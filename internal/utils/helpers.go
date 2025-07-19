@@ -1,0 +1,45 @@
+package utils
+
+import (
+	"encoding/json"
+	"net/http"
+	"strings"
+
+	"octopus/pkg/errors"
+)
+
+func SendResponse(w http.ResponseWriter, status int, data any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(data)
+}
+
+func ReadBody[T any](w http.ResponseWriter, r *http.Request, model T) T {
+	var body T
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		SendResponse(w, 500, errors.Err_body_res)
+	}
+	return body
+}
+
+func readQueryParam(r *http.Request, QueryName string) string {
+	name := r.URL.Query().Get(QueryName)
+	return name
+}
+
+func readParams(r *http.Request, paramsToRead []string) map[string]string {
+	path := r.URL.Path
+	splittedPath := strings.Split(path, "/")
+	params := make(map[string]string)
+	for i := 0; i < len(splittedPath); i++ {
+		for _, val := range paramsToRead {
+			if splittedPath[i] == val {
+				if i+1 < len(splittedPath) {
+					params[val] = splittedPath[i+1]
+				}
+			}
+		}
+	}
+	return params
+}
