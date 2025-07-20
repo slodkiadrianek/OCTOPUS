@@ -5,8 +5,25 @@ import (
 	"net/http"
 	"strings"
 
-	"octopus/pkg/errors"
+	"github.com/slodkiadrianek/octopus/pkg/errors"
 )
+
+func MarshalData(data any) ([]byte, error) {
+	dataBytes, err := json.Marshal(data)
+	if err != nil {
+		return []byte{}, err
+	}
+	return dataBytes, nil
+}
+
+func UnmarshalData[T any](dataBytes []byte) (*T, error) {
+	var data *T
+	err := json.Unmarshal(dataBytes, &data)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
 
 func SendResponse(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
