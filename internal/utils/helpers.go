@@ -11,7 +11,10 @@ import (
 func SendResponse(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+	err := json.NewEncoder(w).Encode(data)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func ReadBody[T any](w http.ResponseWriter, r *http.Request, model T) T {
@@ -30,13 +33,13 @@ func readQueryParam(r *http.Request, QueryName string) string {
 
 func readParams(r *http.Request, paramsToRead []string) map[string]string {
 	path := r.URL.Path
-	splittedPath := strings.Split(path, "/")
+	splitPath := strings.Split(path, "/")
 	params := make(map[string]string)
-	for i := 0; i < len(splittedPath); i++ {
+	for i := 0; i < len(splitPath); i++ {
 		for _, val := range paramsToRead {
-			if splittedPath[i] == val {
-				if i+1 < len(splittedPath) {
-					params[val] = splittedPath[i+1]
+			if splitPath[i] == val {
+				if i+1 < len(splitPath) {
+					params[val] = splitPath[i+1]
 				}
 			}
 		}
