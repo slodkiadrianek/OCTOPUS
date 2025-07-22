@@ -1,8 +1,8 @@
 package errors
 
-const ERR_BODY = "Body"
+const ERR_HTTP_BODY = "Body"
 
-var Err_body_res = map[string]interface{}{
-	"errorCategory":    ERR_BODY,
+var Err_http_body_res = map[string]any{
+	"errorCategory":    ERR_HTTP_BODY,
 	"ErrorDescription": "Failed to read properly body of the request",
 }

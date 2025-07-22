@@ -38,7 +38,7 @@ func ReadBody[T any](w http.ResponseWriter, r *http.Request, model T) T {
 	var body T
 	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
-		SendResponse(w, 500, errors.Err_body_res)
+		SendResponse(w, 500, errors.Err_http_body_res)
 	}
 	return body
 }

@@ -20,7 +20,7 @@ func methodCheck(next http.Handler, method string) http.Handler {
 	})
 }
 
-func (r *Router) Get(route string, fns ...interface{}) {
+func (r *Router) Request(route string, method string, fns ...any) {
 	middlewares := []Middleware{}
 	var finalHandler http.Handler
 	for _, el := range fns {
@@ -35,13 +35,25 @@ func (r *Router) Get(route string, fns ...interface{}) {
 	for i := len(middlewares) - 1; i >= 0; i-- {
 		handler = middlewares[i](handler)
 	}
-	http.Handle(route, methodCheck(handler, "GET"))
+	http.Handle(route, methodCheck(handler, method))
+}
+
+func (r *Router) Get(route string, fns ...any) {
+	r.Request(route, "GET", fns)
 }
 
 func (r *Router) Post(route string, fns ...Middleware) {
-	handler := finalHandler
-	for i := len(fns) - 1; i >= 0; i-- {
-		handler = fns[i](handler)
-	}
-	http.Handle(route, handler)
+	r.Request(route, "POST", fns)
+}
+
+func (r *Router) Patch(route string, fns ...Middleware) {
+	r.Request(route, "PATCH", fns)
+}
+
+func (r *Router) PUT(route string, fns ...Middleware) {
+	r.Request(route, "PUT", fns)
+}
+
+func (r *Router) Delete(route string, fns ...Middleware) {
+	r.Request(route, "Delete", fns)
 }
