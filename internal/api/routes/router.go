@@ -3,22 +3,13 @@ package routes
 import (
 	"net/http"
 
-	"github.com/slodkiadrianek/octopus/internal/utils"
+	"github.com/slodkiadrianek/octopus/internal/middleware"
 )
 
 type (
 	Router     struct{}
 	Middleware func(http.Handler) http.Handler
 )
-
-func methodCheck(next http.Handler, method string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if method != r.Method {
-			utils.SendResponse(w, 404, map[string]string{"error": "Not found"})
-		}
-		next.ServeHTTP(w, r)
-	})
-}
 
 func (r *Router) Request(route string, method string, fns ...any) {
 	middlewares := []Middleware{}
@@ -31,11 +22,14 @@ func (r *Router) Request(route string, method string, fns ...any) {
 			finalHandler = fn
 		}
 	}
+	middlewares = append(middlewares, middleware.ErrorHandler)
 	handler := finalHandler
 	for i := len(middlewares) - 1; i >= 0; i-- {
 		handler = middlewares[i](handler)
 	}
-	http.Handle(route, methodCheck(handler, method))
+	chainedHandler := middleware.CorsHandler(middleware.MethodCheck(handler, method))
+
+	http.Handle(route, chainedHandler)
 }
 
 func (r *Router) Get(route string, fns ...any) {

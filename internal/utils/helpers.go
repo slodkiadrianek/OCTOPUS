@@ -1,12 +1,18 @@
 package utils
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
 
+	"github.com/slodkiadrianek/octopus/internal/Models"
 	"github.com/slodkiadrianek/octopus/pkg/errors"
 )
+
+type contextKey string
+
+const ErrorKey contextKey = "Error"
 
 func MarshalData(data any) ([]byte, error) {
 	dataBytes, err := json.Marshal(data)
@@ -32,6 +38,10 @@ func SendResponse(w http.ResponseWriter, status int, data any) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func SetError(ctx context.Context, err *Models.Error) context.Context {
+	return context.WithValue(ctx, ErrorKey, err)
 }
 
 func ReadBody[T any](w http.ResponseWriter, r *http.Request, model T) T {
