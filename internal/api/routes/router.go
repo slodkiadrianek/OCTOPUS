@@ -7,13 +7,20 @@ import (
 )
 
 type (
-	Router     struct{}
+	Router struct {
+		MiddlewarePreChain []Middleware
+	}
 	Middleware func(http.Handler) http.Handler
 )
 
 func (r *Router) Request(route string, method string, fns ...any) {
 	middlewares := []Middleware{}
 	var finalHandler http.Handler
+	if len(r.MiddlewarePreChain) > 0 {
+		for _, val := range r.MiddlewarePreChain {
+			middlewares = append(middlewares, val)
+		}
+	}
 	for _, el := range fns {
 		switch fn := el.(type) {
 		case func(http.Handler) http.Handler:
@@ -30,6 +37,16 @@ func (r *Router) Request(route string, method string, fns ...any) {
 	chainedHandler := middleware.CorsHandler(middleware.MethodCheck(handler, method))
 
 	http.Handle(route, chainedHandler)
+}
+
+func NewRouter() *Router {
+	return &Router{
+		MiddlewarePreChain: []Middleware{},
+	}
+}
+
+func (r *Router) Use(fns Middleware) {
+	r.MiddlewarePreChain = append(r.MiddlewarePreChain, fns)
 }
 
 func (r *Router) Get(route string, fns ...any) {
