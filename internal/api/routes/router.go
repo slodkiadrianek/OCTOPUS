@@ -4,22 +4,33 @@ import (
 	"net/http"
 
 	"github.com/slodkiadrianek/octopus/internal/middleware"
+	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
+type routeKey struct {
+	method string
+	path   string
+}
 type (
 	Router struct {
 		MiddlewarePreChain []Middleware
+		routes             map[routeKey]http.Handler
 	}
 	Middleware func(http.Handler) http.Handler
 )
+
+func NewRouter() *Router {
+	return &Router{
+		MiddlewarePreChain: []Middleware{},
+		routes:             make(map[routeKey]http.Handler),
+	}
+}
 
 func (r *Router) Request(route string, method string, fns ...any) {
 	middlewares := []Middleware{}
 	var finalHandler http.Handler
 	if len(r.MiddlewarePreChain) > 0 {
-		for _, val := range r.MiddlewarePreChain {
-			middlewares = append(middlewares, val)
-		}
+		middlewares = append(middlewares, r.MiddlewarePreChain...)
 	}
 	for _, el := range fns {
 		switch fn := el.(type) {
@@ -34,15 +45,19 @@ func (r *Router) Request(route string, method string, fns ...any) {
 	for i := len(middlewares) - 1; i >= 0; i-- {
 		handler = middlewares[i](handler)
 	}
-	chainedHandler := middleware.CorsHandler(middleware.MethodCheck(handler, method))
-
+	chainedHandler := handler
+	r.routes[routeKey{method: method, path: route}] = chainedHandler
 	http.Handle(route, chainedHandler)
 }
 
-func NewRouter() *Router {
-	return &Router{
-		MiddlewarePreChain: []Middleware{},
+func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	key := routeKey{method: req.Method, path: req.URL.Path}
+	handler, ok := r.routes[key]
+	if !ok {
+		utils.SendResponse(w, 404, map[string]string{"errorDescription": "Route not found"})
+		return
 	}
+	handler.ServeHTTP(w, req)
 }
 
 func (r *Router) Use(fns Middleware) {
@@ -50,21 +65,31 @@ func (r *Router) Use(fns Middleware) {
 }
 
 func (r *Router) Get(route string, fns ...any) {
-	r.Request(route, "GET", fns)
+	Middlewares := []interface{}{middleware.MethodCheckMiddleware(http.MethodGet)}
+	Middlewares = append(Middlewares, fns...)
+	r.Request(route, "GET", Middlewares)
 }
 
-func (r *Router) Post(route string, fns ...Middleware) {
-	r.Request(route, "POST", fns)
+func (r *Router) Post(route string, fns ...any) {
+	Middlewares := []interface{}{middleware.MethodCheckMiddleware(http.MethodPost)}
+	Middlewares = append(Middlewares, fns...)
+	r.Request(route, "POST", Middlewares)
 }
 
-func (r *Router) Patch(route string, fns ...Middleware) {
-	r.Request(route, "PATCH", fns)
+func (r *Router) Patch(route string, fns ...any) {
+	Middlewares := []interface{}{middleware.MethodCheckMiddleware(http.MethodPatch)}
+	Middlewares = append(Middlewares, fns...)
+	r.Request(route, "PATCH", Middlewares)
 }
 
-func (r *Router) PUT(route string, fns ...Middleware) {
-	r.Request(route, "PUT", fns)
+func (r *Router) PUT(route string, fns ...any) {
+	Middlewares := []interface{}{middleware.MethodCheckMiddleware(http.MethodPut)}
+	Middlewares = append(Middlewares, fns...)
+	r.Request(route, "PUT", Middlewares)
 }
 
-func (r *Router) Delete(route string, fns ...Middleware) {
-	r.Request(route, "Delete", fns)
+func (r *Router) Delete(route string, fns ...any) {
+	Middlewares := []interface{}{middleware.MethodCheckMiddleware(http.MethodDelete)}
+	Middlewares = append(Middlewares, fns...)
+	r.Request(route, "Delete", Middlewares)
 }

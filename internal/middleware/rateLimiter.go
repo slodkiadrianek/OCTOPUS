@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -14,12 +15,12 @@ type RateLimiter struct {
 	BlockDuration time.Duration
 }
 
-func RateLimiterHandler (next http.Handler) http.Handler{
-  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
-    ipAddress:= r.RemoteAddr()
-    if  
-    next.ServeHTTP(w,r)
-  })
+func RateLimiterHandler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ipAddress := r.RemoteAddr
+		fmt.Println(ipAddress)
+		next.ServeHTTP(w, r)
+	})
 }
 
 func NewRateLimiter(maxTokens int, refillRate time.Duration, blockDuration time.Duration) *RateLimiter {
@@ -31,7 +32,6 @@ func NewRateLimiter(maxTokens int, refillRate time.Duration, blockDuration time.
 		BlockDuration: blockDuration,
 	}
 }
-
 
 func (ra *RateLimiter) Allow() bool {
 	now := time.Now()
