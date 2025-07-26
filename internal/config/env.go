@@ -17,7 +17,7 @@ type Env struct {
 	EmailPass    string
 }
 
-func (e *Env) ReadFile() map[string]string {
+func ReadFile() map[string]string {
 	file, err := os.OpenFile(".env", os.O_RDONLY, 0o644)
 	if err != nil {
 		panic(err)
@@ -36,8 +36,8 @@ func (e *Env) ReadFile() map[string]string {
 	return envVariables
 }
 
-func (e *Env) Set() *Env {
-	envVariables := e.ReadFile()
+func SetConfig() *Env {
+	envVariables := ReadFile()
 	return &Env{
 		Port:         envVariables["Port"],
 		JWTSecret:    envVariables["JWTSecret"],

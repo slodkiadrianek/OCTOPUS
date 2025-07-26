@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/slodkiadrianek/octopus/internal/middleware"
@@ -36,8 +37,8 @@ func (r *Router) Request(route string, method string, fns ...any) {
 		switch fn := el.(type) {
 		case func(http.Handler) http.Handler:
 			middlewares = append(middlewares, fn)
-		case http.Handler:
-			finalHandler = fn
+		case func(http.ResponseWriter, *http.Request):
+			finalHandler = http.HandlerFunc(fn)
 		}
 	}
 	middlewares = append(middlewares, middleware.ErrorHandler)
@@ -47,16 +48,18 @@ func (r *Router) Request(route string, method string, fns ...any) {
 	}
 	chainedHandler := handler
 	r.routes[routeKey{method: method, path: route}] = chainedHandler
-	http.Handle(route, chainedHandler)
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	fmt.Printf("Incoming request: %s %s\n", req.Method, req.URL.Path)
 	key := routeKey{method: req.Method, path: req.URL.Path}
 	handler, ok := r.routes[key]
 	if !ok {
+		fmt.Printf("Route not found for key: %v\n", key)
 		utils.SendResponse(w, 404, map[string]string{"errorDescription": "Route not found"})
 		return
 	}
+	fmt.Println("Found matching handler, serving request")
 	handler.ServeHTTP(w, req)
 }
 
@@ -65,9 +68,11 @@ func (r *Router) Use(fns Middleware) {
 }
 
 func (r *Router) Get(route string, fns ...any) {
-	Middlewares := []interface{}{middleware.MethodCheckMiddleware(http.MethodGet)}
+	// Middlewares := []any{middleware.MethodCheckMiddleware(http.MethodGet)}
+
+	Middlewares := []any{}
 	Middlewares = append(Middlewares, fns...)
-	r.Request(route, "GET", Middlewares)
+	r.Request(route, "GET", Middlewares...)
 }
 
 func (r *Router) Post(route string, fns ...any) {

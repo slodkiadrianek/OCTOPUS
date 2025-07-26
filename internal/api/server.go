@@ -2,10 +2,12 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/slodkiadrianek/octopus/internal/api/routes"
+	"github.com/slodkiadrianek/octopus/internal/config"
 	"github.com/slodkiadrianek/octopus/internal/middleware"
 	"github.com/slodkiadrianek/octopus/internal/utils/logger"
 )
@@ -16,12 +18,21 @@ type Config struct {
 }
 
 type Server struct {
-	config *Config
+	config *config.Env
 	server *http.Server
 	router *routes.Router
 }
 
+func NewServer(cfg *config.Env) *Server {
+	return &Server{
+		config: cfg,
+		router: routes.NewRouter(),
+	}
+}
+
 func (s *Server) Start() error {
+	s.SetupMiddlware()
+	s.SetupRoutes()
 	s.server = &http.Server{
 		Addr:         ":" + s.config.Port,
 		Handler:      s.router,
@@ -33,8 +44,11 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) SetupRoutes() {
-	s.router = routes.NewRouter()
-	s.router.Get("/users/:id")
+	s.router.Get("/users", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("Hi")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Hi from server"))
+	})
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
