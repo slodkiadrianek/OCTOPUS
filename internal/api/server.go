@@ -44,7 +44,13 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) SetupRoutes() {
-	s.router.Get("/users", func(w http.ResponseWriter, r *http.Request) {
+	usersApi := s.router.Group("/users")
+	usersApi.GET("/us", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("Hi")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Hi from server"))
+	})
+	s.router.GET("/users", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Hi")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Hi from server"))
@@ -56,6 +62,6 @@ func (s *Server) Shutdown(ctx context.Context) error {
 }
 
 func (s *Server) SetupMiddlware() {
-	s.router.Use(middleware.ErrorHandler)
-	s.router.Use(middleware.CorsHandler)
+	s.router.USE(middleware.CorsHandler)
+	s.router.USE(middleware.ErrorHandler)
 }

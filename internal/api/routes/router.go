@@ -29,6 +29,7 @@ func NewRouter() *Router {
 
 func (r *Router) Request(route string, method string, fns ...any) {
 	middlewares := []Middleware{}
+	middlewares = append(middlewares, middleware.MethodCheckMiddleware(method))
 	var finalHandler http.Handler
 	if len(r.MiddlewarePreChain) > 0 {
 		middlewares = append(middlewares, r.MiddlewarePreChain...)
@@ -54,6 +55,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	fmt.Printf("Incoming request: %s %s\n", req.Method, req.URL.Path)
 	key := routeKey{method: req.Method, path: req.URL.Path}
 	handler, ok := r.routes[key]
+	fmt.Println(r.routes)
 	if !ok {
 		fmt.Printf("Route not found for key: %v\n", key)
 		utils.SendResponse(w, 404, map[string]string{"errorDescription": "Route not found"})
@@ -63,38 +65,30 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	handler.ServeHTTP(w, req)
 }
 
-func (r *Router) Use(fns Middleware) {
+func (r *Router) Group(prefix string) *GroupRouter {
+	return NewGroupRouter(prefix, r)
+}
+
+func (r *Router) USE(fns Middleware) {
 	r.MiddlewarePreChain = append(r.MiddlewarePreChain, fns)
 }
 
-func (r *Router) Get(route string, fns ...any) {
-	// Middlewares := []any{middleware.MethodCheckMiddleware(http.MethodGet)}
-
-	Middlewares := []any{}
-	Middlewares = append(Middlewares, fns...)
-	r.Request(route, "GET", Middlewares...)
+func (r *Router) GET(route string, fns ...any) {
+	r.Request(route, http.MethodGet, fns...)
 }
 
-func (r *Router) Post(route string, fns ...any) {
-	Middlewares := []interface{}{middleware.MethodCheckMiddleware(http.MethodPost)}
-	Middlewares = append(Middlewares, fns...)
-	r.Request(route, "POST", Middlewares)
+func (r *Router) POST(route string, fns ...any) {
+	r.Request(route, http.MethodPost, fns...)
 }
 
-func (r *Router) Patch(route string, fns ...any) {
-	Middlewares := []interface{}{middleware.MethodCheckMiddleware(http.MethodPatch)}
-	Middlewares = append(Middlewares, fns...)
-	r.Request(route, "PATCH", Middlewares)
+func (r *Router) PATCH(route string, fns ...any) {
+	r.Request(route, http.MethodPatch, fns...)
 }
 
 func (r *Router) PUT(route string, fns ...any) {
-	Middlewares := []interface{}{middleware.MethodCheckMiddleware(http.MethodPut)}
-	Middlewares = append(Middlewares, fns...)
-	r.Request(route, "PUT", Middlewares)
+	r.Request(route, http.MethodPut, fns...)
 }
 
-func (r *Router) Delete(route string, fns ...any) {
-	Middlewares := []interface{}{middleware.MethodCheckMiddleware(http.MethodDelete)}
-	Middlewares = append(Middlewares, fns...)
-	r.Request(route, "Delete", Middlewares)
+func (r *Router) DELETE(route string, fns ...any) {
+	r.Request(route, http.MethodDelete, fns...)
 }
