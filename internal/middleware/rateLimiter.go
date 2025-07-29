@@ -15,7 +15,13 @@ type RateLimiter struct {
 	BlockDuration time.Duration
 }
 
-func RateLimiterHandler(next http.Handler) http.Handler {
+func RateLimiterMiddleware(userMap map[string]string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return RateLimiterHandler(next, userMap)
+	}
+}
+
+func RateLimiterHandler(next http.Handler, userMap map[string]string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ipAddress := r.RemoteAddr
 		fmt.Println(ipAddress)

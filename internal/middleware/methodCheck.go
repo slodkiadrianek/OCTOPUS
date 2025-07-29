@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/slodkiadrianek/octopus/internal/utils"
@@ -15,7 +14,6 @@ func MethodCheckMiddleware(method string) func(http.Handler) http.Handler {
 
 func MethodCheckHandler(next http.Handler, method string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println(method, r.Method)
 		if method != r.Method {
 			utils.SendResponse(w, 405, map[string]string{"error": "Not found"})
 			return
