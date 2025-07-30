@@ -8,7 +8,7 @@ import (
 )
 
 func SetupAuthHadnlers(r *routes.Router) {
-	authGroup := r.Group("/auth")
+	authGroup := r.Group("/api/v1/auth")
 	authGroup.POST("/register", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Hi")
 		w.WriteHeader(http.StatusOK)
@@ -18,4 +18,10 @@ func SetupAuthHadnlers(r *routes.Router) {
 	authGroup.GET("/check")
 	authGroup.POST("/reset-password")
 	authGroup.POST("/reset-password/set-password")
+}
+
+func SetupWorkspaceHandlers(r *routes.Router) {
+	workspaceGroup := r.Group("/api/v1/workspaces")
+	workspaceGroup.POST("")
+	workspaceGroup.DELETE("/:id")
 }

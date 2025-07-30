@@ -48,12 +48,16 @@ func (r *Router) Request(route string, method string, fns ...any) {
 		handler = middlewares[i](handler)
 	}
 	chainedHandler := handler
+	route = utils.RemoveLatCharacterFromUrl(route)
 	r.routes[routeKey{method: method, path: route}] = chainedHandler
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	fmt.Printf("Incoming request: %s %s\n", req.Method, req.URL.Path)
+	req.URL.Path = utils.RemoveLatCharacterFromUrl(req.URL.Path)
 	key := routeKey{method: req.Method, path: req.URL.Path}
+	for i, val := range r.routes {
+		fmt.Println(i, val)
+	}
 	handler, ok := r.routes[key]
 	if !ok {
 		fmt.Printf("Route not found for key: %v\n", key)
