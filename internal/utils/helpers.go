@@ -58,6 +58,25 @@ func ReadQueryParam(r *http.Request, QueryName string) string {
 	return name
 }
 
+func MatchRoute(routeUrl, urlPath string) bool {
+	splittedRouteUrl := strings.Split(strings.Trim(routeUrl, "/"), "/")
+	splittedUrlPath := strings.Split(strings.Trim(urlPath, "/"), "/")
+
+	if len(splittedRouteUrl) != len(splittedUrlPath) {
+		return false
+	}
+
+	for i := 0; i < len(splittedRouteUrl); i++ {
+		if strings.Contains(splittedRouteUrl[i], ":") {
+			continue
+		}
+		if splittedUrlPath[i] != splittedRouteUrl[i] {
+			return false
+		}
+	}
+	return true
+}
+
 func readParams(r *http.Request, paramsToRead []string) map[string]string {
 	path := r.URL.Path
 	splitPath := strings.Split(path, "/")

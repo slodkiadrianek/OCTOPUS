@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/slodkiadrianek/octopus/internal/middleware"
@@ -54,17 +53,16 @@ func (r *Router) Request(route string, method string, fns ...any) {
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	req.URL.Path = utils.RemoveLatCharacterFromUrl(req.URL.Path)
-	key := routeKey{method: req.Method, path: req.URL.Path}
-	for i, val := range r.routes {
-		fmt.Println(i, val)
+	for routeKey, handler := range r.routes {
+		if routeKey.method != req.Method {
+			continue
+		}
+
+		if utils.MatchRoute(routeKey.path, req.URL.Path) {
+			handler.ServeHTTP(w, req)
+		}
 	}
-	handler, ok := r.routes[key]
-	if !ok {
-		fmt.Printf("Route not found for key: %v\n", key)
-		utils.SendResponse(w, 404, map[string]string{"errorDescription": "Route not found"})
-		return
-	}
-	handler.ServeHTTP(w, req)
+	utils.SendResponse(w, 404, map[string]string{"errorDescription": "Route not found"})
 }
 
 func (r *Router) Group(prefix string) *GroupRouter {
