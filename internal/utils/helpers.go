@@ -53,7 +53,7 @@ func ReadBody[T any](w http.ResponseWriter, r *http.Request, model T) T {
 	return body
 }
 
-func readQueryParam(r *http.Request, QueryName string) string {
+func ReadQueryParam(r *http.Request, QueryName string) string {
 	name := r.URL.Query().Get(QueryName)
 	return name
 }
