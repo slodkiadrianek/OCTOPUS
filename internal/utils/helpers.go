@@ -73,3 +73,10 @@ func readParams(r *http.Request, paramsToRead []string) map[string]string {
 	}
 	return params
 }
+
+func RemoveLatCharacterFromUrl(route string) string {
+	if string(route[len(route)-1]) == "/" {
+		route = route[:len(route)-1]
+	}
+	return route
+}

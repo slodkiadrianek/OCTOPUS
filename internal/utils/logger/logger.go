@@ -50,7 +50,8 @@ func (l *Logger) CreateLogger() {
 func (l *Logger) Info(msg string, data ...any) {
 	actualDate := time.Now()
 	fileName := actualDate.Format(l.DateFormat)
-	fmt.Print(GREEN + "[INFO: " + fileName + "] " + msg)
+	logTime := actualDate.Format("2006-01-02 15:04:05")
+	fmt.Println(GREEN + "[INFO: " + logTime + "] " + msg)
 	if len(data) > 0 {
 		fmt.Print(" ")
 		for _, d := range data {

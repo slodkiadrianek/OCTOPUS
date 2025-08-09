@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 )
 
@@ -10,7 +9,6 @@ func CorsHandler(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000") //
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		fmt.Println(r.Method)
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
 			return

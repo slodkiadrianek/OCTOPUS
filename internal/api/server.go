@@ -2,11 +2,12 @@ package api
 
 import (
 	"context"
-	"fmt"
+	// "fmt"
 	"net/http"
 	"time"
 
 	"github.com/slodkiadrianek/octopus/internal/api/routes"
+	"github.com/slodkiadrianek/octopus/internal/api/routes/handlers"
 	"github.com/slodkiadrianek/octopus/internal/config"
 	"github.com/slodkiadrianek/octopus/internal/middleware"
 	"github.com/slodkiadrianek/octopus/internal/utils/logger"
@@ -44,17 +45,18 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) SetupRoutes() {
-	usersApi := s.router.Group("/users")
-	usersApi.GET("/us", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Hi")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Hi from server"))
-	})
-	s.router.GET("/users", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Hi")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Hi from server"))
-	})
+	handlers.SetupAuthHadnlers(s.router)
+	// usersApi := s.router.Group("/users")
+	// usersApi.GET("/us", func(w http.ResponseWriter, r *http.Request) {
+	// 	fmt.Println("Hi")
+	// 	w.WriteHeader(http.StatusOK)
+	// 	w.Write([]byte("Hi from server"))
+	// })
+	// s.router.GET("/users", func(w http.ResponseWriter, r *http.Request) {
+	// 	fmt.Println("Hi")
+	// 	w.WriteHeader(http.StatusOK)
+	// 	w.Write([]byte("Hi from server"))
+	// })
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
@@ -62,6 +64,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 }
 
 func (s *Server) SetupMiddlware() {
+	s.router.USE(middleware.Logger)
 	s.router.USE(middleware.CorsHandler)
 	s.router.USE(middleware.ErrorHandler)
 }
