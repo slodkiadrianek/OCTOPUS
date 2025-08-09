@@ -28,7 +28,7 @@ func NewRouter() *Router {
 }
 
 func (r *Router) Request(route string, method string, fns ...any) {
-	middlewares := []Middleware{}
+	var middlewares []Middleware
 	middlewares = append(middlewares, middleware.MethodCheckMiddleware(method))
 	var finalHandler http.Handler
 	if len(r.MiddlewarePreChain) > 0 {
