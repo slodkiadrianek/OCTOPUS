@@ -45,7 +45,7 @@ func (ra *RateLimiter) Allow() bool {
 		return false
 	}
 	elapsed := now.Sub(ra.LastRefill)
-	newTokens := (elapsed / ra.RefillRate)
+	newTokens := elapsed / ra.RefillRate
 	if newTokens > 0 {
 		ra.Tokens += int(newTokens)
 		if ra.Tokens > ra.MaxTokens {

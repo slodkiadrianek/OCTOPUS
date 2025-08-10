@@ -4,10 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/slodkiadrianek/octopus/internal/models"
 	"net/http"
 	"strings"
-
-	"github.com/slodkiadrianek/octopus/internal/Models"
 )
 
 type contextKey string
@@ -40,7 +39,7 @@ func SendResponse(w http.ResponseWriter, status int, data any) {
 	}
 }
 
-func SetError(ctx context.Context, err *Models.Error) context.Context {
+func SetError(ctx context.Context, err *models.Error) context.Context {
 	return context.WithValue(ctx, ErrorKey, err)
 }
 

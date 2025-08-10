@@ -1,9 +1,9 @@
 package middleware
 
 import (
+	"github.com/slodkiadrianek/octopus/internal/models"
 	"net/http"
 
-	"github.com/slodkiadrianek/octopus/internal/Models"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
@@ -23,7 +23,7 @@ func ErrorHandler(next http.Handler) http.Handler {
 			return
 		}
 
-		customErr, isCustomErr := err.(*Models.Error)
+		customErr, isCustomErr := err.(*models.Error)
 		if isCustomErr {
 			if customErr == nil {
 				// Log or zwróć bezpieczną odpowiedź, aby uniknąć panic

@@ -4,13 +4,12 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"github.com/slodkiadrianek/octopus/internal/utils"
+	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
 	"net/url"
 	"testing"
-
-	"github.com/slodkiadrianek/octopus/internal/utils"
-	"github.com/stretchr/testify/assert"
 )
 
 type testData struct {

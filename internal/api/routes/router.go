@@ -68,6 +68,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			ctx := context.WithValue(req.Context(), routeKeyPath, routeKey.path)
 			req = req.WithContext(ctx)
 			handler.ServeHTTP(w, req)
+			return
 		}
 	}
 	utils.SendResponse(w, 404, map[string]string{"errorDescription": "Route not found"})

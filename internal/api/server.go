@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	// "fmt"
 	"net/http"
 	"time"
@@ -32,7 +33,7 @@ func NewServer(cfg *config.Env) *Server {
 }
 
 func (s *Server) Start() error {
-	s.SetupMiddlware()
+	s.SetupMiddleware()
 	s.SetupRoutes()
 	s.server = &http.Server{
 		Addr:         ":" + s.config.Port,
@@ -46,24 +47,24 @@ func (s *Server) Start() error {
 
 func (s *Server) SetupRoutes() {
 	handlers.SetupAuthHadnlers(s.router)
-	// usersApi := s.router.Group("/users")
-	// usersApi.GET("/us", func(w http.ResponseWriter, r *http.Request) {
-	// 	fmt.Println("Hi")
-	// 	w.WriteHeader(http.StatusOK)
-	// 	w.Write([]byte("Hi from server"))
-	// })
-	// s.router.GET("/users", func(w http.ResponseWriter, r *http.Request) {
-	// 	fmt.Println("Hi")
-	// 	w.WriteHeader(http.StatusOK)
-	// 	w.Write([]byte("Hi from server"))
-	// })
+	usersApi := s.router.Group("/users")
+	usersApi.GET("/us", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("Hi")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Hi from server"))
+	})
+	s.router.GET("/users", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("Hi")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Hi from server"))
+	})
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }
 
-func (s *Server) SetupMiddlware() {
+func (s *Server) SetupMiddleware() {
 	s.router.USE(middleware.Logger)
 	s.router.USE(middleware.CorsHandler)
 	s.router.USE(middleware.ErrorHandler)
