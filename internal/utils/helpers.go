@@ -3,11 +3,11 @@ package utils
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/slodkiadrianek/octopus/internal/Models"
-	"github.com/slodkiadrianek/octopus/pkg/errors"
 )
 
 type contextKey string
@@ -44,13 +44,16 @@ func SetError(ctx context.Context, err *Models.Error) context.Context {
 	return context.WithValue(ctx, ErrorKey, err)
 }
 
-func ReadBody[T any](w http.ResponseWriter, r *http.Request, model T) T {
+func ReadBody[T any](r *http.Request) (*T, error) {
+	if r.Body == nil {
+		return nil, errors.New("no request body provided")
+	}
 	var body T
 	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
-		SendResponse(w, 500, errors.Err_http_body_res)
+		return nil, err
 	}
-	return body
+	return &body, nil
 }
 
 func ReadQueryParam(r *http.Request, QueryName string) string {
@@ -77,20 +80,26 @@ func MatchRoute(routeUrl, urlPath string) bool {
 	return true
 }
 
-func readParams(r *http.Request, paramsToRead []string) map[string]string {
+func ReadParam(r *http.Request, paramToRead string) (string, error) {
 	path := r.URL.Path
-	splitPath := strings.Split(path, "/")
-	params := make(map[string]string)
-	for i := 0; i < len(splitPath); i++ {
-		for _, val := range paramsToRead {
-			if splitPath[i] == val {
-				if i+1 < len(splitPath) {
-					params[val] = splitPath[i+1]
-				}
-			}
+	routeKeyPath := r.Context().Value("routeKeyPath")
+	s, ok := routeKeyPath.(string)
+	if !ok {
+		return "", errors.New("failed to read context routeKeyPath, must be type string")
+	}
+	splittedPath := strings.Split(strings.Trim(path, "/"), "/")
+	splittedRouteKeyPath := strings.Split(strings.Trim(s, "/"), "/")
+	param := ""
+	for i := 0; i < len(splittedPath); i++ {
+		if strings.Contains(splittedRouteKeyPath[i], ":") && splittedRouteKeyPath[i][1:] == paramToRead {
+			param = splittedPath[i]
+			break
 		}
 	}
-	return params
+	if param == "" {
+		return "", errors.New("The is no parameter called: " + paramToRead)
+	}
+	return param, nil
 }
 
 func RemoveLatCharacterFromUrl(route string) string {

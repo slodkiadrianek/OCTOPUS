@@ -1,16 +1,21 @@
 package routes
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/slodkiadrianek/octopus/internal/middleware"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
-type routeKey struct {
-	method string
-	path   string
-}
+type (
+	key      string
+	routeKey struct {
+		method string
+		path   string
+	}
+)
+
 type (
 	Router struct {
 		MiddlewarePreChain []Middleware
@@ -59,6 +64,9 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 
 		if utils.MatchRoute(routeKey.path, req.URL.Path) {
+			const routeKeyPath key = "routeKeyPath"
+			ctx := context.WithValue(req.Context(), routeKeyPath, routeKey.path)
+			req = req.WithContext(ctx)
 			handler.ServeHTTP(w, req)
 		}
 	}

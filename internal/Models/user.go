@@ -8,10 +8,10 @@ type User struct {
 	Role    string `json:"role" sql:"role" example:"Admin"`
 }
 
-var query string = "CREATE TABLE IF NOT EXISTS users (" +
-	"id INT PRIMARY KEY AUTOINCREMENT," +
-	"email VARCHAR(128) UNIQUE," +
-	"name VARCHAR(64)," +
-	"surname VARCHAR(64)," +
-	"role VARCHAR(64)," +
-	")"
+//var query string = "CREATE TABLE IF NOT EXISTS users (" +
+//	"id INT PRIMARY KEY AUTOINCREMENT," +
+//	"email VARCHAR(128) UNIQUE," +
+//	"name VARCHAR(64)," +
+//	"surname VARCHAR(64)," +
+//	"role VARCHAR(64)," +
+//	")"

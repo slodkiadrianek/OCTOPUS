@@ -1,4 +1,4 @@
-package errors
+package custom_errors
 
 const (
 	ERR_DB_NOT_FOUND = "NOT_FOUND"

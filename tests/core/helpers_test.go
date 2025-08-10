@@ -1,7 +1,10 @@
 package core
 
 import (
+	"bytes"
+	"context"
 	"errors"
+	"io"
 	"net/http"
 	"net/url"
 	"testing"
@@ -24,14 +27,151 @@ type testReadQueryParamData struct {
 	expectedData  string
 }
 
-type testReadParamsData struct {
+type testReadParamData struct {
 	name          string
-	data          []string
+	urlPath       string
+	routeKeyUrl   string
+	paramToRead   string
+	expectedError error
+	expectedData  string
+}
+
+type testMatchRoutesData struct {
+	name         string
+	routeKeyUrl  string
+	urlPath      string
+	expectedData bool
+}
+
+type testRemoveLastCharacterFromUrlData struct {
+	name         string
+	urlPath      string
+	expectedData string
+}
+type testReadBodyData struct {
+	name          string
+	bodyData      string
 	expectedError error
 	expectedData  map[string]string
 }
 
-func TestReadQeuryParam(t *testing.T) {
+func testReadBody(t *testing.T) {
+	tests := []testReadBodyData{
+		{
+			name:          "Test with proper data",
+			bodyData:      `{"name":"test"}`,
+			expectedError: nil,
+			expectedData:  map[string]string{"name": "test"},
+		}, {
+			name:          "Test with malformed json",
+			bodyData:      `{this is invalid json}`,
+			expectedError: errors.New("invalid character 't' looking for beginning of object key string"),
+			expectedData:  nil,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var r http.Request
+			r.Body = io.NopCloser(bytes.NewBufferString(test.bodyData))
+			res, err := utils.ReadBody[map[string]string](&r)
+			if test.expectedError != nil {
+				assert.Equal(t, test.expectedError.Error(), err.Error())
+			} else {
+				assert.Equal(t, test.expectedError, nil)
+			}
+			assert.Equal(t, test.expectedData, res)
+		})
+	}
+}
+
+func testRemoveLastCharacterFromUrl(t *testing.T) {
+	test := testRemoveLastCharacterFromUrlData{
+		name:         "Testing remove last character from url",
+		urlPath:      "/url/",
+		expectedData: "/url",
+	}
+
+	t.Run(test.name, func(t *testing.T) {
+		res := utils.RemoveLatCharacterFromUrl(test.urlPath)
+		assert.Equal(t, test.expectedData, res)
+	})
+}
+
+func TestReadParam(t *testing.T) {
+	tests := []testReadParamData{
+		{
+			name:          "Proper urlPath and expectedData with 1 param in path",
+			urlPath:       "/users/1",
+			routeKeyUrl:   "/users/:userId",
+			paramToRead:   "userId",
+			expectedError: nil,
+			expectedData:  "1",
+		}, {
+			name:          "Proper urlPath and expectedData with 2 params in path",
+			urlPath:       "/users/1/posts/1",
+			routeKeyUrl:   "/users/:userId/posts/:postId",
+			paramToRead:   "postId",
+			expectedError: nil,
+			expectedData:  "1",
+		}, {
+			name:          "lack off the requested param",
+			urlPath:       "/users/1",
+			routeKeyUrl:   "/users/:userId",
+			paramToRead:   "postId",
+			expectedError: errors.New("The is no parameter called: postId"),
+			expectedData:  "",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var r http.Request
+			r.URL = &url.URL{}
+			r.URL.Path = test.urlPath
+			ctx := context.WithValue(r.Context(), "routeKeyPath", test.routeKeyUrl)
+			r = *r.WithContext(ctx)
+			res, err := utils.ReadParam(&r, test.paramToRead)
+			if test.expectedError != nil {
+				assert.Equal(t, test.expectedError.Error(), err.Error())
+			} else {
+				assert.Equal(t, test.expectedError, nil)
+			}
+			assert.Equal(t, test.expectedData, res)
+		})
+	}
+}
+
+func TestMatchRoutes(t *testing.T) {
+	tests := []testMatchRoutesData{
+		{
+			name:         "Test same urls",
+			routeKeyUrl:  "/url/v1/v1",
+			urlPath:      "/url/v1/v1",
+			expectedData: true,
+		},
+		{
+			name:         "Test different urls but with the same length",
+			routeKeyUrl:  "/ur2",
+			urlPath:      "/ur1",
+			expectedData: false,
+		},
+		{
+			name:         "Test urls with different lengths",
+			routeKeyUrl:  "/url",
+			urlPath:      "/url1",
+			expectedData: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			res := utils.MatchRoute(test.routeKeyUrl, test.urlPath)
+			assert.Equal(t, test.expectedData, res)
+		})
+	}
+}
+
+func TestReadQueryParam(t *testing.T) {
 	tests := []testReadQueryParamData{
 		{
 			name:          "Read query param properly",
