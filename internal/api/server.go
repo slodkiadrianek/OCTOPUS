@@ -62,6 +62,7 @@ func (s *Server) SetupRoutes() {
 		}
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(userId))
+		w.Write([]byte(userId))
 	})
 }
 
