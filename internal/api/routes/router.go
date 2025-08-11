@@ -2,6 +2,7 @@ package routes
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/slodkiadrianek/octopus/internal/middleware"
@@ -65,6 +66,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 		if utils.MatchRoute(routeKey.path, req.URL.Path) {
 			const routeKeyPath key = "routeKeyPath"
+			fmt.Println(routeKeyPath)
 			ctx := context.WithValue(req.Context(), routeKeyPath, routeKey.path)
 			req = req.WithContext(ctx)
 			handler.ServeHTTP(w, req)

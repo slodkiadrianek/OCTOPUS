@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+
 	// "fmt"
 	"net/http"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/api/routes/handlers"
 	"github.com/slodkiadrianek/octopus/internal/config"
 	"github.com/slodkiadrianek/octopus/internal/middleware"
+	"github.com/slodkiadrianek/octopus/internal/utils"
 	"github.com/slodkiadrianek/octopus/internal/utils/logger"
 )
 
@@ -53,10 +55,14 @@ func (s *Server) SetupRoutes() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Hi from server"))
 	})
-	s.router.GET("/users", func(w http.ResponseWriter, r *http.Request) {
+	s.router.GET("/users/:id", func(w http.ResponseWriter, r *http.Request) {
+		userId, err := utils.ReadParam(r, "id")
+		if err != nil {
+			panic(err)
+		}
 		fmt.Println("Hi")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Hi from server"))
+		w.Write([]byte(userId))
 	})
 }
 
