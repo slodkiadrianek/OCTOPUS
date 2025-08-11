@@ -65,7 +65,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 		if utils.MatchRoute(routeKey.path, req.URL.Path) {
 			const routeKeyPath key = "routeKeyPath"
-			ctx := context.WithValue(req.Context(), routeKeyPath, routeKey.path)
+			ctx := context.WithValue(req.Context(), "routeKeyPath", routeKey.path)
 			req = req.WithContext(ctx)
 			handler.ServeHTTP(w, req)
 			return
