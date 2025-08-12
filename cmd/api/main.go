@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/slodkiadrianek/octopus/internal/repository"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,6 +15,7 @@ import (
 
 func main() {
 	loggerService := logger.NewLogger("./logs", "02.01.2006")
+	userRepository := repository.NewUserRepository()
 	cfg := config.SetConfig()
 	server := api.NewServer(cfg)
 

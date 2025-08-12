@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	"fmt"
+	"github.com/slodkiadrianek/octopus/internal/controllers"
 
 	// "fmt"
 	"net/http"
@@ -10,24 +10,23 @@ import (
 
 	"github.com/slodkiadrianek/octopus/internal/api/routes"
 	"github.com/slodkiadrianek/octopus/internal/api/routes/handlers"
-	"github.com/slodkiadrianek/octopus/internal/config"
 	"github.com/slodkiadrianek/octopus/internal/middleware"
-	"github.com/slodkiadrianek/octopus/internal/utils"
 	"github.com/slodkiadrianek/octopus/internal/utils/logger"
 )
 
 type Config struct {
-	Port   string
-	Logger *logger.Logger
+	Port           string
+	Logger         *logger.Logger
+	UserController *controllers.UserController
 }
 
 type Server struct {
-	config *config.Env
+	config *Config
 	server *http.Server
 	router *routes.Router
 }
 
-func NewServer(cfg *config.Env) *Server {
+func NewServer(cfg *Config) *Server {
 	return &Server{
 		config: cfg,
 		router: routes.NewRouter(),
@@ -48,22 +47,23 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) SetupRoutes() {
-	handlers.SetupAuthHadnlers(s.router)
-	usersApi := s.router.Group("/users")
-	usersApi.GET("/us", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Hi")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Hi from server"))
-	})
-	s.router.GET("/users/:userId", func(w http.ResponseWriter, r *http.Request) {
-		userId, err := utils.ReadBody[map[string]string](r)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println(userId)
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`Body readed successfully`))
-	})
+	authHandler := handlers.NewAuthHandler(s.config.UserController)
+	authHandler.SetupAuthHandlers(*s.router)
+	//usersApi := s.router.Group("/users")
+	//usersApi.GET("/us", func(w http.ResponseWriter, r *http.Request) {
+	//	fmt.Println("Hi")
+	//	w.WriteHeader(http.StatusOK)
+	//	w.Write([]byte("Hi from server"))
+	//})
+	//s.router.GET("/users/:userId", func(w http.ResponseWriter, r *http.Request) {
+	//	userId, err := utils.ReadBody[map[string]string](r)
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//	fmt.Println(userId)
+	//	w.WriteHeader(http.StatusOK)
+	//	w.Write([]byte(`Body readed successfully`))
+	//})
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {

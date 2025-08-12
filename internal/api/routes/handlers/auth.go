@@ -1,27 +1,21 @@
 package handlers
 
 import (
-	"fmt"
-	"net/http"
-
 	"github.com/slodkiadrianek/octopus/internal/api/routes"
+	"github.com/slodkiadrianek/octopus/internal/controllers"
 )
 
-func SetupAuthHadnlers(r *routes.Router) {
-	authGroup := r.Group("/api/v1/auth")
-	authGroup.POST("/register", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Hi")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Hi from server"))
-	})
-	authGroup.POST("/login")
-	authGroup.GET("/check")
-	authGroup.POST("/reset-password")
-	authGroup.POST("/reset-password/set-password")
+type AuthHandlers struct {
+	UserController *controllers.UserController
 }
 
-func SetupWorkspaceHandlers(r *routes.Router) {
-	workspaceGroup := r.Group("/api/v1/workspaces")
-	workspaceGroup.POST("")
-	workspaceGroup.DELETE("/:id")
+func NewAuthHandler(userController *controllers.UserController) *AuthHandlers {
+	return &AuthHandlers{
+		UserController: userController,
+	}
+}
+
+func (a *AuthHandlers) SetupAuthHandlers(router routes.Router) {
+	groupRouter := router.Group("/api/v1/auth")
+	groupRouter.POST("/register", a.UserController)
 }

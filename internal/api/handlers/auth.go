@@ -1,12 +1,15 @@
 package handlers
 
-import "github.com/slodkiadrianek/octopus/internal/api/routes"
+import (
+	"github.com/slodkiadrianek/octopus/internal/api/routes"
+	"github.com/slodkiadrianek/octopus/internal/controllers"
+)
 
 type AuthHandlers struct {
-	AuthControllers
+	UserController *controllers.UserController
 }
 
 func (a *AuthHandlers) SetupAuthHandlers(router routes.Router) {
 	groupRouter := router.Group("/api/v1/auth")
-	groupRouter.POST("/register")
+	groupRouter.POST("/register", a.UserController)
 }

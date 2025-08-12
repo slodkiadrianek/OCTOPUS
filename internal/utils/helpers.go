@@ -108,3 +108,8 @@ func RemoveLatCharacterFromUrl(route string) string {
 	}
 	return route
 }
+
+func SetErrorInContext(r *http.Request, err error) {
+	ctx := context.WithValue(r.Context(), "Error", err)
+	r = r.WithContext(ctx)
+}
