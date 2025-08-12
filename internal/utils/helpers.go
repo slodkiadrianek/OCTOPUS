@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/slodkiadrianek/octopus/internal/models"
 	"net/http"
 	"strings"
+
+	"github.com/slodkiadrianek/octopus/internal/models"
 )
 
 type contextKey string

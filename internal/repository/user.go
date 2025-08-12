@@ -33,7 +33,7 @@ func (u *UserRepository) InsertUserToDb(ctx context.Context, user DTO.User, pass
 	return nil
 }
 
-func (u *UserRepository) UpdateUser(ctx context.Context, user DTO.User, userId string) error {
+func (u *UserRepository) UpdateUser(ctx context.Context, user DTO.User, userId int) error {
 	query := `UPDATE users SET name=$1, surname=$2, email=$3 WHERE id=$1`
 	stmt, err := u.Db.PrepareContext(ctx, query)
 	if err != nil {
@@ -45,6 +45,25 @@ func (u *UserRepository) UpdateUser(ctx context.Context, user DTO.User, userId s
 		u.LoggerService.Info("failed to execute query for execution", map[string]interface{}{
 			"query": query,
 			"args":  []interface{}{user.Name, user.Surname, user.Email, userId},
+		})
+		return models.NewError(500, "Database", "Failed to insert data to the database")
+	}
+	return nil
+}
+
+func (u *UserRepository) DeleteUser(ctx context.Context, password string, userId int) error {
+	query := `DELETE FROM users WHERE id=$1 AND password=$2`
+	stmt, err := u.Db.PrepareContext(ctx, query)
+	if err != nil {
+		u.LoggerService.Info("failed to prepare query for execution", query)
+		return models.NewError(500, "Database", "Failed to update data in  database")
+	}
+
+	_, err = stmt.ExecContext(ctx, userId, password)
+	if err != nil {
+		u.LoggerService.Info("failed to execute query for execution", map[string]interface{}{
+			"query": query,
+			"args":  []interface{}{password, userId},
 		})
 		return models.NewError(500, "Database", "Failed to insert data to the database")
 	}

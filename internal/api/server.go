@@ -56,13 +56,13 @@ func (s *Server) SetupRoutes() {
 		w.Write([]byte("Hi from server"))
 	})
 	s.router.GET("/users/:userId", func(w http.ResponseWriter, r *http.Request) {
-		userId, err := utils.ReadParam(r, "userId")
+		userId, err := utils.ReadBody[map[string]string](r)
 		if err != nil {
 			panic(err)
 		}
+		fmt.Println(userId)
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(userId))
-		w.Write([]byte(userId))
+		w.Write([]byte(`Body readed successfully`))
 	})
 }
 
