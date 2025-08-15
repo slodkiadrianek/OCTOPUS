@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+
 	"github.com/slodkiadrianek/octopus/internal/controllers"
 
 	// "fmt"
@@ -14,14 +15,13 @@ import (
 )
 
 type DependencyConfig struct {
-	Port           string
-	//Logger         *logger.Logger
+	Port string
 	UserController *controllers.UserController
 }
 
-func NewDependencyConfig(port string, userController *controllers.UserController) *DependencyConfig{
+func NewDependencyConfig(port string, userController *controllers.UserController) *DependencyConfig {
 	return &DependencyConfig{
-		Port: port,
+		Port:           port,
 		UserController: userController,
 	}
 }

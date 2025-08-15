@@ -17,7 +17,7 @@ func NewAuthHandler(userController *controllers.UserController) *AuthHandlers {
 
 func (a *AuthHandlers) SetupAuthHandlers(router routes.Router) {
 	groupRouter := router.Group("/api/v1/auth")
-	groupRouter.POST("/register", a.UserController)
-	groupRouter.POST("/login", )
+	groupRouter.POST("/register", a.UserController.InsertUser)
+	groupRouter.POST("/login")
 	groupRouter.GET("/check")
 }

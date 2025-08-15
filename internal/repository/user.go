@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/utils/logger"
@@ -26,7 +25,7 @@ func (u *UserRepository) FindUserByEmail(ctx context.Context, email string) (int
 	query := `SELECT id FROM users WHERE email = $1`
 	stmt, err := u.Db.PrepareContext(ctx, query)
 	if err != nil {
-		u.LoggerService.Info("failed to prepare query for execution", query)
+		u.LoggerService.Info("failed to prepare query for execution", err)
 		return 0, models.NewError(500, "Database", "Failed to get data from the database")
 	}
 	defer stmt.Close()
@@ -37,7 +36,7 @@ func (u *UserRepository) FindUserByEmail(ctx context.Context, email string) (int
 			u.LoggerService.Info("user not found", map[string]interface{}{
 				"email": email,
 			})
-			return 0, models.NewError(404, "NotFound", "User not found")
+			return 0, nil
 		}
 		u.LoggerService.Info("failed to execute query for execution", map[string]interface{}{
 			"query": query,
@@ -45,14 +44,15 @@ func (u *UserRepository) FindUserByEmail(ctx context.Context, email string) (int
 		})
 		return 0, models.NewError(500, "Database", "Failed to get data from the database")
 	}
-	return id, err
+	return id, nil
 }
 
 func (u *UserRepository) InsertUserToDb(ctx context.Context, user DTO.User, password string) error {
-	query := `INSERT INTO users(name, surname, email, password) VALUES($1, $2, $3, $4 ,$5)`
+
+	query := `INSERT INTO users(name, surname, email, password) VALUES($1, $2, $3, $4 )`
 	stmt, err := u.Db.PrepareContext(ctx, query)
 	if err != nil {
-		u.LoggerService.Info("failed to prepare query for execution", query)
+		u.LoggerService.Info("failed to prepare query for execution", err)
 		return models.NewError(500, "Database", "Failed to insert data to the database")
 	}
 	defer stmt.Close()
@@ -64,6 +64,7 @@ func (u *UserRepository) InsertUserToDb(ctx context.Context, user DTO.User, pass
 		})
 		return models.NewError(500, "Database", "Failed to insert data to the database")
 	}
+
 	return nil
 }
 

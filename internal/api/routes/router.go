@@ -46,7 +46,6 @@ func (r *Router) Request(route string, method string, fns ...any) {
 			finalHandler = http.HandlerFunc(fn)
 		}
 	}
-	middlewares = append(middlewares, middleware.ErrorHandler)
 	handler := finalHandler
 	for i := len(middlewares) - 1; i >= 0; i-- {
 		handler = middlewares[i](handler)

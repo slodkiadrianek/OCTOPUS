@@ -1,6 +1,10 @@
 package config
 
-import "database/sql"
+import (
+	"database/sql"
+
+	_ "github.com/lib/pq"
+)
 
 type Db struct {
 	DbConnection *sql.DB

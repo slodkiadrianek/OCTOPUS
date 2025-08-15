@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/repository"
@@ -23,19 +24,21 @@ func NewUserService(loggerService *logger.Logger, userRepository *repository.Use
 
 func (u *UserService) InsertUserToDb(ctx context.Context, user DTO.User, password string) error {
 	doesUserExists, err := u.UserRepository.FindUserByEmail(ctx, user.Email)
-	if err.Error() != "User not found" {
+	if err != nil && err.Error() != "User not found" {
 		return err
 	}
 	if doesUserExists > 0 {
 		u.LoggerService.Info("User with this email already exists", user.Email)
 		return models.NewError(400, "Verification", "User with this email already exists")
 	}
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		u.LoggerService.Info("failed to generate password", err)
 		return err
 	}
 	err = u.UserRepository.InsertUserToDb(ctx, user, string(hashedPassword))
+
 	if err != nil {
 		return err
 	}
@@ -57,5 +60,3 @@ func (u *UserService) DeleteUser(ctx context.Context, userId int, password strin
 	}
 	return nil
 }
-
-

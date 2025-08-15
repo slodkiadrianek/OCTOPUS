@@ -13,6 +13,9 @@ type UpdateUser struct {
 	Email string `json:"email" example:"joedoe@email.com"`
 }
 
+
+
+
 type UserId struct {
 	UserId int `json:"userId" example:"2"`
 }
