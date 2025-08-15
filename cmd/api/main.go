@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"errors"
+	"github.com/slodkiadrianek/octopus/internal/controllers"
 	"github.com/slodkiadrianek/octopus/internal/repository"
+	"github.com/slodkiadrianek/octopus/internal/services"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,13 +18,17 @@ import (
 
 func main() {
 	loggerService := logger.NewLogger("./logs", "02.01.2006")
-	userRepository := repository.NewUserRepository()
 	cfg := config.SetConfig()
-	server := api.NewServer(cfg)
+	db := config.NewDb(cfg.DbLink)
+	userRepository := repository.NewUserRepository(db.DbConnection, loggerService)
+	userService := services.NewUserService(loggerService, userRepository)
+	userController := controllers.NewUserController(userService)
+	dependenciesConfig := api.NewDependencyConfig(cfg.Port, userController)
+	server := api.NewServer(dependenciesConfig)
 
 	go func() {
 		loggerService.Info("Starting API server on port: " + cfg.Port)
-		if err := server.Start(); err != nil && err != http.ErrServerClosed {
+		if err := server.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			loggerService.Error("Failed to start server", err)
 		}
 	}()

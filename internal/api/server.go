@@ -11,22 +11,28 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/api/routes"
 	"github.com/slodkiadrianek/octopus/internal/api/routes/handlers"
 	"github.com/slodkiadrianek/octopus/internal/middleware"
-	"github.com/slodkiadrianek/octopus/internal/utils/logger"
 )
 
-type Config struct {
+type DependencyConfig struct {
 	Port           string
-	Logger         *logger.Logger
+	//Logger         *logger.Logger
 	UserController *controllers.UserController
 }
 
+func NewDependencyConfig(port string, userController *controllers.UserController) *DependencyConfig{
+	return &DependencyConfig{
+		Port: port,
+		UserController: userController,
+	}
+}
+
 type Server struct {
-	config *Config
+	config *DependencyConfig
 	server *http.Server
 	router *routes.Router
 }
 
-func NewServer(cfg *Config) *Server {
+func NewServer(cfg *DependencyConfig) *Server {
 	return &Server{
 		config: cfg,
 		router: routes.NewRouter(),
@@ -55,7 +61,7 @@ func (s *Server) SetupRoutes() {
 	//	w.WriteHeader(http.StatusOK)
 	//	w.Write([]byte("Hi from server"))
 	//})
-	//s.router.GET("/users/:userId", func(w http.ResponseWriter, r *http.Request) {
+	//s.router.GET("/users/:userIdd", func(w http.ResponseWriter, r *http.Request) {
 	//	userId, err := utils.ReadBody[map[string]string](r)
 	//	if err != nil {
 	//		panic(err)

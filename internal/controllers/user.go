@@ -14,8 +14,14 @@ type UserController struct {
 	UserService *services.UserService
 }
 
+func NewUserController(userService *services.UserService) *UserController{
+	return &UserController{
+		UserService: userService,
+	}
+}
+
 func (u *UserController) InsertUser(w http.ResponseWriter, r *http.Request) {
-	userBody, err := utils.ReadBody[schema.User](r)
+	userBody, err := utils.ReadBody[schema.CreateUser](r)
 	if err != nil {
 		return
 	}
@@ -27,4 +33,15 @@ func (u *UserController) InsertUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	utils.SendResponse(w, 201, map[string]string{})
+}
+
+func (u *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	userBody, err := utils.ReadBody[schema.UpdateUser](r)
+	userId :=1;
+	if err != nil{
+		return
+	}
+	userDto := DTO.NewUser(userBody.Email, userBody.Name, userBody.Surname)
+	err = u.UserService.UpdateUser(r.Context(), *userDto, userId)
+
 }

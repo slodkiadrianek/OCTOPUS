@@ -57,3 +57,5 @@ func (u *UserService) DeleteUser(ctx context.Context, userId int, password strin
 	}
 	return nil
 }
+
+
