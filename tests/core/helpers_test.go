@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"github.com/slodkiadrianek/octopus/internal/utils"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
 	"net/url"
 	"testing"
+
+	"github.com/slodkiadrianek/octopus/internal/utils"
+	"github.com/stretchr/testify/assert"
 )
 
 type testData struct {
@@ -83,7 +84,7 @@ func testReadBody(t *testing.T) {
 	}
 }
 
-func testRemoveLastCharacterFromUrl(t *testing.T) {
+func TestRemoveLastCharacterFromUrl(t *testing.T) {
 	test := testRemoveLastCharacterFromUrlData{
 		name:         "Testing remove last character from url",
 		urlPath:      "/url/",

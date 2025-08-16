@@ -27,15 +27,15 @@ func NewDependencyConfig(port string, userController *controllers.UserController
 }
 
 type Server struct {
-	config *DependencyConfig
+	Config *DependencyConfig
 	server *http.Server
-	router *routes.Router
+Router *routes.Router
 }
 
 func NewServer(cfg *DependencyConfig) *Server {
 	return &Server{
-		config: cfg,
-		router: routes.NewRouter(),
+		Config: cfg,
+		Router: routes.NewRouter(),
 	}
 }
 
@@ -43,8 +43,8 @@ func (s *Server) Start() error {
 	s.SetupMiddleware()
 	s.SetupRoutes()
 	s.server = &http.Server{
-		Addr:         ":" + s.config.Port,
-		Handler:      s.router,
+		Addr:         ":" + s.Config.Port,
+		Handler:      s.Router,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
 		IdleTimeout:  30 * time.Second,
@@ -53,8 +53,8 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) SetupRoutes() {
-	authHandler := handlers.NewAuthHandler(s.config.UserController)
-	authHandler.SetupAuthHandlers(*s.router)
+	authHandler := handlers.NewAuthHandler(s.Config.UserController)
+	authHandler.SetupAuthHandlers(*s.Router)
 	//usersApi := s.router.Group("/users")
 	//usersApi.GET("/us", func(w http.ResponseWriter, r *http.Request) {
 	//	fmt.Println("Hi")
@@ -77,7 +77,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 }
 
 func (s *Server) SetupMiddleware() {
-	s.router.USE(middleware.Logger)
-	s.router.USE(middleware.CorsHandler)
-	s.router.USE(middleware.ErrorHandler)
+	s.Router.USE(middleware.Logger)
+	s.Router.USE(middleware.CorsHandler)
+	s.Router.USE(middleware.ErrorHandler)
 }
