@@ -102,14 +102,14 @@ func ReadParam(r *http.Request, paramToRead string) (string, error) {
 	}
 	return param, nil
 }
-func ValidateInput(schema *z.StructSchema, val any) (z.ZogIssueMap) {
+
+func ValidateInput(schema *z.StructSchema, val any) z.ZogIssueMap {
 	errMap := schema.Validate(val)
 	if errMap != nil {
 		return errMap
 	}
 	return nil
 }
-
 
 func RemoveLatCharacterFromUrl(route string) string {
 	if string(route[len(route)-1]) == "/" {

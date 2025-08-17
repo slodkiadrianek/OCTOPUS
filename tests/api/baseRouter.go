@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"database/sql"
 	"net/http"
 	"net/http/httptest"
 
@@ -15,14 +16,21 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/utils/logger"
 )
 
+type Db struct {
+	DbConn *sql.DB
+}
+
+var DbInterface Db
+
 type TestRouter struct {
-		Router *routes.Router
+	Router *routes.Router
 }
 
 func NewTestDependencies() *TestRouter {
-	loggerService := logger.NewLogger("../../logs", "02.01.2006")
-	cfg := config.SetConfig()
+	loggerService := logger.NewLogger("../../../logs", "02.01.2006")
+	cfg := config.SetConfig("../../../.env")
 	db := config.NewDb(cfg.DbLink)
+	DbInterface.DbConn = db.DbConnection
 	userRepository := repository.NewUserRepository(db.DbConnection, loggerService)
 	userService := services.NewUserService(loggerService, userRepository)
 	userController := controllers.NewUserController(userService)
@@ -36,11 +44,11 @@ func NewTestDependencies() *TestRouter {
 }
 
 func SetupRouter() *routes.Router {
-	return  NewTestDependencies().Router
+	return NewTestDependencies().Router
 }
 
-func CreateNewTestRequest(method, path string, body map[string]string) (*http.Request, error){
-	jsonBody , err := utils.MarshalData(body)
+func CreateNewTestRequest(method, path string, body map[string]string) (*http.Request, error) {
+	jsonBody, err := utils.MarshalData(body)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +57,6 @@ func CreateNewTestRequest(method, path string, body map[string]string) (*http.Re
 		return nil, err
 	}
 	return req, nil
-
 }
 
 func PerformTestRequest(router *routes.Router, method, url string, body map[string]string) *httptest.ResponseRecorder {

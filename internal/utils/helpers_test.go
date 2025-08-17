@@ -1,4 +1,4 @@
-package core
+package utils
 
 import (
 	"bytes"
@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/slodkiadrianek/octopus/internal/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -73,7 +72,7 @@ func testReadBody(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			var r http.Request
 			r.Body = io.NopCloser(bytes.NewBufferString(test.bodyData))
-			res, err := utils.ReadBody[map[string]string](&r)
+			res, err := ReadBody[map[string]string](&r)
 			if test.expectedError != nil {
 				assert.Equal(t, test.expectedError.Error(), err.Error())
 			} else {
@@ -92,7 +91,7 @@ func TestRemoveLastCharacterFromUrl(t *testing.T) {
 	}
 
 	t.Run(test.name, func(t *testing.T) {
-		res := utils.RemoveLatCharacterFromUrl(test.urlPath)
+		res := RemoveLatCharacterFromUrl(test.urlPath)
 		assert.Equal(t, test.expectedData, res)
 	})
 }
@@ -130,7 +129,7 @@ func TestReadParam(t *testing.T) {
 			r.URL.Path = test.urlPath
 			ctx := context.WithValue(r.Context(), "routeKeyPath", test.routeKeyUrl)
 			r = *r.WithContext(ctx)
-			res, err := utils.ReadParam(&r, test.paramToRead)
+			res, err := ReadParam(&r, test.paramToRead)
 			if test.expectedError != nil {
 				assert.Equal(t, test.expectedError.Error(), err.Error())
 			} else {
@@ -165,7 +164,7 @@ func TestMatchRoutes(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			res := utils.MatchRoute(test.routeKeyUrl, test.urlPath)
+			res := MatchRoute(test.routeKeyUrl, test.urlPath)
 			assert.Equal(t, test.expectedData, res)
 		})
 	}
@@ -187,7 +186,7 @@ func TestReadQueryParam(t *testing.T) {
 			q := r.URL.Query()
 			q.Add(test.data[0], test.data[1])
 			r.URL.RawQuery = q.Encode()
-			res := utils.ReadQueryParam(&r, test.data[0])
+			res := ReadQueryParam(&r, test.data[0])
 			assert.Equal(t, test.expectedError, nil)
 			assert.Equal(t, test.expectedData, res)
 		})
@@ -214,7 +213,7 @@ func TestUnmarshalData(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			if b, ok := test.data.([]byte); ok {
-				res, err := utils.UnmarshalData[map[string]string](b)
+				res, err := UnmarshalData[map[string]string](b)
 				if test.expectedError != nil {
 					assert.Equal(t, test.expectedError.Error(), err.Error())
 					assert.Nil(t, test.expectedData, res)
@@ -256,7 +255,7 @@ func TestMarshalData(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			res, err := utils.MarshalData(test.data)
+			res, err := MarshalData(test.data)
 			if test.expectedError != nil {
 				assert.Equal(t, test.expectedError.Error(), err.Error())
 			} else {

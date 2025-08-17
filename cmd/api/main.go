@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"errors"
-	"github.com/slodkiadrianek/octopus/internal/controllers"
-	"github.com/slodkiadrianek/octopus/internal/repository"
-	"github.com/slodkiadrianek/octopus/internal/services"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/slodkiadrianek/octopus/internal/controllers"
+	"github.com/slodkiadrianek/octopus/internal/repository"
+	"github.com/slodkiadrianek/octopus/internal/services"
 
 	"github.com/slodkiadrianek/octopus/internal/api"
 	"github.com/slodkiadrianek/octopus/internal/config"
@@ -18,7 +19,7 @@ import (
 
 func main() {
 	loggerService := logger.NewLogger("./logs", "02.01.2006")
-	cfg := config.SetConfig()
+	cfg := config.SetConfig("./.env")
 	db := config.NewDb(cfg.DbLink)
 	userRepository := repository.NewUserRepository(db.DbConnection, loggerService)
 	userService := services.NewUserService(loggerService, userRepository)
