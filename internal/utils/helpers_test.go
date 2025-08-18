@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -29,7 +30,7 @@ type testReadQueryParamData struct {
 type testReadParamData struct {
 	name          string
 	urlPath       string
-	routeKeyUrl   string
+	routeKeyUrl   any
 	paramToRead   string
 	expectedError error
 	expectedData  string
@@ -49,36 +50,55 @@ type testRemoveLastCharacterFromUrlData struct {
 }
 type testReadBodyData struct {
 	name          string
-	bodyData      string
+	bodyData      any
 	expectedError error
-	expectedData  map[string]string
+	expectedData  any
 }
 
-func testReadBody(t *testing.T) {
+// func Test
+
+func TestReadBody(t *testing.T) {
 	tests := []testReadBodyData{
 		{
 			name:          "Test with proper data",
 			bodyData:      `{"name":"test"}`,
 			expectedError: nil,
 			expectedData:  map[string]string{"name": "test"},
-		}, {
+		},
+		{
 			name:          "Test with malformed json",
 			bodyData:      `{this is invalid json}`,
 			expectedError: errors.New("invalid character 't' looking for beginning of object key string"),
+			expectedData:  nil,
+		},
+		{
+			name:          "Test without body",
+			bodyData:      nil,
+			expectedError: errors.New("no request body provided"),
 			expectedData:  nil,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var r http.Request
-			r.Body = io.NopCloser(bytes.NewBufferString(test.bodyData))
+			if test.bodyData == nil {
+				r.Body = nil
+			} else {
+				s, ok := test.bodyData.(string)
+				if !ok {
+					panic(ok)
+				}
+				r.Body = io.NopCloser(bytes.NewBufferString(s))
+			}
 			res, err := ReadBody[map[string]string](&r)
 			if test.expectedError != nil {
+				fmt.Println(err.Error())
 				assert.Equal(t, test.expectedError.Error(), err.Error())
+				assert.Equal(t, test.expectedData, nil)
 			} else {
 				assert.Equal(t, test.expectedError, nil)
+				assert.Equal(t, test.expectedData, *res)
 			}
-			assert.Equal(t, test.expectedData, res)
 		})
 	}
 }
@@ -105,19 +125,29 @@ func TestReadParam(t *testing.T) {
 			paramToRead:   "userId",
 			expectedError: nil,
 			expectedData:  "1",
-		}, {
+		},
+		{
 			name:          "Proper urlPath and expectedData with 2 params in path",
 			urlPath:       "/users/1/posts/1",
 			routeKeyUrl:   "/users/:userId/posts/:postId",
 			paramToRead:   "postId",
 			expectedError: nil,
 			expectedData:  "1",
-		}, {
+		},
+		{
 			name:          "lack off the requested param",
 			urlPath:       "/users/1",
 			routeKeyUrl:   "/users/:userId",
 			paramToRead:   "postId",
 			expectedError: errors.New("The is no parameter called: postId"),
+			expectedData:  "",
+		},
+		{
+			name:          "Wrong type for value stored in context",
+			urlPath:       "/users/1",
+			routeKeyUrl:   1,
+			paramToRead:   "postId",
+			expectedError: errors.New("failed to read context routeKeyPath, must be type string"),
 			expectedData:  "",
 		},
 	}
@@ -157,8 +187,20 @@ func TestMatchRoutes(t *testing.T) {
 		{
 			name:         "Test urls with different lengths",
 			routeKeyUrl:  "/url",
-			urlPath:      "/url1",
+			urlPath:      "/url/12232",
 			expectedData: false,
+		},
+		{
+			name:         "Test urls with different lengths",
+			routeKeyUrl:  "/url1",
+			urlPath:      "/url1",
+			expectedData: true,
+		},
+		{
+			name:         "Test urls with parameters included in path",
+			routeKeyUrl:  "/url1/:id/123",
+			urlPath:      "/url1/1/123",
+			expectedData: true,
 		},
 	}
 
