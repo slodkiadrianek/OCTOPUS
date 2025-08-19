@@ -59,8 +59,16 @@ type testReadBodyData struct {
 type testValidateSchemaData struct {
 	name          string
 	schema        z.StructSchema
-	val           any
+	val           ValidateSchemaTestData
 	expectedError any
+}
+
+type ValidateSchemaTestData struct {
+	Name string `json:"name"`
+}
+
+func ptr(s string) *string {
+	return &s
 }
 
 func TestValidateSchema(t *testing.T) {
@@ -70,25 +78,49 @@ func TestValidateSchema(t *testing.T) {
 			schema: *z.Struct(z.Shape{
 				"name": z.String(),
 			}),
-			val: map[string]string{
-				"name": "test",
+			val: ValidateSchemaTestData{
+				Name: "test",
 			},
-			expectedError: nil,
-		}, {
-			name: "Wrong data not prepared for schema",
+			expectedError: z.ZogIssueMap(nil),
+		},
+		{
+			name: "With wrong data provided",
 			schema: *z.Struct(z.Shape{
-				"name": z.String(),
+				"name": z.String().Email(),
 			}),
-			val: map[string]int{
-				"name": 1,
+			val: ValidateSchemaTestData{
+				Name: "test",
 			},
-			expectedError: "",
+			expectedError: z.ZogIssueMap{
+				"$first": []*z.ZogIssue{
+					{
+						Code:    "email",
+						Path:    "name",
+						Value:   ptr("test"),
+						Dtype:   "string",
+						Params:  nil,
+						Message: "must be a valid email",
+						Err:     nil,
+					},
+				},
+				"name": []*z.ZogIssue{
+					{
+						Code:    "email",
+						Path:    "name",
+						Value:   ptr("test"),
+						Dtype:   "string",
+						Params:  nil,
+						Message: "must be a valid email",
+						Err:     nil,
+					},
+				},
+			},
 		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			err := ValidateInput(&test.schema, test.val)
+			err := ValidateInput(&test.schema, &test.val)
 			assert.Equal(t, test.expectedError, err)
 		})
 	}

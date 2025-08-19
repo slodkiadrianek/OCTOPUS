@@ -1,14 +1,12 @@
 package utils
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
 
 	z "github.com/Oudwins/zog"
-	"github.com/slodkiadrianek/octopus/internal/models"
 )
 
 type contextKey string
@@ -39,10 +37,6 @@ func SendResponse(w http.ResponseWriter, status int, data any) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-func SetError(ctx context.Context, err *models.Error) context.Context {
-	return context.WithValue(ctx, ErrorKey, err)
 }
 
 func ReadBody[T any](r *http.Request) (*T, error) {
@@ -116,9 +110,4 @@ func RemoveLatCharacterFromUrl(route string) string {
 		route = route[:len(route)-1]
 	}
 	return route
-}
-
-func SetErrorInContext(r *http.Request, err error) {
-	ctx := context.WithValue(r.Context(), "Error", err)
-	r = r.WithContext(ctx)
 }
