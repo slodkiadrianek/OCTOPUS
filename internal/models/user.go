@@ -14,8 +14,6 @@ type App struct {
 	Description string `json:"description" example:"Quiz App"`
 	DbLink string `json:"dbLink" example:"mongodb://werqwerw"`
 	ApiUrl string `json:"apiUrl" example:"http://localhost"`
-	
-
 }
 
 // var query string = "CREATE TABLE IF NOT EXISTS users (" +

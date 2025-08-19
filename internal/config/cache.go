@@ -12,14 +12,14 @@ type CacheService struct {
 	Client *redis.Client
 }
 
-func NewCacheService(cacheLink string) *CacheService {
+func NewCacheService(cacheLink string) (*CacheService,error) {
 	opt, err := redis.ParseURL(cacheLink)
 	if err != nil {
-		panic(err)
+		return &CacheService{},err
 	}
 	return &CacheService{
 		Client: redis.NewClient(opt),
-	}
+	},nil
 }
 
 func (c *CacheService) SetData(ctx context.Context, key string, data string, ttl time.Duration) error {

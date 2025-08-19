@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"testing"
 
+	z "github.com/Oudwins/zog"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -55,7 +56,43 @@ type testReadBodyData struct {
 	expectedData  any
 }
 
-// func Test
+type testValidateSchemaData struct {
+	name          string
+	schema        z.StructSchema
+	val           any
+	expectedError any
+}
+
+func TestValidateSchema(t *testing.T) {
+	testCases := []testValidateSchemaData{
+		{
+			name: "Proper data",
+			schema: *z.Struct(z.Shape{
+				"name": z.String(),
+			}),
+			val: map[string]string{
+				"name": "test",
+			},
+			expectedError: nil,
+		}, {
+			name: "Wrong data not prepared for schema",
+			schema: *z.Struct(z.Shape{
+				"name": z.String(),
+			}),
+			val: map[string]int{
+				"name": 1,
+			},
+			expectedError: "",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			err := ValidateInput(&test.schema, test.val)
+			assert.Equal(t, test.expectedError, err)
+		})
+	}
+}
 
 func TestReadBody(t *testing.T) {
 	tests := []testReadBodyData{
