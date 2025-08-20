@@ -2,6 +2,7 @@ package config
 
 import (
 	"bufio"
+	"errors"
 	"os"
 	"strings"
 )
@@ -20,7 +21,7 @@ type Env struct {
 func ReadFile(filepath string) (map[string]string, error) {
 	file, err := os.OpenFile(filepath, os.O_RDONLY, 0o644)
 	if err != nil {
-		return map[string]string{}, err
+		return map[string]string{}, errors.New("failed to open a file")
 	}
 	defer file.Close()
 	envVariables := make(map[string]string)
@@ -31,7 +32,7 @@ func ReadFile(filepath string) (map[string]string, error) {
 		envVariables[lineSplitted[0]] = lineSplitted[1]
 	}
 	if err := scanner.Err(); err != nil {
-		return map[string]string{}, err
+		return map[string]string{}, errors.New("failed to scan a file")
 	}
 	return envVariables, nil
 }

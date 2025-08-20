@@ -10,12 +10,16 @@ type Db struct {
 	DbConnection *sql.DB
 }
 
-func NewDb(databaseLink string) *Db {
-	dbConnection, err := sql.Open("postgres", databaseLink)
+func NewDb(databaseLink, driver string) (*Db, error) {
+	dbConnection, err := sql.Open(driver, databaseLink)
 	if err != nil {
-		panic(err)
+		return &Db{}, err
+	}
+	err = dbConnection.Ping()
+	if err != nil {
+		return &Db{}, err
 	}
 	return &Db{
 		DbConnection: dbConnection,
-	}
+	}, nil
 }

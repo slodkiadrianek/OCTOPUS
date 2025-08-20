@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -12,20 +11,20 @@ type CacheService struct {
 	Client *redis.Client
 }
 
-func NewCacheService(cacheLink string) (*CacheService,error) {
+func NewCacheService(cacheLink string) (*CacheService, error) {
 	opt, err := redis.ParseURL(cacheLink)
 	if err != nil {
-		return &CacheService{},err
+		return &CacheService{}, err
 	}
 	return &CacheService{
 		Client: redis.NewClient(opt),
-	},nil
+	}, nil
 }
 
 func (c *CacheService) SetData(ctx context.Context, key string, data string, ttl time.Duration) error {
 	err := c.Client.Set(ctx, key, string(data), ttl).Err()
 	if err != nil {
-		return errors.New("Failed to set value in cache")
+		return err
 	}
 	return nil
 }
