@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -73,7 +72,6 @@ func TestCacheService_SetData(t *testing.T) {
 			ctx := context.Background()
 			ttl := 20 * time.Millisecond
 			err := serviceClient.SetData(ctx, testCase.key, "hi", ttl)
-			fmt.Println(err)
 			if testCase.expectedError == nil {
 				assert.Nil(t, err) // TTL truncation does NOT count as an error
 			} else {
