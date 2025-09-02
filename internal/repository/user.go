@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/utils/logger"
@@ -47,8 +48,7 @@ func (u *UserRepository) FindUserByEmail(ctx context.Context, email string) (int
 	return id, nil
 }
 
-func (u *UserRepository) InsertUserToDb(ctx context.Context, user DTO.User, password string) error {
-
+func (u *UserRepository) InsertUserToDb(ctx context.Context, user DTO.CreateUser, password string) error {
 	query := `INSERT INTO users(name, surname, email, password) VALUES($1, $2, $3, $4 )`
 	stmt, err := u.Db.PrepareContext(ctx, query)
 	if err != nil {
@@ -68,7 +68,7 @@ func (u *UserRepository) InsertUserToDb(ctx context.Context, user DTO.User, pass
 	return nil
 }
 
-func (u *UserRepository) UpdateUser(ctx context.Context, user DTO.User, userId int) error {
+func (u *UserRepository) UpdateUser(ctx context.Context, user DTO.CreateUser, userId int) error {
 	query := `UPDATE users SET name=$1, surname=$2, email=$3 WHERE id=$1`
 	stmt, err := u.Db.PrepareContext(ctx, query)
 	if err != nil {

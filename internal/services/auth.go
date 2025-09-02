@@ -1,0 +1,37 @@
+package services
+
+import (
+	"context"
+
+	"github.com/slodkiadrianek/octopus/internal/middleware"
+	"github.com/slodkiadrianek/octopus/internal/models"
+	"github.com/slodkiadrianek/octopus/internal/repository"
+	"github.com/slodkiadrianek/octopus/internal/schema"
+	"github.com/slodkiadrianek/octopus/internal/utils/logger"
+)
+
+type AuthService struct {
+	LoggerService  *logger.Logger
+	UserRepository *repository.UserRepository
+	JWT            *middleware.JWT
+}
+
+func NewAuthService(loggerService *logger.Logger, userRepository *repository.UserRepository, jwt *middleware.JWT) *AuthService {
+	return &AuthService{
+		LoggerService:  loggerService,
+		UserRepository: userRepository,
+		JWT:            jwt,
+	}
+}
+
+func (a AuthService) LoginUser(ctx context.Context, loginData schema.LoginUser) (string, error) {
+	doesUserExists, err := a.UserRepository.FindUserByEmail(ctx, loginData.Email)
+	if err != nil && err.Error() != "User not found" {
+		return "", err
+	}
+	if doesUserExists == 0 {
+		a.LoggerService.Info("User with this email does not exist", loginData.Email)
+		return "", models.NewError(400, "Verification", "User with this email does not exist")
+	}
+	return "", nil
+}

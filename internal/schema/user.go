@@ -24,6 +24,20 @@ var CreateUserSchema = z.Struct(z.Shape{
 	"password": z.String().Min(8).Max(32).ContainsSpecial().ContainsUpper().ContainsDigit().Required(),
 })
 
+type LoginUser struct {
+	Email    string `json:"email" example:"adikurek@gmail.com"`
+	Password string `json:"password" example:"zaqwekflas;h#&"`
+}
+
+var LoginUserSchema = z.Struct(z.Shape{
+	"email": z.String().Email().Required().Transform(func(val *string, ctx z.Ctx) error {
+		*val = strings.ToLower(*val)
+		*val = strings.TrimSpace(*val)
+		return nil
+	}),
+	"password": z.String().Required(),
+})
+
 type UpdateUser struct {
 	Name    string `json:"name" example:"Joe"`
 	Surname string `json:"surname" example:"Doe"`

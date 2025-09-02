@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -12,6 +13,11 @@ import (
 type contextKey string
 
 const ErrorKey contextKey = "Error"
+
+func SetContext(r *http.Request, key any, data any) *http.Request {
+	ctx := context.WithValue(r.Context(), key, data)
+	return r.WithContext(ctx)
+}
 
 func MarshalData(data any) ([]byte, error) {
 	dataBytes, err := json.Marshal(data)

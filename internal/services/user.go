@@ -22,7 +22,7 @@ func NewUserService(loggerService *logger.Logger, userRepository *repository.Use
 	}
 }
 
-func (u *UserService) InsertUserToDb(ctx context.Context, user DTO.User, password string) error {
+func (u *UserService) InsertUserToDb(ctx context.Context, user DTO.CreateUser, password string) error {
 	doesUserExists, err := u.UserRepository.FindUserByEmail(ctx, user.Email)
 	if err != nil && err.Error() != "User not found" {
 		return err
@@ -38,14 +38,13 @@ func (u *UserService) InsertUserToDb(ctx context.Context, user DTO.User, passwor
 		return err
 	}
 	err = u.UserRepository.InsertUserToDb(ctx, user, string(hashedPassword))
-
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u *UserService) UpdateUser(ctx context.Context, user DTO.User, userId int) error {
+func (u *UserService) UpdateUser(ctx context.Context, user DTO.CreateUser, userId int) error {
 	err := u.UserRepository.UpdateUser(ctx, user, userId)
 	if err != nil {
 		return err
