@@ -71,6 +71,27 @@ func ptr(s string) *string {
 	return &s
 }
 
+func TestSetContext(t *testing.T){
+	type args struct{
+		key string
+		value any
+	}
+	tests := []args{
+		{
+			key: "test",
+			value: "testValue",
+		},
+	}
+	for _, test := range tests {
+		t.Run("Testing set context", func(t *testing.T) {
+			var r http.Request
+			res := SetContext(&r, test.key, test.value)
+			assert.Equal(t, test.value, res.Context().Value(test.key))
+		})
+	}
+
+}
+
 func TestValidateSchema(t *testing.T) {
 	testCases := []testValidateSchemaData{
 		{

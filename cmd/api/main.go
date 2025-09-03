@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/slodkiadrianek/octopus/internal/controllers"
+	"github.com/slodkiadrianek/octopus/internal/middleware"
 	"github.com/slodkiadrianek/octopus/internal/repository"
 	"github.com/slodkiadrianek/octopus/internal/services"
 
@@ -19,12 +20,28 @@ import (
 
 func main() {
 	loggerService := logger.NewLogger("./logs", "02.01.2006")
-	cfg := config.SetConfig("./.env")
-	db := config.NewDb(cfg.DbLink)
+	cfg ,err:= config.SetConfig("./.env")
+	if err != nil {
+		loggerService.Error("Failed to load config", err)
+		return
+	}
+	cacheService, err := config.NewCacheService(cfg.CacheLink)
+	if err != nil {
+		loggerService.Error("Failed to connect to cache", err)
+		return
+	}
+	db,err := config.NewDb(cfg.DbLink, "psql")
+	if err != nil {
+		loggerService.Error("Failed to connect to database", err)
+		return
+	}
 	userRepository := repository.NewUserRepository(db.DbConnection, loggerService)
 	userService := services.NewUserService(loggerService, userRepository)
+	jwt := middleware.NewJWT(cfg.JWTSecret, *loggerService, *cacheService)
+	authService := services.NewAuthService(loggerService, userRepository, jwt)
+	authController := controllers.NewAuthController(authService, jwt)
 	userController := controllers.NewUserController(userService)
-	dependenciesConfig := api.NewDependencyConfig(cfg.Port, userController)
+	dependenciesConfig := api.NewDependencyConfig(cfg.Port, userController, authController, jwt)
 	server := api.NewServer(dependenciesConfig)
 
 	go func() {

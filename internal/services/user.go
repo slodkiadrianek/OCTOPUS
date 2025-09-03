@@ -27,7 +27,7 @@ func (u *UserService) InsertUserToDb(ctx context.Context, user DTO.CreateUser, p
 	if err != nil && err.Error() != "User not found" {
 		return err
 	}
-	if doesUserExists > 0 {
+	if doesUserExists.Id > 0 {
 		u.LoggerService.Info("User with this email already exists", user.Email)
 		return models.NewError(400, "Verification", "User with this email already exists")
 	}

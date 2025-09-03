@@ -27,7 +27,7 @@ func (u *UserController) InsertUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	userDto := DTO.NewUser(userBody.Email, userBody.Name, userBody.Surname)
+	userDto := DTO.NewCreateUser(userBody.Email, userBody.Name, userBody.Surname)
 	err = u.UserService.InsertUserToDb(r.Context(), *userDto, userBody.Password)
 	if err != nil {
 		errBucket, ok := r.Context().Value("ErrorBucket").(*middleware.ErrorBucket)
@@ -50,6 +50,40 @@ func (u *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	userDto := DTO.NewUser(userBody.Email, userBody.Name, userBody.Surname)
+	userDto := DTO.NewCreateUser(userBody.Email, userBody.Name, userBody.Surname)
 	err = u.UserService.UpdateUser(r.Context(), *userDto, userId)
+	if err != nil {
+		errBucket, ok := r.Context().Value("ErrorBucket").(*middleware.ErrorBucket)
+		if ok {
+			errBucket.Err = err
+			return
+		}
+		utils.SendResponse(w, 500, map[string]string{
+			"errorCategory":    "Server",
+			"errorDescription": "Internal server error",
+		})
+		return
+	}
+	utils.SendResponse(w, 204, map[string]string{})
+}
+
+func (u *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	userBody, err := utils.ReadBody[schema.DeleteUser](r)
+	if err != nil {
+		return
+	}
+	err = u.UserService.DeleteUser(r.Context(), userBody.UserId.UserId, userBody.Password)
+	if err != nil {
+		errBucket ,ok := r.Context().Value("ErrorBucket").(*middleware.ErrorBucket)
+		if ok {	
+			errBucket.Err = err
+	}
+		utils.SendResponse(w, 500, map[string]string{
+			"errorCategory":    "Server",
+			"errorDescription": "Internal server error",
+		})
+		return
+	}
+	utils.SendResponse(w, 204, map[string]string{})
+
 }

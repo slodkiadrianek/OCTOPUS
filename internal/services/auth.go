@@ -3,11 +3,13 @@ package services
 import (
 	"context"
 
+	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/middleware"
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/repository"
 	"github.com/slodkiadrianek/octopus/internal/schema"
 	"github.com/slodkiadrianek/octopus/internal/utils/logger"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService struct {
@@ -25,13 +27,20 @@ func NewAuthService(loggerService *logger.Logger, userRepository *repository.Use
 }
 
 func (a AuthService) LoginUser(ctx context.Context, loginData schema.LoginUser) (string, error) {
-	doesUserExists, err := a.UserRepository.FindUserByEmail(ctx, loginData.Email)
+	user, err := a.UserRepository.FindUserByEmail(ctx, loginData.Email)
 	if err != nil && err.Error() != "User not found" {
 		return "", err
 	}
-	if doesUserExists == 0 {
+	if user.Id == 0 {
 		a.LoggerService.Info("User with this email does not exist", loginData.Email)
 		return "", models.NewError(400, "Verification", "User with this email does not exist")
 	}
-	return "", nil
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginData.Password))
+	if err != nil {
+		a.LoggerService.Info("Wrong password provided", loginData)
+		return "", models.NewError(401, "Authorization", "Wron guser provided")
+	}
+	loggedUser := DTO.NewLoggedUser(user.Id, user.Email, user.Name, user.Surname)
+	tokenString, err := a.JWT.GenerateToken(*loggedUser)
+	return tokenString, nil
 }
