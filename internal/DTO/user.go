@@ -13,7 +13,16 @@ type LoggedUser struct {
 	Surname string `json:"surname" example:"Doe"`
 }
 
-func NewUser(email string, name string, surname string) *CreateUser {
+func NewLoggedUser(id int, email string, name string, surname string) *LoggedUser {
+	return &LoggedUser{
+		Id:      id,
+		Email:   email,
+		Name:    name,
+		Surname: surname,
+	}
+}
+
+func NewCreateUser(email string, name string, surname string) *CreateUser {
 	return &CreateUser{
 		Email:   email,
 		Name:    name,

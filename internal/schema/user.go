@@ -61,3 +61,11 @@ type UserId struct {
 var UserIdSchema = z.Struct(z.Shape{
 	"userId": z.Int().Required(),
 })
+
+type DeleteUser struct{
+	Password string `json:"password" example:"zaqwekflas;h#&"`
+	UserId   UserId
+}
+var DeleteUserSchema = z.Struct(z.Shape{
+	"password": z.String().Required(),
+}).Merge(UserIdSchema)
