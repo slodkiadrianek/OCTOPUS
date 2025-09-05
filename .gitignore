@@ -1,6 +1,7 @@
 logs
 *.tmp
 .idea/
+.zed/
 .vscode/
 *.swp
 *.swo

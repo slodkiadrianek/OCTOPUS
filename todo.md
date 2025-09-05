@@ -1,8 +1,16 @@
-# Router
-- Fix key route path key must be type string
-
-# Integrity test 
-
-- For reading query param
-- For reading urls params
-- For reading body of request
+# WEEKEND SPRINT
+## Add an app
+- Name
+- owner
+- Db Link
+- API Link
+##  API Routes
+ - route
+ - paramData
+ - bodyData
+ - predicted status code
+ - predicted body data
+ - appId
+## server metrics
+## API status
+##  Db status

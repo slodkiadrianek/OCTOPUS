@@ -1,0 +1,222 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>utils: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/slodkiadrianek/octopus/internal/utils/helpers.go (91.2%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package utils
+
+import (
+        "context"
+        "encoding/json"
+        "errors"
+        "net/http"
+        "strings"
+
+        z "github.com/Oudwins/zog"
+)
+
+type contextKey string
+
+const ErrorKey contextKey = "Error"
+
+func SetContext(r *http.Request, key any, data any) *http.Request <span class="cov8" title="1">{
+        ctx := context.WithValue(r.Context(), key, data)
+        return r.WithContext(ctx)
+}</span>
+
+func MarshalData(data any) ([]byte, error) <span class="cov8" title="1">{
+        dataBytes, err := json.Marshal(data)
+        if err != nil </span><span class="cov8" title="1">{
+                return []byte{}, err
+        }</span>
+        <span class="cov8" title="1">return dataBytes, nil</span>
+}
+
+func UnmarshalData[T any](dataBytes []byte) (*T, error) <span class="cov8" title="1">{
+        var data *T
+        err := json.Unmarshal(dataBytes, &amp;data)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return data, nil</span>
+}
+
+func SendResponse(w http.ResponseWriter, status int, data any) <span class="cov0" title="0">{
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(status)
+        err := json.NewEncoder(w).Encode(data)
+        if err != nil </span><span class="cov0" title="0">{
+                panic(err)</span>
+        }
+}
+
+func ReadBody[T any](r *http.Request) (*T, error) <span class="cov8" title="1">{
+        if r.Body == nil </span><span class="cov8" title="1">{
+                return nil, errors.New("no request body provided")
+        }</span>
+        <span class="cov8" title="1">var body T
+        err := json.NewDecoder(r.Body).Decode(&amp;body)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return &amp;body, nil</span>
+}
+
+func ReadQueryParam(r *http.Request, QueryName string) string <span class="cov8" title="1">{
+        name := r.URL.Query().Get(QueryName)
+        return name
+}</span>
+
+func MatchRoute(routeUrl, urlPath string) bool <span class="cov8" title="1">{
+        splittedRouteUrl := strings.Split(strings.Trim(routeUrl, "/"), "/")
+        splittedUrlPath := strings.Split(strings.Trim(urlPath, "/"), "/")
+
+        if len(splittedRouteUrl) != len(splittedUrlPath) </span><span class="cov8" title="1">{
+                return false
+        }</span>
+
+        <span class="cov8" title="1">for i := 0; i &lt; len(splittedRouteUrl); i++ </span><span class="cov8" title="1">{
+                if strings.Contains(splittedRouteUrl[i], ":") </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">if splittedUrlPath[i] != splittedRouteUrl[i] </span><span class="cov8" title="1">{
+                        return false
+                }</span>
+        }
+        <span class="cov8" title="1">return true</span>
+}
+
+func ReadParam(r *http.Request, paramToRead string) (string, error) <span class="cov8" title="1">{
+        path := r.URL.Path
+        routeKeyPath := r.Context().Value("routeKeyPath")
+        s, ok := routeKeyPath.(string)
+        if !ok </span><span class="cov8" title="1">{
+                return "", errors.New("failed to read context routeKeyPath, must be type string")
+        }</span>
+        <span class="cov8" title="1">splittedPath := strings.Split(strings.Trim(path, "/"), "/")
+        splittedRouteKeyPath := strings.Split(strings.Trim(s, "/"), "/")
+        param := ""
+        for i := 0; i &lt; len(splittedPath); i++ </span><span class="cov8" title="1">{
+                if strings.Contains(splittedRouteKeyPath[i], ":") &amp;&amp; splittedRouteKeyPath[i][1:] == paramToRead </span><span class="cov8" title="1">{
+                        param = splittedPath[i]
+                        break</span>
+                }
+        }
+        <span class="cov8" title="1">if param == "" </span><span class="cov8" title="1">{
+                return "", errors.New("The is no parameter called: " + paramToRead)
+        }</span>
+        <span class="cov8" title="1">return param, nil</span>
+}
+
+func ValidateInput(schema *z.StructSchema, val any) z.ZogIssueMap <span class="cov8" title="1">{
+        errMap := schema.Validate(val)
+        if errMap != nil </span><span class="cov8" title="1">{
+                return errMap
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func RemoveLatCharacterFromUrl(route string) string <span class="cov8" title="1">{
+        if string(route[len(route)-1]) == "/" </span><span class="cov8" title="1">{
+                route = route[:len(route)-1]
+        }</span>
+        <span class="cov8" title="1">return route</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

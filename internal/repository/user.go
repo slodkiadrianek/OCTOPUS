@@ -22,30 +22,32 @@ func NewUserRepository(db *sql.DB, loggerService *logger.Logger) *UserRepository
 	}
 }
 
-func (u *UserRepository) FindUserByEmail(ctx context.Context, email string) (int, error) {
-	query := `SELECT id FROM users WHERE email = $1`
+func (u *UserRepository) FindUserByEmail(ctx context.Context, email string) (models.User, error) {
+	query := `SELECT * FROM users WHERE email = $1`
 	stmt, err := u.Db.PrepareContext(ctx, query)
 	if err != nil {
 		u.LoggerService.Info("failed to prepare query for execution", err)
-		return 0, models.NewError(500, "Database", "Failed to get data from the database")
+		return models.User{}, models.NewError(500, "Database", "Failed to get data from the database")
 	}
 	defer stmt.Close()
-	var id int
-	err = stmt.QueryRowContext(ctx, email).Scan(&id)
+	var user models.User
+	err = stmt.QueryRowContext(ctx, email).Scan(&user.Id, &user.Name, &user.Surname, &user.Password)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			u.LoggerService.Info("user not found", map[string]interface{}{
 				"email": email,
 			})
-			return 0, nil
+			return models.User{
+				Id: 0,
+			}, nil
 		}
 		u.LoggerService.Info("failed to execute query for execution", map[string]interface{}{
 			"query": query,
 			"args":  []interface{}{email},
 		})
-		return 0, models.NewError(500, "Database", "Failed to get data from the database")
+		return models.User{}, models.NewError(500, "Database", "Failed to get data from the database")
 	}
-	return id, nil
+	return user, nil
 }
 
 func (u *UserRepository) InsertUserToDb(ctx context.Context, user DTO.CreateUser, password string) error {
