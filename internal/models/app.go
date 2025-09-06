@@ -10,6 +10,7 @@ type App struct {
 	SlackWebhook   string `json:"slack_webhook" example:"https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"`
 	DiscordWebhook string `json:"discord_webhook" example:"https://discord.com/api/webhooks/1234567890/abcdefghijklmnopqrstuvwxyz"`
 }
+<<<<<<< HEAD
 
 func NewApp(name, description, dbLink, apiLink, slackWebhook, discordWebhook string, id, ownerID int) *App {
 	return &App{
@@ -23,3 +24,5 @@ func NewApp(name, description, dbLink, apiLink, slackWebhook, discordWebhook str
 		DiscordWebhook: discordWebhook,
 	}
 }
+=======
+>>>>>>> a4f4bb342f74a1e297be363d81262025c784bffa
