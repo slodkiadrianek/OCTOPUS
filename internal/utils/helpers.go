@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	z "github.com/Oudwins/zog"
+	"github.com/slodkiadrianek/octopus/internal/middleware"
 )
 
 type contextKey string
@@ -17,6 +18,18 @@ const ErrorKey contextKey = "Error"
 func SetContext(r *http.Request, key any, data any) *http.Request {
 	ctx := context.WithValue(r.Context(), key, data)
 	return r.WithContext(ctx)
+}
+
+func SetError(w http.ResponseWriter, r *http.Request, err error) {
+	errBucket, ok := r.Context().Value("ErrorBucket").(*middleware.ErrorBucket)
+	if ok {
+		errBucket.Err = err
+		return
+	}
+	SendResponse(w, 500, map[string]string{
+		"errorCategory":    "Server",
+		"errorDescription": "Internal server error",
+	})
 }
 
 func MarshalData(data any) ([]byte, error) {
