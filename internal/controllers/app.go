@@ -49,3 +49,58 @@ func (a *AppController) GetApp(w http.ResponseWriter, r *http.Request) {}
 func (a *AppController) UpdateApp(w http.ResponseWriter, r *http.Request) {}
 
 func (a *AppController) DeleteApp(w http.ResponseWriter, r *http.Request) {}
+
+
+func (a *AppController) GetAppStatus(w http.ResponseWriter, r *http.Request) {
+	appId, ok := r.Context().Value("appId").(int)
+	if !ok || appId == 0 {
+		a.Logger.Error("Failed to read app id from context", r.URL.Path)
+		err := models.NewError(500, "Server", "Internal server error")
+		utils.SetError(w, r, err)
+		return
+	}
+	status , err := a.AppService.GetAppStatus(r.Context(), appId)
+	if err != nil {
+		utils.SetError(w, r, err)
+		return
+	}
+	utils.SendResponse(w, 200, map[string]string{
+		"status": status,
+	})
+}
+
+func (a *AppController) GetDbStatus(w http.ResponseWriter, r *http.Request){
+	appId, ok := r.Context().Value("appId").(int)
+	if !ok || appId == 0 {
+		a.Logger.Error("Failed to read app id from context", r.URL.Path)
+		err := models.NewError(500, "Server", "Internal server error")
+		utils.SetError(w, r, err)
+		return
+	}
+	status , err := a.AppService.GetDbStatus(r.Context(), appId)
+	if err != nil {
+		utils.SetError(w, r, err)
+		return
+	}
+	utils.SendResponse(w, 200, map[string]string{
+		"status": status,
+	})
+}
+
+func (a *AppController) GetServerMetrics(w http.ResponseWriter, r *http.Request){
+	appId,  err := utils.ReadParam(r, "appId")
+	if err != nil {
+		a.Logger.Error("Failed to read app id from context", r.URL.Path)
+		err := models.NewError(500, "Server", "Internal server error")
+		utils.SetError(w, r, err)
+		return
+	}
+	metrics , err := a.AppService.GetServerMetrics(r.Context(), appId)
+	if err != nil {
+		utils.SetError(w, r, err)
+		return
+	}
+	utils.SendResponse(w, 200, map[string]any{
+		"metrics": metrics,
+	})
+}
