@@ -54,7 +54,7 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 		if !strings.HasPrefix(authHeader, "Bearer ") {
 			j.Logger.Info("token is missing", authHeader)
 			err := models.NewError(401, "Authorization", "Failed to authorize user")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*ErrorBucket)
+			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
 			if ok {
 				errBucket.Err = err
 				return
@@ -65,7 +65,7 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 		if err != nil {
 			j.Logger.Info("Failed to check blacklist", err)
 			err := models.NewError(401, "Authorization", "Failed to check blacklist")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*ErrorBucket)
+			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
 			if ok {
 				errBucket.Err = err
 				return
@@ -74,7 +74,7 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 		if result > 0 {
 			j.Logger.Info("Token is blacklisted", tokenString)
 			err := models.NewError(401, "Authorization", "Token is blacklisted")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*ErrorBucket)
+			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
 			if ok {
 				errBucket.Err = err
 				return
@@ -90,7 +90,7 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 		if err != nil {
 			j.Logger.Info("Failed to read data properly", tokenString)
 			err := models.NewError(401, "Authorization", "Failed to read token")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*ErrorBucket)
+			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
 			if ok {
 				errBucket.Err = err
 				return
@@ -100,7 +100,7 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 
 			j.Logger.Info("Provided token is invalid", tokenString)
 			err := models.NewError(401, "Authorization", "Provided token is invalid")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*ErrorBucket)
+			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
 			if ok {
 				errBucket.Err = err
 				return
@@ -119,7 +119,7 @@ func (j JWT) BlacklistUser(next http.Handler) http.Handler {
 		if !strings.HasPrefix(authHeader, "Bearer ") {
 			j.Logger.Info("token is missing", authHeader)
 			err := models.NewError(401, "Authorization", "Failed to authorize user")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*ErrorBucket)
+			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
 			if ok {
 				errBucket.Err = err
 				return
@@ -130,7 +130,7 @@ func (j JWT) BlacklistUser(next http.Handler) http.Handler {
 		if err != nil {
 			j.Logger.Info("Failed to check blacklist", err)
 			err := models.NewError(401, "Authorization", "Failed to check blacklist")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*ErrorBucket)
+			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
 			if ok {
 				errBucket.Err = err
 				return
@@ -139,7 +139,7 @@ func (j JWT) BlacklistUser(next http.Handler) http.Handler {
 		if result > 0 {
 			j.Logger.Info("Token is blacklisted", tokenString)
 			err := models.NewError(401, "Authorization", "Token is blacklisted")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*ErrorBucket)
+			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
 			if ok {
 				errBucket.Err = err
 				return
@@ -155,7 +155,7 @@ func (j JWT) BlacklistUser(next http.Handler) http.Handler {
 		if err != nil {
 			j.Logger.Info("Failed to read data properly", tokenString)
 			err := models.NewError(401, "Authorization", "Failed to read token")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*ErrorBucket)
+			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
 			if ok {
 				errBucket.Err = err
 				return
@@ -164,7 +164,7 @@ func (j JWT) BlacklistUser(next http.Handler) http.Handler {
 		if !token.Valid {
 			j.Logger.Info("Provided token is invalid", tokenString)
 			err := models.NewError(401, "Authorization", "Provided token is invalid")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*ErrorBucket)
+			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
 			if ok {
 				errBucket.Err = err
 				return
@@ -175,7 +175,7 @@ func (j JWT) BlacklistUser(next http.Handler) http.Handler {
 		if err != nil {
 			j.Logger.Info("Failed to read data properly", tokenString)
 			err := models.NewError(401, "Authorization", "Failed to read token")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*ErrorBucket)
+			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
 			if ok {
 				errBucket.Err = err
 				return

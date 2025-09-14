@@ -21,6 +21,5 @@ func NewCreateRoute(id, method, path, queryData, paramData, bodyData string, exp
 		BodyData:           bodyData,
 		ExpectedStatusCode: expectedStatusCode,
 		ExpectedBodyData:   predictedBodyData,
-		AppId:              appId,
 	}
 }

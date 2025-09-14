@@ -8,6 +8,10 @@ type Error struct {
 	Descritpion string
 }
 
+type ErrorBucket struct {
+	Err error
+}
+
 func NewError(statusCode int, category string, description string) *Error {
 	return &Error{
 		StatusCode:  statusCode,

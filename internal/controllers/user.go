@@ -3,7 +3,9 @@ package controllers
 import (
 	// "context"
 
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/schema"
@@ -51,6 +53,30 @@ func (u *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	utils.SendResponse(w, 204, map[string]string{})
 }
+func (u *UserController) UpdateUserNotifications(w http.ResponseWriter, r *http.Request) {
+	userBody, err := utils.ReadBody[schema.UpdateUserNotifications](r)
+	if err != nil {
+		utils.SetError(w, r, err)
+		return
+	}
+	fmt.Println(1)
+	userIdString, err := utils.ReadParam(r, "userId")
+	if err != nil {
+		utils.SetError(w, r, err)
+		return
+	}
+	userId, err := strconv.Atoi(userIdString)
+	if err != nil {
+		utils.SetError(w, r, err)
+		return
+	}
+	err = u.UserService.UpdateUserNotifications(r.Context(), userId, *userBody)
+	if err != nil {
+		utils.SetError(w, r, err)
+		return
+	}
+	utils.SendResponse(w, 204, map[string]string{})
+}
 
 func (u *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	userBody, err := utils.ReadBody[schema.DeleteUser](r)
@@ -65,5 +91,4 @@ func (u *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	utils.SendResponse(w, 204, map[string]string{})
-
 }

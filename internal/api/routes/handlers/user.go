@@ -21,8 +21,7 @@ func NewUserHandler(userController *controllers.UserController, jwt *middleware.
 
 func (u *UserHandlers) SetupUserHandlers(router routes.Router) {
 	groupRouter := router.Group("/api/v1/user")
-	groupRouter.PUT("/:userId", middleware.ValidateMiddleware[schema.UpdateUser]("params", schema.UserIdSchema), u.UserController.UpdateUser)
-
+	groupRouter.PUT("/:userId", middleware.ValidateMiddleware[schema.UpdateUser]("body", schema.UpdateUserSchema), u.UserController.UpdateUser)
+	groupRouter.PUT("/:userId/notifications", middleware.ValidateMiddleware[schema.UpdateUserNotifications]("body", schema.UpdateUserNotificationsSchema), u.UserController.UpdateUserNotifications)
 	groupRouter.DELETE("/:userId", middleware.ValidateMiddleware[schema.UserId]("params", schema.UserIdSchema), u.JWT.BlacklistUser, u.UserController.DeleteUser)
 }
-

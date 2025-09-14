@@ -62,10 +62,23 @@ var UserIdSchema = z.Struct(z.Shape{
 	"userId": z.Int().Required(),
 })
 
-type DeleteUser struct{
+type DeleteUser struct {
 	Password string `json:"password" example:"zaqwekflas;h#&"`
 	UserId   UserId
 }
+
 var DeleteUserSchema = z.Struct(z.Shape{
 	"password": z.String().Required(),
 }).Merge(UserIdSchema)
+
+type UpdateUserNotifications struct {
+	DiscordNotifications bool `json:"discordNotifications" example:"true"`
+	SlackNotifications   bool `json:"slackNotifications" example:"true"`
+	EmailNotifications   bool `json:"emailNotifications" example:"true"`
+}
+
+var UpdateUserNotificationsSchema = z.Struct(z.Shape{
+	"discordNotifications": z.Bool().Optional(),
+	"slackNotifications":   z.Bool().Optional(),
+	"emailNotifications":   z.Bool().Optional(),
+})

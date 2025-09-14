@@ -7,6 +7,7 @@ import (
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
+	"github.com/slodkiadrianek/octopus/internal/schema"
 	"github.com/slodkiadrianek/octopus/internal/utils/logger"
 )
 
@@ -71,7 +72,7 @@ func (u *UserRepository) InsertUserToDb(ctx context.Context, user DTO.CreateUser
 }
 
 func (u *UserRepository) UpdateUser(ctx context.Context, user DTO.CreateUser, userId int) error {
-	query := `UPDATE users SET name=$1, surname=$2, email=$3 WHERE id=$1`
+	query := `UPDATE users SET name=$1, surname=$2, email=$3 WHERE id=$4`
 	stmt, err := u.Db.PrepareContext(ctx, query)
 	if err != nil {
 		u.LoggerService.Info("failed to prepare query for execution", query)
@@ -82,6 +83,25 @@ func (u *UserRepository) UpdateUser(ctx context.Context, user DTO.CreateUser, us
 		u.LoggerService.Info("failed to execute query for execution", map[string]interface{}{
 			"query": query,
 			"args":  []interface{}{user.Name, user.Surname, user.Email, userId},
+		})
+		return models.NewError(500, "Database", "Failed to insert data to the database")
+	}
+	return nil
+}
+
+func (u *UserRepository) UpdateUserNotifications(ctx context.Context, userId int, userNotifications schema.UpdateUserNotifications) error {
+	query := `UPDATE users SET discordNotifications=$1, slackNotifications=$2, emailNotifications=$3 WHERE id=$4`
+	stmt, err := u.Db.PrepareContext(ctx, query)
+	if err != nil {
+		u.LoggerService.Info("failed to prepare query for execution", query)
+		return models.NewError(500, "Database", "Failed to update data in  database")
+	}
+
+	_, err = stmt.ExecContext(ctx, userNotifications.DiscordNotifications, userNotifications.SlackNotifications, userNotifications.EmailNotifications, userId)
+	if err != nil {
+		u.LoggerService.Info("failed to execute query for execution", map[string]interface{}{
+			"query": query,
+			"args":  []interface{}{userNotifications, userId},
 		})
 		return models.NewError(500, "Database", "Failed to insert data to the database")
 	}

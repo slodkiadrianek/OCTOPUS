@@ -69,35 +69,21 @@ func (a *AppRepository) GetApp(ctx context.Context, id int) (*models.App, error)
 	return &app, nil
 }
 
-<<<<<<< HEAD
 func (a *AppRepository) UpdateApp(ctx context.Context, app DTO.UpdateApp) error {
-=======
-func (a *AppRepository) UpdateApp(ctx context.Context, app models.App) error {
->>>>>>> a4f4bb342f74a1e297be363d81262025c784bffa
 	query := `UPDATE apps SET
 		name = $2,
 		description = $3,
 		dbLink = $4,
 		apiLink = $5,
-<<<<<<< HEAD
 		slackWebhook = $6,
 		discordWebhook = $7
-=======
-		ownerId = $6,
-		slackWebhook = $7,
-		discordWebhook = $8
->>>>>>> a4f4bb342f74a1e297be363d81262025c784bffa
 	WHERE id = $1`
 	stmt, err := a.Db.PrepareContext(ctx, query)
 	if err != nil {
 		a.Logger.Error("Failed to prepared statement for execution", query)
 		return models.NewError(500, "Database", "Failed to update app in the database")
 	}
-<<<<<<< HEAD
 	_, err = stmt.ExecContext(ctx, app.Id, app.Name, app.Description, app.DbLink, app.ApiLink, app.SlackWebhook, app.DiscordWebhook)
-=======
-	_, err = stmt.ExecContext(ctx, app.Id, app.Name, app.Description, app.DbLink, app.ApiLink, app.OwnerID, app.SlackWebhook, app.DiscordWebhook)
->>>>>>> a4f4bb342f74a1e297be363d81262025c784bffa
 	if err != nil {
 		a.Logger.Error("Failed to execute an update query", map[string]any{
 			"query": query,

@@ -9,13 +9,9 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
-type ErrorBucket struct {
-	Err error
-}
-
 func ErrorHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		errBucket := &ErrorBucket{}
+		errBucket := &models.ErrorBucket{}
 		ctx := context.WithValue(r.Context(), "ErrorBucket", errBucket)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)

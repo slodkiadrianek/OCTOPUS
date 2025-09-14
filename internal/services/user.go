@@ -6,6 +6,7 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/repository"
+	"github.com/slodkiadrianek/octopus/internal/schema"
 	"github.com/slodkiadrianek/octopus/internal/utils/logger"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -46,6 +47,14 @@ func (u *UserService) InsertUserToDb(ctx context.Context, user DTO.CreateUser, p
 
 func (u *UserService) UpdateUser(ctx context.Context, user DTO.CreateUser, userId int) error {
 	err := u.UserRepository.UpdateUser(ctx, user, userId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *UserService) UpdateUserNotifications(ctx context.Context, userId int, userNotifications schema.UpdateUserNotifications) error {
+	err := u.UserRepository.UpdateUserNotifications(ctx, userId, userNotifications)
 	if err != nil {
 		return err
 	}

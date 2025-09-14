@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	z "github.com/Oudwins/zog"
-	"github.com/slodkiadrianek/octopus/internal/middleware"
+	"github.com/slodkiadrianek/octopus/internal/models"
 )
 
 type contextKey string
@@ -21,7 +21,7 @@ func SetContext(r *http.Request, key any, data any) *http.Request {
 }
 
 func SetError(w http.ResponseWriter, r *http.Request, err error) {
-	errBucket, ok := r.Context().Value("ErrorBucket").(*middleware.ErrorBucket)
+	errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
 	if ok {
 		errBucket.Err = err
 		return
@@ -52,6 +52,9 @@ func UnmarshalData[T any](dataBytes []byte) (*T, error) {
 func SendResponse(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
+	if status == 204 {
+		return
+	}
 	err := json.NewEncoder(w).Encode(data)
 	if err != nil {
 		panic(err)

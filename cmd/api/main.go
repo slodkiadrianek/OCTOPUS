@@ -20,7 +20,7 @@ import (
 
 func main() {
 	loggerService := logger.NewLogger("./logs", "02.01.2006")
-	cfg ,err:= config.SetConfig("./.env")
+	cfg, err := config.SetConfig("./.env")
 	if err != nil {
 		loggerService.Error("Failed to load config", err)
 		return
@@ -30,7 +30,7 @@ func main() {
 		loggerService.Error("Failed to connect to cache", err)
 		return
 	}
-	db,err := config.NewDb(cfg.DbLink, "psql")
+	db, err := config.NewDb(cfg.DbLink, "postgres")
 	if err != nil {
 		loggerService.Error("Failed to connect to database", err)
 		return
