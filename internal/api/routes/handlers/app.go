@@ -18,7 +18,7 @@ func NewAppAppSettingsHandlers(appController *controllers.AppController) *AppSet
 func (a AppSettingsHandlers) SetupAppHandlers(router *routes.Router) {
 	appGroup := router.Group("/api/v1/app")
 	appGroup.POST("")
-	appGroup.GET("/:appId")
+	appGroup.GET("/:appId/status")
 	appGroup.PUT("/:appId")
 	appGroup.DELETE("/:appId")
 }

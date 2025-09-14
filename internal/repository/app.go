@@ -109,3 +109,34 @@ func (a *AppRepository) DeleteApp(ctx context.Context, id int) error {
 	}
 	return nil
 }
+
+
+func (a *AppRepository) GetAppServerAddress(ctx context.Context, id int) (string, error) {
+	query := `SELECT apiLink FROM apps WHERE id = $1`
+	row := a.Db.QueryRowContext(ctx, query, id)
+	var appServerAddress string
+	err := row.Scan(&appServerAddress)
+	if err != nil {
+		a.Logger.Error("Failed to execute a select query", map[string]any{
+			"query": query,
+			"args":  id,
+		})
+		return "", err
+	}
+	return appServerAddress, nil
+}
+
+func (a *AppRepository) GetDbServerAddress(ctx context.Context, id int) (string, error) {
+	query := `SELECT dbLink FROM apps WHERE id = $1`
+	row := a.Db.QueryRowContext(ctx, query, id)
+	var dbServerAddress string
+	err := row.Scan(&dbServerAddress)
+	if err != nil {
+		a.Logger.Error("Failed to execute a select query", map[string]any{
+			"query": query,
+			"args":  id,
+		})
+		return "", err
+	}
+	return dbServerAddress, nil
+}
