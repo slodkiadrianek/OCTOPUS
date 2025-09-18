@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
+	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/schema"
 	"github.com/slodkiadrianek/octopus/internal/services"
 	"github.com/slodkiadrianek/octopus/internal/utils"
@@ -84,7 +85,13 @@ func (u *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		utils.SetError(w, r, err)
 		return
 	}
-	err = u.UserService.DeleteUser(r.Context(), userBody.UserId.UserId, userBody.Password)
+	userIdString, err := utils.ReadParam(r, "userId")
+	if err != nil {
+		utils.SetError(w, r, err)
+		return
+	}
+	userId, err := strconv.Atoi(userIdString)
+	err = u.UserService.DeleteUser(r.Context(), userId, userBody.Password)
 	if err != nil {
 
 		utils.SetError(w, r, err)
@@ -93,14 +100,32 @@ func (u *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	utils.SendResponse(w, 204, map[string]string{})
 }
 
-func (u *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	userBody, err := utils.ReadBody[schema.DeleteUser](r)
+func (u *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Request) {
+	userBody, err := utils.ReadBody[schema.ChangeUserPassword](r)
 	if err != nil {
 		return
 	}
-	err = u.UserService.DeleteUser(r.Context(), userBody.UserId.UserId, userBody.Password)
+	userIdString, err := utils.ReadParam(r, "userId")
 	if err != nil {
-		errBucket ,ok := r.Context().Value("ErrorBucket").(*middleware.ErrorBucket)
+		utils.SetError(w, r, err)
+		return
+	}
+	userId, err := strconv.Atoi(userIdString)
+	if userBody.NewPassword != userBody.ConfirmPassword {
+		err = fmt.Errorf("passwords do not match")
+		errBucket ,ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
+		if ok {	
+			errBucket.Err = err
+		}
+		utils.SendResponse(w, 400, map[string]string{
+			"errorCategory":    "Validation",
+			"errorDescription": "Passwords do not match",
+		})
+		return
+	}
+	err = u.UserService.ChangeUserPassword(r.Context(), userId, userBody.CurrentPassword, userBody.NewPassword)
+	if err != nil {
+		errBucket ,ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
 		if ok {	
 			errBucket.Err = err
 	}

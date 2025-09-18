@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	
 	"fmt"
 	"net/http"
 	"strings"
@@ -36,15 +37,19 @@ func NewJWT(token string, logger logger.Logger, cacheService config.CacheService
 
 func (j JWT) GenerateToken(user DTO.LoggedUser) (string, error) {
 	j.Logger.Info("started signing a new token")
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
-		"user": user,
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id": user.Id,
+		"email": user.Email,
+		"name": user.Name,
+		"surname": user.Surname,
 		"exp":  time.Now().Add(2 * time.Hour).Unix(),
 	})
-	tokenString, err := token.SignedString(j.Token)
+	tokenString, err := token.SignedString([]byte(j.Token))
 	if err != nil {
-		j.Logger.Error("Failed to sign token properly", user)
+		j.Logger.Error("Failed to sign token properly", err)
 		return "", models.NewError(401, "Authorization", "Failed to login the user")
 	}
+	j.Logger.Info("Successfully signed a new token")
 	return tokenString, nil
 }
 
@@ -81,15 +86,15 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 			}
 		}
 		var user userClaims
-		token, err := jwt.ParseWithClaims(tokenString, &user, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseWithClaims(tokenString, &user, func(token *jwt.Token) (any, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 			return []byte(j.Token), nil
 		})
 		if err != nil {
-			j.Logger.Info("Failed to read data properly", tokenString)
-			err := models.NewError(401, "Authorization", "Failed to read token")
+			j.Logger.Info("Failed to read data properly", err)
+			err := models.NewError(401, "Authorization", "Provided token is invalid")
 			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
 			if ok {
 				errBucket.Err = err
@@ -97,8 +102,7 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 			}
 		}
 		if !token.Valid {
-
-			j.Logger.Info("Provided token is invalid", tokenString)
+			j.Logger.Info("Provided token is invalid", err)
 			err := models.NewError(401, "Authorization", "Provided token is invalid")
 			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
 			if ok {

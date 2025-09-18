@@ -62,7 +62,46 @@ func (u *UserService) UpdateUserNotifications(ctx context.Context, userId int, u
 }
 
 func (u *UserService) DeleteUser(ctx context.Context, userId int, password string) error {
-	err := u.UserRepository.DeleteUser(ctx, password, userId)
+	user,err := u.UserRepository.FindUserById(ctx, userId)
+	if err != nil {
+		return err
+	}
+	if user.Id == 0 {
+		u.LoggerService.Info("User with this id does not exist", userId)
+		return models.NewError(400, "Verification", "User with this id does not exist")
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		u.LoggerService.Info("Wrong password provided", userId)
+		return models.NewError(401, "Authorization", "Wrong password provided")
+	}
+	err = u.UserRepository.DeleteUser(ctx, password, userId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *UserService) ChangeUserPassword(ctx context.Context, userId int, currentPassword string, newPassword string) error {
+	user, err := u.UserRepository.FindUserById(ctx, userId)
+	if err != nil {
+		return err
+	}
+	if user.Id == 0 {
+		u.LoggerService.Info("User with this id does not exist", userId)
+		return models.NewError(400, "Verification", "User with this id does not exist")
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(currentPassword))
+	if err != nil {
+		u.LoggerService.Info("Wrong current password provided", userId)
+		return models.NewError(401, "Authorization", "Wrong current password provided")
+	}
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		u.LoggerService.Info("failed to generate password", err)
+		return err
+	}
+	err = u.UserRepository.ChangeUserPassword(ctx, userId, string(hashedPassword))
 	if err != nil {
 		return err
 	}

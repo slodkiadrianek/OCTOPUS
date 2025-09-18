@@ -6,6 +6,9 @@ type User struct {
 	Name     string `json:"name" sql:"name" example:"Joe"`
 	Surname  string `json:"surname" sql:"surname" example:"Doe"`
 	Password string `json:"password" example:"fsdf2332@!32"`
+	DiscordNotifications bool   `json:"discordNotifications" sql:"discord_notifications" example:"false"`
+	EmailNotifications   bool   `json:"emailNotifications" sql:"email_notifications" example:"true"`
+	SlackNotifications   bool   `json:"slackNotifications" sql:"slack_notifications" example:"false"`
 }
 
 // var query string = "CREATE TABLE IF NOT EXISTS users (" +

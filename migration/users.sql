@@ -8,3 +8,4 @@ CREATE TABLE IF NOT EXISTS users(
   emailNotifications BOOLEAN DEFAULT FALSE,
   slackNotifications BOOLEAN DEFAULT FALSE
 )
+-- postgresql://myuser:mypassword@localhost:5432/mydb?sslmode=disable
