@@ -2,6 +2,8 @@ package utils
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -11,6 +13,16 @@ import (
 	z "github.com/Oudwins/zog"
 	"github.com/slodkiadrianek/octopus/internal/models"
 )
+
+func GenerateID() (string, error) {
+	bytes := make([]byte, 32)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(bytes), nil
+}
 
 type contextKey string
 
@@ -133,11 +145,11 @@ func ReadAllParams(r *http.Request) (map[string]int, error) {
 	for i := 0; i < len(splittedPath); i++ {
 		if strings.Contains(splittedRouteKeyPath[i], ":") {
 			paramName := splittedRouteKeyPath[i][1:]
-			intValue ,err := strconv.Atoi(splittedPath[i])
+			intValue, err := strconv.Atoi(splittedPath[i])
 			if err != nil {
 				return nil, errors.New("Invalid parameter: " + paramName)
 			}
-			params[paramName]=intValue
+			params[paramName] = intValue
 
 		}
 	}

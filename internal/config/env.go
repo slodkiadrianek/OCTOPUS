@@ -8,14 +8,11 @@ import (
 )
 
 type Env struct {
-	Port         string
-	JWTSecret    string
-	DbLink       string
-	CacheLink    string
-	EmailService string
-	EmailUser    string
-	EmailFrom    string
-	EmailPass    string
+	Port       string
+	JWTSecret  string
+	DbLink     string
+	CacheLink  string
+	DockerHost string
 }
 
 func ReadFile(filepath string) (map[string]string, error) {
@@ -43,13 +40,10 @@ func SetConfig(filepath string) (*Env, error) {
 		return &Env{}, err
 	}
 	return &Env{
-		Port:         envVariables["Port"],
-		JWTSecret:    envVariables["JWTSecret"],
-		DbLink:       envVariables["DbLink"],
-		CacheLink:    envVariables["CacheLink"],
-		EmailService: envVariables["EmailService"],
-		EmailUser:    envVariables["EmailUser"],
-		EmailFrom:    envVariables["EmailFrom"],
-		EmailPass:    envVariables["EmailPass"],
+		Port:       envVariables["Port"],
+		JWTSecret:  envVariables["JWTSecret"],
+		DbLink:     envVariables["DbLink"],
+		CacheLink:  envVariables["CacheLink"],
+		DockerHost: envVariables["DOCKER_HOST"],
 	}, nil
 }

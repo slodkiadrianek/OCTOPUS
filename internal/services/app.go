@@ -2,35 +2,45 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"net"
+	"runtime"
+	"sync"
+	"time"
 
+	"github.com/docker/docker/client"
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/config"
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/repository"
 	"github.com/slodkiadrianek/octopus/internal/schema"
+	"github.com/slodkiadrianek/octopus/internal/utils"
 	"github.com/slodkiadrianek/octopus/internal/utils/logger"
-	"golang.org/x/net/icmp"
-	"golang.org/x/net/ipv4"
 )
 
 type AppService struct {
 	AppRepository *repository.AppRepository
 	Logger        *logger.Logger
 	CacheService  *config.CacheService
+	DockerHost    string
 }
 
-func NewAppService(appRepository *repository.AppRepository, logger *logger.Logger, cacheService *config.CacheService) *AppService {
+func NewAppService(appRepository *repository.AppRepository, logger *logger.Logger, cacheService *config.CacheService, dockerHost string) *AppService {
 	return &AppService{
 		AppRepository: appRepository,
 		Logger:        logger,
 		CacheService:  cacheService,
+		DockerHost:    dockerHost,
 	}
 }
 
 func (a *AppService) CreateApp(ctx context.Context, app schema.CreateApp, ownerId int) error {
-	appDto := DTO.NewApp(app.Name, app.Description, app.DbLink, app.ApiLink, ownerId, app.DiscordWebhook, app.SlackWebhook)
-	err := a.AppRepository.InsertApp(ctx, *appDto)
+	id, err := utils.GenerateID()
+	if err != nil {
+		return err
+	}
+	appDto := DTO.NewApp(id, app.Name, app.Description, false, ownerId, "", "")
+	err = a.AppRepository.InsertApp(ctx, []DTO.App{*appDto})
 	if err != nil {
 		return err
 	}
@@ -46,11 +56,7 @@ func (a *AppService) GetApp(ctx context.Context, id int) (*models.App, error) {
 }
 
 func (a *AppService) UpdateApp(ctx context.Context, id int, app schema.UpdateApp) error {
-	appDto := DTO.NewUpdateApp(id, app.Name, app.Description, app.DbLink, app.ApiLink, app.DiscordWebhook, app.SlackWebhook)
-	err := a.AppRepository.UpdateApp(ctx, *appDto)
-	if err != nil {
-		return err
-	}
+	// appDto := DTO.NewUpdateApp(id, app.Name, app.Description, app.DbLink, app.ApiLink, app.DiscordWebhook, app.SlackWebhook)
 	return nil
 }
 
@@ -62,68 +68,82 @@ func (a *AppService) DeleteApp(ctx context.Context, id int) error {
 	return nil
 }
 
-func (a *AppService) GetAppStatus(ctx context.Context, id int) (string, error) {
-	appServerAddress, err := a.AppRepository.GetAppServerAddress(ctx, id)
+func (a *AppService) CheckAppsStatus(ctx context.Context) error {
+	apps, err := a.AppRepository.GetAppsToCheck(ctx)
 	if err != nil {
-		a.Logger.Error("Failed to get app server address from database", err)
-		return "", models.NewError(400, "app server", "Failed to get info about app status")
+		return err
 	}
-	packetConn, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")
-	if err != nil{
-		a.Logger.Error("Failed to listen to packet connection", err)
-		return "", models.NewError(400, "app server", "Failed to get info about app status");
-	}
-	defer packetConn.Close()
-	msg := &icmp.Message{
-		Type: ipv4.ICMPTypeEcho,
-		Code: 0,
-		Body: &icmp.Echo{
-			ID:   1,
-			Seq:  1,
-			Data: []byte("OCTOPUS"),
-		},
-	}
-	wb, err := msg.Marshal(nil)
+	workerCount := runtime.NumCPU()
+	cli, err := client.NewClientWithOpts(client.WithHost(a.DockerHost), client.WithAPIVersionNegotiation())
 	if err != nil {
-		a.Logger.Error("Failed to marshal ICMP message", err)
-		return "", models.NewError(400, "app server", "Failed to get info about app status")
+		return err
 	}
-	if _, err := packetConn.WriteTo(wb, &net.IPAddr{IP: net.ParseIP(appServerAddress)}); err != nil {
-		a.Logger.Error("Failed to write to packet connection", err)
-		return "", models.NewError(400, "app server", "Failed to get info about app status")
+	var appsStatuses []DTO.AppStatus
+	defer cli.Close()
+	jobs := make(chan *models.AppToCheck, len(apps))
+	var wg sync.WaitGroup
+	for i := 0; i < workerCount; i++ {
+		wg.Add(1)
+		go func(workerId int) {
+			defer wg.Done()
+			for job := range jobs {
+				if job.IsDocker {
+					container, err := cli.ContainerInspect(ctx, job.Id)
+					if err != nil {
+						a.Logger.Error("Failed to check status inside of a container", err)
+						continue
+					}
+					status := container.State.Status
+					startedTime, err := time.Parse(time.RFC3339, container.State.StartedAt)
+					if err != nil {
+						a.Logger.Error("Failed to parse time", err)
+						continue
+					}
+					duration := time.Since(startedTime)
+					changedAtTime, err := time.Parse(time.RFC3339, container.State.StartedAt)
+					if err != nil {
+						a.Logger.Error("Failed to parse time", err)
+						continue
+					}
+					appStatus := *DTO.NewAppStatus(job.Id, status, changedAtTime, duration)
+					appsStatuses = append(appsStatuses, appStatus)
+					bodyBytes, err := utils.MarshalData(appStatus)
+					if err != nil {
+						a.Logger.Error("Failed to convert data to json", map[string]any{
+							"data":  appStatus,
+							"error": err.Error(),
+						})
+						continue
+					}
+					err = a.CacheService.SetData(ctx, "status-"+job.Id, string(bodyBytes), time.Minute*2)
+					if err != nil {
+						a.Logger.Error("Failed to setData in cache", map[string]any{
+							"data":  appStatus,
+							"error": err.Error(),
+						})
+						continue
+					}
+				} else {
+					address := fmt.Sprintf("%s:%d", job.IpAddress, job.Port)
+					conn, err := net.DialTimeout("tcp", address, time.Second*3)
+					if err != nil {
+						a.Logger.Error("Failed to check status inside of a container", err)
+						continue
+					}
+					defer conn.Close()
+					status := "running"
+					duration := time.Since(time.Now())
+					changedAt := time.Now()
+					appsStatuses = append(appsStatuses, *DTO.NewAppStatus(job.Id, status, changedAt, duration))
+				}
+			}
+		}(i + 1)
 	}
-	rb:=make([]byte, 1500)
-	n,peer,err := packetConn.ReadFrom(rb)
-	if err != nil {
-		a.Logger.Error("Failed to read from packet connection", err)
-		return "", models.NewError(400, "app server", "Failed to get info about app status")
+	for _, app := range apps {
+		jobs <- app
 	}
-	rm, err := icmp.ParseMessage(1, rb[:n])
-	if err != nil {
-		a.Logger.Error("Failed to parse ICMP message", err)
-		return "", models.NewError(400, "app server", "Failed to get info about app status")
-	}
-	switch rm.Type {
-	case ipv4.ICMPTypeEchoReply:
-		a.Logger.Info("Got echo reply from " + peer.String())
-		return "Online", nil
-	default:
-		a.Logger.Info("Got something else from " + peer.String())
-		return "Offline", nil
-	}
-}
-
-func (a *AppService) GetDbStatus(ctx context.Context, id int) (string, error) {
-	dbServerAddress, err := a.AppRepository.GetDbServerAddress(ctx, id)
-	if err != nil {
-		a.Logger.Error("Failed to get db server address from database", err)
-		return "", models.NewError(400, "db server", "Failed to get info about db status")
-	}
-	conn, err := net.Dial("tcp", dbServerAddress)
-	if err != nil {
-		a.Logger.Error("Failed to connect to db server", err)
-		return "Offline", nil
-	}
-	defer conn.Close()
-	return "Online", nil
+	close(jobs)
+	wg.Wait()
+	err = a.AppRepository.InsertAppStatuses(ctx, appsStatuses)
+	return err
 }

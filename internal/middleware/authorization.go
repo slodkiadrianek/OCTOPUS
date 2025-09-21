@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	
 	"fmt"
 	"net/http"
 	"strings"
@@ -16,8 +15,11 @@ import (
 )
 
 type userClaims struct {
-	DTO.LoggedUser
-	exp int64
+	Id      int    `json:"id" example:"11"`
+	Email   string `json:"email" example:"joedoe@email.com"`
+	Name    string `json:"name" example:"Joe"`
+	Surname string `json:"surname" example:"Doe"`
+	exp     int64
 	jwt.RegisteredClaims
 }
 
@@ -38,11 +40,11 @@ func NewJWT(token string, logger logger.Logger, cacheService config.CacheService
 func (j JWT) GenerateToken(user DTO.LoggedUser) (string, error) {
 	j.Logger.Info("started signing a new token")
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id": user.Id,
-		"email": user.Email,
-		"name": user.Name,
+		"id":      user.Id,
+		"email":   user.Email,
+		"name":    user.Name,
 		"surname": user.Surname,
-		"exp":  time.Now().Add(2 * time.Hour).Unix(),
+		"exp":     time.Now().Add(2 * time.Hour).Unix(),
 	})
 	tokenString, err := token.SignedString([]byte(j.Token))
 	if err != nil {
@@ -66,25 +68,25 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 			}
 		}
 		tokenString := strings.Split(authHeader, " ")[1]
-		result, err := j.CacheService.ExistsData(r.Context(), "blacklist-"+tokenString)
-		if err != nil {
-			j.Logger.Info("Failed to check blacklist", err)
-			err := models.NewError(401, "Authorization", "Failed to check blacklist")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
-			if ok {
-				errBucket.Err = err
-				return
-			}
-		}
-		if result > 0 {
-			j.Logger.Info("Token is blacklisted", tokenString)
-			err := models.NewError(401, "Authorization", "Token is blacklisted")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
-			if ok {
-				errBucket.Err = err
-				return
-			}
-		}
+		// result, err := j.CacheService.ExistsData(r.Context(), "blacklist-"+tokenString)
+		// if err != nil {
+		// 	j.Logger.Info("Failed to check blacklist", err)
+		// 	err := models.NewError(401, "Authorization", "Failed to check blacklist")
+		// 	errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
+		// 	if ok {
+		// 		errBucket.Err = err
+		// 		return
+		// 	}
+		// }
+		// if result > 0 {
+		// 	j.Logger.Info("Token is blacklisted", tokenString)
+		// 	err := models.NewError(401, "Authorization", "Token is blacklisted")
+		// 	errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
+		// 	if ok {
+		// 		errBucket.Err = err
+		// 		return
+		// 	}
+		// }
 		var user userClaims
 		token, err := jwt.ParseWithClaims(tokenString, &user, func(token *jwt.Token) (any, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -110,7 +112,7 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 				return
 			}
 		}
-		r = utils.SetContext(r, "id", user.ID)
+		r = utils.SetContext(r, "id", user.Id)
 
 		r = utils.SetContext(r, "email", user.Email)
 		next.ServeHTTP(w, r)

@@ -15,18 +15,22 @@ import (
 )
 
 type DependencyConfig struct {
-	Port string
-	UserController *controllers.UserController
-	AuthController *controllers.AuthController
-	JWT            *middleware.JWT
+	Port             string
+	UserController   *controllers.UserController
+	AppController    *controllers.AppController
+	DockerController *controllers.DockerController
+	AuthController   *controllers.AuthController
+	JWT              *middleware.JWT
 }
 
-func NewDependencyConfig(port string, userController *controllers.UserController, authController *controllers.AuthController, jwt *middleware.JWT) *DependencyConfig {
+func NewDependencyConfig(port string, userController *controllers.UserController, appController *controllers.AppController, dockerController *controllers.DockerController, authController *controllers.AuthController, jwt *middleware.JWT) *DependencyConfig {
 	return &DependencyConfig{
-		Port:           port,
-		UserController: userController,
-		AuthController: authController,
-		JWT:            jwt,
+		Port:             port,
+		UserController:   userController,
+		AppController:    appController,
+		DockerController: dockerController,
+		AuthController:   authController,
+		JWT:              jwt,
 		// CacheService:   cacheService,
 	}
 }
@@ -34,7 +38,7 @@ func NewDependencyConfig(port string, userController *controllers.UserController
 type Server struct {
 	Config *DependencyConfig
 	server *http.Server
-Router *routes.Router
+	Router *routes.Router
 }
 
 func NewServer(cfg *DependencyConfig) *Server {
@@ -60,7 +64,9 @@ func (s *Server) Start() error {
 func (s *Server) SetupRoutes() {
 	authHandler := handlers.NewAuthHandler(s.Config.UserController, s.Config.AuthController, s.Config.JWT)
 	userHandler := handlers.NewUserHandler(s.Config.UserController, s.Config.JWT)
+	appHandler := handlers.NewAppAppHandler(s.Config.AppController, s.Config.DockerController, s.Config.JWT)
 	authHandler.SetupAuthHandlers(*s.Router)
+	appHandler.SetupAppHandlers(*s.Router)
 	userHandler.SetupUserHandlers(*s.Router)
 	//usersApi := s.router.Group("/users")
 	//usersApi.GET("/us", func(w http.ResponseWriter, r *http.Request) {

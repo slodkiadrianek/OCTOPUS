@@ -3,7 +3,6 @@ CREATE TABLE IF NOT EXISTS apps(
   name VARCHAR(64) NOT NULL,
   description VARCHAR(256),
   dbLink VARCHAR(128) ,
-  apiLink VARHCAR(64),
   ownerId INT  REFERENCES  users(id),
   slackWebhook VARCHAR(256),
   discordWebhook VARCHAR(256),
