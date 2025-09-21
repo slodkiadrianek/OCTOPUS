@@ -157,6 +157,30 @@ func (a *AppRepository) GetDbServerAddress(ctx context.Context, id int) (string,
 	return dbServerAddress, nil
 }
 
+func (a *AppRepository) GetAppStatus(ctx context.Context, id string) (DTO.AppStatus, error) {
+	query := "SELECT * FROM apps_statuses WHERE apps_statuses.app_id = $1	"
+	stmt, err := a.Db.PrepareContext(ctx, query)
+	if err != nil {
+		a.Logger.Error("Failed to prepare statement", map[string]any{
+			"query": query,
+			"err":   err.Error(),
+		})
+		return DTO.AppStatus{}, err
+	}
+	defer stmt.Close()
+	var appStatus DTO.AppStatus
+	err = stmt.QueryRowContext(ctx, id).Scan(&appStatus.AppId, &appStatus.Status, &appStatus.ChangedAt, &appStatus.Duration)
+	if err != nil {
+		a.Logger.Error("Failed to execute a select query", map[string]any{
+			"query": query,
+			"args":  id,
+			"err":   err.Error(),
+		})
+		return DTO.AppStatus{}, err
+	}
+	return appStatus, nil
+}
+
 func (a *AppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppToCheck, error) {
 	query := `SELECT
 	    a.id,

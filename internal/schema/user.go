@@ -55,11 +55,11 @@ var UpdateUserSchema = z.Struct(z.Shape{
 })
 
 type UserId struct {
-	UserId int `json:"userId" example:"2"`
+	UserId string `json:"userId" example:"2"`
 }
 
 var UserIdSchema = z.Struct(z.Shape{
-	"userId": z.Int().Required(),
+	"userId": z.String().Required(),
 })
 
 type ChangeUserPassword struct {

@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 
+	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/schema"
 	"github.com/slodkiadrianek/octopus/internal/services"
@@ -30,7 +31,7 @@ func (a *AppController) CreateApp(w http.ResponseWriter, r *http.Request) {
 		utils.SetError(w, r, err)
 		return
 	}
-	ownerId, ok := r.Context().Value(key("id")).(int)
+	ownerId, ok := r.Context().Value("id").(int)
 	if !ok || ownerId == 0 {
 		a.Logger.Error("Failed to read user id from context", r.URL.Path)
 		err = models.NewError(500, "Server", "Internal server error")
@@ -51,20 +52,20 @@ func (a *AppController) UpdateApp(w http.ResponseWriter, r *http.Request) {}
 func (a *AppController) DeleteApp(w http.ResponseWriter, r *http.Request) {}
 
 func (a *AppController) GetAppStatus(w http.ResponseWriter, r *http.Request) {
-	appId, ok := r.Context().Value("appId").(int)
-	if !ok || appId == 0 {
-		a.Logger.Error("Failed to read app id from context", r.URL.Path)
+	appId, err := utils.ReadParam(r, "appId")
+	if err != nil {
+		a.Logger.Error("Failed to read app id from params", r.URL.Path)
 		err := models.NewError(500, "Server", "Internal server error")
 		utils.SetError(w, r, err)
 		return
 	}
-	// // status , err := a.AppService.GetAppStatus(r.Context(), appId)
-	// if err != nil {
-	// 	utils.SetError(w, r, err)
-	// 	return
-	// }
-	utils.SendResponse(w, 200, map[string]string{
-		// "status": status,
+	appStatus, err := a.AppService.GetAppStatus(r.Context(), appId)
+	if err != nil {
+		utils.SetError(w, r, err)
+		return
+	}
+	utils.SendResponse(w, 200, map[string]DTO.AppStatus{
+		"data": appStatus,
 	})
 }
 

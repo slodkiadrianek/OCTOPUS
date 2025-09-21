@@ -4,6 +4,7 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/api/routes"
 	"github.com/slodkiadrianek/octopus/internal/controllers"
 	"github.com/slodkiadrianek/octopus/internal/middleware"
+	"github.com/slodkiadrianek/octopus/internal/schema"
 )
 
 type AppSettingsHandlers struct {
@@ -22,9 +23,9 @@ func NewAppAppHandler(appController *controllers.AppController, dockerController
 
 func (a AppSettingsHandlers) SetupAppHandlers(router routes.Router) {
 	appGroup := router.Group("/api/v1/app")
-	appGroup.POST("")
+	appGroup.POST("", a.JWT.VerifyToken, middleware.ValidateMiddleware[schema.CreateApp]("body", schema.CreateAppSchema), a.AppController.CreateApp)
 	appGroup.POST("/docker/import", a.JWT.VerifyToken, a.DockerController.ImportDockerContainers)
-	appGroup.GET("/:appId/status")
+	appGroup.GET("/:appId/status", a.JWT.VerifyToken, middleware.ValidateMiddleware[schema.AppId]("params", schema.AppIdSchema), a.AppController.GetAppStatus)
 	appGroup.PUT("/:appId")
 	appGroup.DELETE("/:appId")
 }

@@ -41,7 +41,12 @@ func (u *UserController) InsertUser(w http.ResponseWriter, r *http.Request) {
 
 func (u *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	userBody, err := utils.ReadBody[schema.UpdateUser](r)
-	userId := 1
+	userIdString, err := utils.ReadParam(r, "userId")
+	if err != nil {
+		utils.SetError(w, r, err)
+		return
+	}
+	userId, err := strconv.Atoi(userIdString)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
@@ -60,7 +65,6 @@ func (u *UserController) UpdateUserNotifications(w http.ResponseWriter, r *http.
 		utils.SetError(w, r, err)
 		return
 	}
-	fmt.Println(1)
 	userIdString, err := utils.ReadParam(r, "userId")
 	if err != nil {
 		utils.SetError(w, r, err)

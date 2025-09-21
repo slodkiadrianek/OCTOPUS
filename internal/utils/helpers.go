@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
 	"strings"
 
 	z "github.com/Oudwins/zog"
@@ -132,7 +131,7 @@ func ReadParam(r *http.Request, paramToRead string) (string, error) {
 	return param, nil
 }
 
-func ReadAllParams(r *http.Request) (map[string]int, error) {
+func ReadAllParams(r *http.Request) (map[string]string, error) {
 	path := r.URL.Path
 	routeKeyPath := r.Context().Value("routeKeyPath")
 	s, ok := routeKeyPath.(string)
@@ -141,15 +140,11 @@ func ReadAllParams(r *http.Request) (map[string]int, error) {
 	}
 	splittedPath := strings.Split(strings.Trim(path, "/"), "/")
 	splittedRouteKeyPath := strings.Split(strings.Trim(s, "/"), "/")
-	params := make(map[string]int)
+	params := make(map[string]string)
 	for i := 0; i < len(splittedPath); i++ {
 		if strings.Contains(splittedRouteKeyPath[i], ":") {
 			paramName := splittedRouteKeyPath[i][1:]
-			intValue, err := strconv.Atoi(splittedPath[i])
-			if err != nil {
-				return nil, errors.New("Invalid parameter: " + paramName)
-			}
-			params[paramName] = intValue
+			params[paramName] = splittedPath[i]
 
 		}
 	}

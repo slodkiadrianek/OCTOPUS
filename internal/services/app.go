@@ -39,7 +39,7 @@ func (a *AppService) CreateApp(ctx context.Context, app schema.CreateApp, ownerI
 	if err != nil {
 		return err
 	}
-	appDto := DTO.NewApp(id, app.Name, app.Description, false, ownerId, "", "")
+	appDto := DTO.NewApp(id, app.Name, app.Description, false, ownerId, app.IpAddress, app.Port)
 	err = a.AppRepository.InsertApp(ctx, []DTO.App{*appDto})
 	if err != nil {
 		return err
@@ -58,6 +58,32 @@ func (a *AppService) GetApp(ctx context.Context, id int) (*models.App, error) {
 func (a *AppService) UpdateApp(ctx context.Context, id int, app schema.UpdateApp) error {
 	// appDto := DTO.NewUpdateApp(id, app.Name, app.Description, app.DbLink, app.ApiLink, app.DiscordWebhook, app.SlackWebhook)
 	return nil
+}
+
+func (a *AppService) GetAppStatus(ctx context.Context, id string) (DTO.AppStatus, error) {
+	cacheKey := fmt.Sprintf("status-%s", id)
+	doesExist, err := a.CacheService.ExistsData(ctx, cacheKey)
+	if err != nil {
+		a.Logger.Warn("Failed to get info about data in cache", err)
+	}
+	if doesExist > 0 {
+		data, err := a.CacheService.GetData(ctx, cacheKey)
+		if err != nil {
+			a.Logger.Warn("Failed to get data from cache", err)
+			return DTO.AppStatus{}, models.NewError(500, "Server", "Internal server error")
+		}
+		appStatus, err := utils.UnmarshalData[DTO.AppStatus]([]byte(data))
+		if err != nil {
+			a.Logger.Warn("Failed to unmarshal  data", err)
+			return DTO.AppStatus{}, models.NewError(500, "Server", "Internal server error")
+		}
+		return *appStatus, nil
+	}
+	appStatus, err := a.AppRepository.GetAppStatus(ctx, id)
+	if err != nil {
+		return DTO.AppStatus{}, err
+	}
+	return appStatus, nil
 }
 
 func (a *AppService) DeleteApp(ctx context.Context, id int) error {
@@ -124,17 +150,36 @@ func (a *AppService) CheckAppsStatus(ctx context.Context) error {
 						continue
 					}
 				} else {
-					address := fmt.Sprintf("%s:%d", job.IpAddress, job.Port)
+					address := fmt.Sprintf("%s:%s", job.IpAddress, job.Port)
 					conn, err := net.DialTimeout("tcp", address, time.Second*3)
-					if err != nil {
-						a.Logger.Error("Failed to check status inside of a container", err)
-						continue
-					}
-					defer conn.Close()
 					status := "running"
 					duration := time.Since(time.Now())
 					changedAt := time.Now()
-					appsStatuses = append(appsStatuses, *DTO.NewAppStatus(job.Id, status, changedAt, duration))
+					if err != nil {
+						a.Logger.Error("Failed to check status inside of a container", err)
+						status = "stopped"
+						appsStatuses = append(appsStatuses, *DTO.NewAppStatus(job.Id, status, changedAt, duration))
+						continue
+					}
+					appStatus := *DTO.NewAppStatus(job.Id, status, changedAt, duration)
+					bodyBytes, err := utils.MarshalData(appStatus)
+					if err != nil {
+						a.Logger.Error("Failed to convert data to json", map[string]any{
+							"data":  appStatus,
+							"error": err.Error(),
+						})
+						continue
+					}
+					appsStatuses = append(appsStatuses, appStatus)
+					defer conn.Close()
+					err = a.CacheService.SetData(ctx, "status-"+job.Id, string(bodyBytes), time.Minute*2)
+					if err != nil {
+						a.Logger.Error("Failed to setData in cache", map[string]any{
+							"data":  appStatus,
+							"error": err.Error(),
+						})
+						continue
+					}
 				}
 			}
 		}(i + 1)

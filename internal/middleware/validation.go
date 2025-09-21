@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -11,26 +12,26 @@ import (
 
 func ValidateMiddleware[T any](validationType string, validationSchema *zog.StructSchema) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return validateHandler[T](next,validationType, validationSchema)
+		return validateHandler[T](next, validationType, validationSchema)
 	}
 }
 
-func validateHandler[T any](next http.Handler,validationType string, validationSchema *zog.StructSchema ) http.Handler {
-	return  http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func validateHandler[T any](next http.Handler, validationType string, validationSchema *zog.StructSchema) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch validationType {
 		case "body":
-			bodyBytes,err := io.ReadAll(r.Body)
-			if err != nil{
+			bodyBytes, err := io.ReadAll(r.Body)
+			if err != nil {
 				utils.SendResponse(w, http.StatusBadRequest, "Invalid request body")
 			}
 			defer r.Body.Close()
 			var data *T
-			data, err =  utils.UnmarshalData[T](bodyBytes); 
+			data, err = utils.UnmarshalData[T](bodyBytes)
 			if err != nil {
 				utils.SendResponse(w, http.StatusBadRequest, "Invalid request body")
 				return
 			}
-			errMap := utils.ValidateInput(validationSchema, data); 
+			errMap := utils.ValidateInput(validationSchema, data)
 			if errMap != nil {
 				utils.SendResponse(w, 422, errMap["$first"])
 				return
@@ -38,6 +39,11 @@ func validateHandler[T any](next http.Handler,validationType string, validationS
 			r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 		case "params":
 			paramsMap, err := utils.ReadAllParams(r)
+			if err != nil {
+				fmt.Println(err)
+				utils.SendResponse(w, http.StatusBadRequest, "Invalid request body")
+				return
+			}
 			paramBytes, err := utils.MarshalData(paramsMap)
 			if err != nil {
 				utils.SendResponse(w, http.StatusBadRequest, "Invalid request parameters")
@@ -49,7 +55,7 @@ func validateHandler[T any](next http.Handler,validationType string, validationS
 				utils.SendResponse(w, http.StatusBadRequest, err)
 				return
 			}
-			errMap := utils.ValidateInput(validationSchema, param); 
+			errMap := utils.ValidateInput(validationSchema, param)
 			if errMap != nil {
 				utils.SendResponse(w, 422, errMap["$first"])
 				return
