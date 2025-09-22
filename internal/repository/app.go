@@ -274,3 +274,7 @@ func (a *AppRepository) InsertAppStatuses(ctx context.Context, appsStatuses []DT
 	}
 	return nil
 }
+
+func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appId int) ([]models.User, error) {
+	
+}

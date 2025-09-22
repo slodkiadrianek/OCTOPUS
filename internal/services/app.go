@@ -192,3 +192,8 @@ func (a *AppService) CheckAppsStatus(ctx context.Context) error {
 	err = a.AppRepository.InsertAppStatuses(ctx, appsStatuses)
 	return err
 }
+
+
+func (a *AppService) SendNotification(ctx context.Context, appId int, message string) error {
+	
+}
