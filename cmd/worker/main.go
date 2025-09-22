@@ -39,7 +39,11 @@ func runStatusChecker(ctx context.Context, appService *services.AppService, logg
 	for {
 		select {
 		case <-ticker.C:
-			err := appService.CheckAppsStatus(ctx)
+			appsToSendNotification, err := appService.CheckAppsStatus(ctx)
+			if err != nil {
+				logger.Error("Something went wrong during checking statuses of apps", err)
+			}
+			err = appService.SendNotifications(ctx, appsToSendNotification)
 			if err != nil {
 				logger.Error("Something went wrong during checking statuses of apps", err)
 			}

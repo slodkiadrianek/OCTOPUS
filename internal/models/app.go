@@ -19,9 +19,22 @@ type AppToCheck struct {
 	IsDocker  bool   `json:"is_docker" example:"false"`
 	IpAddress string `json:"ip_address" example:"192.168.1.1"`
 	Port      string `json:"port" example:"8080"`
+	Status    string `json:"status" example:"running"`
 }
 
-func NewAppToCheck(id, name string, ownerID int, isDocker bool, ipAddress, port string) *AppToCheck {
+type SendNotificationTo struct {
+	Id                   string `json:"id" example:"1"`
+	Name                 string `json:"name" example:"My App"`
+	Email                string `json:"email" sql:"email" example:"joedoe@email.com"`
+	Status               string `json:"status" example:"running"`
+	SlackWebhook         string `json:"slack_webhook" example:"https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"`
+	DiscordWebhook       string `json:"discord_webhook" example:"https://discord.com/api/webhooks/1234567890/abcdefghijklmnopqrstuvwxyz"`
+	DiscordNotifications bool   `json:"discordNotifications" sql:"discord_notifications" example:"false"`
+	EmailNotifications   bool   `json:"emailNotifications" sql:"email_notifications" example:"true"`
+	SlackNotifications   bool   `json:"slackNotifications" sql:"slack_notifications" example:"false"`
+}
+
+func NewAppToCheck(id, name string, ownerID int, isDocker bool, ipAddress, port string, status string) *AppToCheck {
 	return &AppToCheck{
 		Id:        id,
 		Name:      name,
@@ -29,6 +42,7 @@ func NewAppToCheck(id, name string, ownerID int, isDocker bool, ipAddress, port 
 		IsDocker:  isDocker,
 		IpAddress: ipAddress,
 		Port:      port,
+		Status:    status,
 	}
 }
 

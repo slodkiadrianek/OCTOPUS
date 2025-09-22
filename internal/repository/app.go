@@ -188,8 +188,10 @@ func (a *AppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppToChec
 			a.owner_id,
 	    a.is_docker,
 	    a.ip_address,
-	    a.port
-    FROM apps a`
+	    a.port,
+      aps.status
+    FROM apps a
+		INNER JOIN apps_statuses aps ON a.id = aps.app_id`
 	stmt, err := a.Db.PrepareContext(ctx, query)
 	if err != nil {
 		a.Logger.Error("Failed to prepare statement", map[string]any{
@@ -211,7 +213,7 @@ func (a *AppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppToChec
 	apps := make([]*models.AppToCheck, 0)
 	for rows.Next() {
 		app := &models.AppToCheck{}
-		err := rows.Scan(&app.Id, &app.Name, &app.OwnerID, &app.IsDocker, &app.IpAddress, &app.Port)
+		err := rows.Scan(&app.Id, &app.Name, &app.OwnerID, &app.IsDocker, &app.IpAddress, &app.Port, &app.Status)
 		if err != nil {
 			a.Logger.Error("Failed to scan row", map[string]any{
 				"query": query,
@@ -275,6 +277,69 @@ func (a *AppRepository) InsertAppStatuses(ctx context.Context, appsStatuses []DT
 	return nil
 }
 
-func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appId int) ([]models.User, error) {
-	
+func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsStatuses []DTO.AppStatus) ([]models.SendNotificationTo, error) {
+	values := ""
+	args := make([]any, 0)
+	for i := range appsStatuses {
+		values += fmt.Sprintf("$%d,", i+1)
+		args = append(args, appsStatuses[i].AppId)
+	}
+	if len(values) > 0 {
+		values = values[:len(values)-1]
+	}
+	query := fmt.Sprintf(`
+	SELECT
+    a.id,
+    a.name,
+		aps.status,
+    a.discord_webhook,
+    a.slack_webhook,
+    u.email,
+    u.email_notifications,
+    u.discord_notifications,
+    u.slack_notifications
+	FROM apps a
+	INNER JOIN apps_statuses aps ON aps.app_id = a.id
+	INNER JOIN users u ON u.id = a.owner_id
+	WHERE a.id IN (%s)
+	`, values)
+	stmt, err := a.Db.PrepareContext(ctx, query)
+	if err != nil {
+		a.Logger.Error("Failed to prepared statement for execution", map[string]any{
+			"query": query,
+			"args":  appsStatuses,
+			"err":   err.Error(),
+		})
+		return []models.SendNotificationTo{}, models.NewError(500, "Database", "Failed to get app from  the database")
+	}
+	rows, err := stmt.QueryContext(ctx, args...)
+	if err != nil {
+		a.Logger.Error("Failed to execute a select query", map[string]any{
+			"query": query,
+			"err":   err.Error(),
+		})
+		return nil, err
+	}
+	defer rows.Close()
+	var dataToSendNotifications []models.SendNotificationTo
+	for rows.Next() {
+		var objectToSendNotification models.SendNotificationTo
+		err := rows.Scan(&objectToSendNotification.Id, &objectToSendNotification.Name, &objectToSendNotification.Status, &objectToSendNotification.DiscordWebhook, &objectToSendNotification.SlackWebhook, &objectToSendNotification.Email, &objectToSendNotification.EmailNotifications, &objectToSendNotification.DiscordNotifications, &objectToSendNotification.SlackNotifications)
+		if err != nil {
+			a.Logger.Error("Failed to scan row", map[string]any{
+				"query": query,
+				"err":   err.Error(),
+			})
+			return nil, err
+		}
+		dataToSendNotifications = append(dataToSendNotifications, objectToSendNotification)
+	}
+	if err := rows.Err(); err != nil {
+		a.Logger.Error("Failed to iterate over rows", map[string]any{
+			"query": query,
+			"err":   err.Error(),
+		})
+		return nil, err
+	}
+	return dataToSendNotifications, nil
 }

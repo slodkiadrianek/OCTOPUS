@@ -1,9 +1,11 @@
 package services
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net"
+	"net/http"
 	"runtime"
 	"sync"
 	"time"
@@ -94,17 +96,18 @@ func (a *AppService) DeleteApp(ctx context.Context, id int) error {
 	return nil
 }
 
-func (a *AppService) CheckAppsStatus(ctx context.Context) error {
+func (a *AppService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatus, error) {
 	apps, err := a.AppRepository.GetAppsToCheck(ctx)
 	if err != nil {
-		return err
+		return []DTO.AppStatus{}, err
 	}
 	workerCount := runtime.NumCPU()
 	cli, err := client.NewClientWithOpts(client.WithHost(a.DockerHost), client.WithAPIVersionNegotiation())
 	if err != nil {
-		return err
+		return []DTO.AppStatus{}, err
 	}
 	var appsStatuses []DTO.AppStatus
+	var appsToSendNotification []DTO.AppStatus
 	defer cli.Close()
 	jobs := make(chan *models.AppToCheck, len(apps))
 	var wg sync.WaitGroup
@@ -132,6 +135,9 @@ func (a *AppService) CheckAppsStatus(ctx context.Context) error {
 						continue
 					}
 					appStatus := *DTO.NewAppStatus(job.Id, status, changedAtTime, duration)
+					if status != job.Status {
+						appsToSendNotification = append(appsToSendNotification, appStatus)
+					}
 					appsStatuses = append(appsStatuses, appStatus)
 					bodyBytes, err := utils.MarshalData(appStatus)
 					if err != nil {
@@ -158,7 +164,11 @@ func (a *AppService) CheckAppsStatus(ctx context.Context) error {
 					if err != nil {
 						a.Logger.Error("Failed to check status inside of a container", err)
 						status = "stopped"
-						appsStatuses = append(appsStatuses, *DTO.NewAppStatus(job.Id, status, changedAt, duration))
+						appStatus := *DTO.NewAppStatus(job.Id, status, changedAt, duration)
+						appsStatuses = append(appsStatuses, appStatus)
+						if status != job.Status {
+							appsToSendNotification = append(appsToSendNotification, appStatus)
+						}
 						continue
 					}
 					appStatus := *DTO.NewAppStatus(job.Id, status, changedAt, duration)
@@ -170,11 +180,14 @@ func (a *AppService) CheckAppsStatus(ctx context.Context) error {
 						})
 						continue
 					}
+					if status != job.Status {
+						appsToSendNotification = append(appsToSendNotification, appStatus)
+					}
 					appsStatuses = append(appsStatuses, appStatus)
 					defer conn.Close()
 					err = a.CacheService.SetData(ctx, "status-"+job.Id, string(bodyBytes), time.Minute*2)
 					if err != nil {
-						a.Logger.Error("Failed to setData in cache", map[string]any{
+						a.Logger.Error("Failed to set data in cache", map[string]any{
 							"data":  appStatus,
 							"error": err.Error(),
 						})
@@ -190,10 +203,85 @@ func (a *AppService) CheckAppsStatus(ctx context.Context) error {
 	close(jobs)
 	wg.Wait()
 	err = a.AppRepository.InsertAppStatuses(ctx, appsStatuses)
-	return err
+	return appsToSendNotification, err
 }
 
+func (a *AppService) SendNotifications(ctx context.Context, appsStatuses []DTO.AppStatus) error {
+	if len(appsStatuses) == 0 {
+		return nil
+	}
+	a.Logger.Info("Started sending Notfications to user")
+	appsToSendNotifications, err := a.AppRepository.GetUsersToSendNotifications(ctx, appsStatuses)
+	if err != nil {
+		return err
+	}
+	sortedData := map[string][]models.SendNotificationTo{
+		"Discord": {},
+		"Slack":   {},
+		"Email":   {},
+	}
+	for _, app := range appsToSendNotifications {
+		if app.DiscordNotifications {
+			sortedData["Discord"] = append(sortedData["Discord"], app)
+		}
+		if app.SlackNotifications {
+			sortedData["Slack"] = append(sortedData["Slack"], app)
+		}
+		if app.EmailNotifications {
+			sortedData["Email"] = append(sortedData["Email"], app)
+		}
+	}
+	sortedDataDiscord := map[string]string{}
+	sortedDataSlack := map[string]string{}
+	// sortedDataEmail := map[string]string{}
+	for _, val := range sortedData["Discord"] {
+		sortedDataDiscord[val.DiscordWebhook] += fmt.Sprintf("%s-%s-%s\n", val.Id, val.Name, val.Status)
+	}
+	for _, val := range sortedData["Slack"] {
+		sortedDataSlack[val.SlackWebhook] += fmt.Sprintf("%s-%s-%s\n", val.Id, val.Name, val.Status)
+	}
+	// for _, val := range sortedData["Email"] {
+	// 	sortedDataDiscord[val.Email] += fmt.Sprintf("%s-%s-%s", val.Id, val.Name, val.Status)
+	// }
+	for i, val := range sortedDataDiscord {
+		payload := map[string]interface{}{
+			"content":  val,
+			"username": "OctopusBot",
+			"embeds":   []interface{}{},
+		}
 
-func (a *AppService) SendNotification(ctx context.Context, appId int, message string) error {
-	
+		jsonData, err := utils.MarshalData(payload)
+		if err != nil {
+			return err
+		}
+
+		req, err := http.NewRequest("POST", i, bytes.NewBuffer(jsonData))
+		if err != nil {
+			return err
+		}
+		req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+		client := &http.Client{}
+		client.Do(req)
+	}
+	for i, val := range sortedDataSlack {
+		payload := map[string]interface{}{
+			"text":     val,
+			"username": "OctopusBot",
+		}
+
+		jsonData, err := utils.MarshalData(payload)
+		if err != nil {
+			return err
+		}
+
+		req, err := http.NewRequest("POST", i, bytes.NewBuffer(jsonData))
+		if err != nil {
+			return err
+		}
+		req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+
+		client := &http.Client{}
+		client.Do(req)
+	}
+	return nil
 }
