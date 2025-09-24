@@ -40,6 +40,7 @@ func main() {
 	appRepository := repository.NewAppRepository(db.DbConnection, loggerService)
 	dockerRepository := repository.NewDockerRepository(db.DbConnection, loggerService)
 	appService := services.NewAppService(appRepository, loggerService, *&cacheService, cfg.DockerHost)
+	serverService := services.NewServerService(loggerService, cacheService)
 	dockerService := services.NewDockerService(dockerRepository, appRepository, loggerService, cfg.DockerHost)
 	jwt := middleware.NewJWT(cfg.JWTSecret, *loggerService, *cacheService)
 	authService := services.NewAuthService(loggerService, userRepository, jwt)
@@ -47,7 +48,9 @@ func main() {
 	userController := controllers.NewUserController(userService)
 	appController := controllers.NewAppController(appService, loggerService)
 	dockerController := controllers.NewDockerController(dockerService, loggerService)
-	dependenciesConfig := api.NewDependencyConfig(cfg.Port, userController, appController, dockerController, authController, jwt)
+	serverController := controllers.NewServerController(loggerService, serverService)
+
+	dependenciesConfig := api.NewDependencyConfig(cfg.Port, userController, appController, dockerController, authController, jwt, serverController)
 	server := api.NewServer(dependenciesConfig)
 
 	go func() {

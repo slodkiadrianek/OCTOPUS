@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/slodkiadrianek/octopus/internal/api/routes"
 	"github.com/slodkiadrianek/octopus/internal/controllers"
 	"github.com/slodkiadrianek/octopus/internal/middleware"
 )
@@ -15,4 +16,9 @@ func NewServerHandlers(serverController *controllers.ServerController, jwt *midd
 		JWT:              jwt,
 		ServerController: serverController,
 	}
+}
+
+func (s ServerHandlers) SetupServerHandlers(router routes.Router) {
+	serverGroup := router.Group("/api/v1/server")
+	serverGroup.GET("", s.JWT.VerifyToken, s.ServerController.GetServerMetrics)
 }

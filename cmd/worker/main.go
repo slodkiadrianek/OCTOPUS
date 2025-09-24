@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+
 	"time"
 
 	"github.com/slodkiadrianek/octopus/internal/config"
@@ -22,6 +23,7 @@ func main() {
 		loggerService.Error("Failed to connect to cache", err)
 		return
 	}
+
 	db, err := config.NewDb(cfg.DbLink, "postgres")
 	if err != nil {
 		loggerService.Error("Failed to connect to database", err)
@@ -29,11 +31,12 @@ func main() {
 	}
 	appRepository := repository.NewAppRepository(db.DbConnection, loggerService)
 	appService := services.NewAppService(appRepository, loggerService, cacheService, cfg.DockerHost)
+	serverService := services.NewServerService(loggerService, cacheService)
 	ctx := context.Background()
-	runStatusChecker(ctx, appService, loggerService)
+	ticker(ctx, appService, serverService, loggerService)
 }
 
-func runStatusChecker(ctx context.Context, appService *services.AppService, logger *logger.Logger) {
+func ticker(ctx context.Context, appService *services.AppService, serverService *services.ServerService, logger *logger.Logger) {
 	ticker := time.NewTicker(15 * time.Second)
 	defer ticker.Stop()
 	for {
@@ -47,7 +50,12 @@ func runStatusChecker(ctx context.Context, appService *services.AppService, logg
 			if err != nil {
 				logger.Error("Something went wrong during checking statuses of apps", err)
 			}
-			logger.Info("Succesfully inserted data about apps statuses")
+			logger.Info("Successfully inserted data about apps statuses")
+			err = serverService.InsertServerMetrics(ctx)
+			if err != nil {
+				logger.Warn("Something went wrong during inserting data about server metrics", err)
+			}
+			logger.Info("Successfully inserted data about server status")
 		case <-ctx.Done():
 			logger.Info("Status checked stopped")
 			return

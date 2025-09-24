@@ -20,16 +20,18 @@ type DependencyConfig struct {
 	AppController    *controllers.AppController
 	DockerController *controllers.DockerController
 	AuthController   *controllers.AuthController
+	ServerController *controllers.ServerController
 	JWT              *middleware.JWT
 }
 
-func NewDependencyConfig(port string, userController *controllers.UserController, appController *controllers.AppController, dockerController *controllers.DockerController, authController *controllers.AuthController, jwt *middleware.JWT) *DependencyConfig {
+func NewDependencyConfig(port string, userController *controllers.UserController, appController *controllers.AppController, dockerController *controllers.DockerController, authController *controllers.AuthController, jwt *middleware.JWT, serverController *controllers.ServerController) *DependencyConfig {
 	return &DependencyConfig{
 		Port:             port,
 		UserController:   userController,
 		AppController:    appController,
 		DockerController: dockerController,
 		AuthController:   authController,
+		ServerController: serverController,
 		JWT:              jwt,
 		// CacheService:   cacheService,
 	}
@@ -65,8 +67,10 @@ func (s *Server) SetupRoutes() {
 	authHandler := handlers.NewAuthHandler(s.Config.UserController, s.Config.AuthController, s.Config.JWT)
 	userHandler := handlers.NewUserHandler(s.Config.UserController, s.Config.JWT)
 	appHandler := handlers.NewAppAppHandler(s.Config.AppController, s.Config.DockerController, s.Config.JWT)
+	serverHandler := handlers.NewServerHandlers(s.Config.ServerController, s.Config.JWT)
 	authHandler.SetupAuthHandlers(*s.Router)
 	appHandler.SetupAppHandlers(*s.Router)
+	serverHandler.SetupServerHandlers(*s.Router)
 	userHandler.SetupUserHandlers(*s.Router)
 	//usersApi := s.router.Group("/users")
 	//usersApi.GET("/us", func(w http.ResponseWriter, r *http.Request) {
