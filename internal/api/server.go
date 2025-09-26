@@ -15,25 +15,29 @@ import (
 )
 
 type DependencyConfig struct {
-	Port             string
-	UserController   *controllers.UserController
-	AppController    *controllers.AppController
-	DockerController *controllers.DockerController
-	AuthController   *controllers.AuthController
-	ServerController *controllers.ServerController
-	JWT              *middleware.JWT
+	Port                string
+	UserController      *controllers.UserController
+	AppController       *controllers.AppController
+	DockerController    *controllers.DockerController
+	AuthController      *controllers.AuthController
+	ServerController    *controllers.ServerController
+	WebSocketController *controllers.WsController
+	JWT                 *middleware.JWT
 }
 
-func NewDependencyConfig(port string, userController *controllers.UserController, appController *controllers.AppController, dockerController *controllers.DockerController, authController *controllers.AuthController, jwt *middleware.JWT, serverController *controllers.ServerController) *DependencyConfig {
+func NewDependencyConfig(port string, userController *controllers.UserController,
+	appController *controllers.AppController, dockerController *controllers.DockerController,
+	authController *controllers.AuthController, jwt *middleware.JWT, serverController *controllers.ServerController,
+	wsController *controllers.WsController) *DependencyConfig {
 	return &DependencyConfig{
-		Port:             port,
-		UserController:   userController,
-		AppController:    appController,
-		DockerController: dockerController,
-		AuthController:   authController,
-		ServerController: serverController,
-		JWT:              jwt,
-		// CacheService:   cacheService,
+		Port:                port,
+		UserController:      userController,
+		AppController:       appController,
+		DockerController:    dockerController,
+		AuthController:      authController,
+		ServerController:    serverController,
+		WebSocketController: wsController,
+		JWT:                 jwt,
 	}
 }
 
@@ -68,8 +72,10 @@ func (s *Server) SetupRoutes() {
 	userHandler := handlers.NewUserHandler(s.Config.UserController, s.Config.JWT)
 	appHandler := handlers.NewAppAppHandler(s.Config.AppController, s.Config.DockerController, s.Config.JWT)
 	serverHandler := handlers.NewServerHandlers(s.Config.ServerController, s.Config.JWT)
+	wsHandler := handlers.NewWebsocketHandler(s.Config.WebSocketController, s.Config.JWT)
 	authHandler.SetupAuthHandlers(*s.Router)
 	appHandler.SetupAppHandlers(*s.Router)
+	wsHandler.SetupWebsocketHandlers(*s.Router)
 	serverHandler.SetupServerHandlers(*s.Router)
 	userHandler.SetupUserHandlers(*s.Router)
 	//usersApi := s.router.Group("/users")

@@ -26,5 +26,5 @@ func (a *AuthHandlers) SetupAuthHandlers(router routes.Router) {
 	groupRouter.POST("/register", middleware.ValidateMiddleware[schema.CreateUser]("body", schema.CreateUserSchema), a.UserController.InsertUser)
 	groupRouter.POST("/login", middleware.ValidateMiddleware[schema.LoginUser]("body", schema.LoginUserSchema), a.AuthController.LoginUser)
 	groupRouter.GET("/check", a.JWT.VerifyToken, a.AuthController.VerifyUser)
-	//groupRouter.DELETE("/logout", a.JWT.VerifyToken, a.AuthController.LogoutUser)
+	groupRouter.DELETE("/logout", a.JWT.VerifyToken, a.JWT.BlacklistUser, a.AuthController.LogoutUser)
 }
