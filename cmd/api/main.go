@@ -12,14 +12,14 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/middleware"
 	"github.com/slodkiadrianek/octopus/internal/repository"
 	"github.com/slodkiadrianek/octopus/internal/services"
+	"github.com/slodkiadrianek/octopus/internal/utils"
 
 	"github.com/slodkiadrianek/octopus/internal/api"
 	"github.com/slodkiadrianek/octopus/internal/config"
-	"github.com/slodkiadrianek/octopus/internal/utils/logger"
 )
 
 func main() {
-	loggerService := logger.NewLogger("./logs", "02.01.2006")
+	loggerService := utils.NewLogger("./logs", "02.01.2006")
 	cfg, err := config.SetConfig("./.env")
 	if err != nil {
 		loggerService.Error("Failed to load config", err)

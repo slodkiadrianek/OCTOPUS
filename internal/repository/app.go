@@ -7,15 +7,16 @@ import (
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
-	"github.com/slodkiadrianek/octopus/internal/utils/logger"
+	"github.com/slodkiadrianek/octopus/internal/schema"
+	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
 type AppRepository struct {
 	Db     *sql.DB
-	Logger *logger.Logger
+	Logger *utils.Logger
 }
 
-func NewAppRepository(db *sql.DB, logger *logger.Logger) *AppRepository {
+func NewAppRepository(db *sql.DB, logger *utils.Logger) *AppRepository {
 	return &AppRepository{
 		Db:     db,
 		Logger: logger,
@@ -75,36 +76,7 @@ func (a *AppRepository) GetApp(ctx context.Context, id int) (*models.App, error)
 	return &app, nil
 }
 
-// func (a *AppRepository) UpdateApp(ctx context.Context, app DTO.UpdateApp) error {
-// 	query := `UPDATE apps SET
-// 		name = $2,
-// 		description = $3,
-// 		db_link = $4,
-// 		is_docker = $5,
-// 		slack_webhook = $6,
-// 		discord_webhook = $7
-// 	WHERE id = $1`
-// 	stmt, err := a.Db.PrepareContext(ctx, query)
-// 	if err != nil {
-// 		a.Logger.Error("Failed to prepared statement for execution", map[string]any{
-// 			"query": query,
-// 			"args":  app,
-// 			"err":   err.Error(),
-// 		})
-// 		return models.NewError(500, "Database", "Failed to update app in the database")
-// 	}
-// 	_, err = stmt.ExecContext(ctx, app.Id, app.Name, app.Description, app.DbLink, app.ApiLink, app.SlackWebhook, app.DiscordWebhoo)
-// 	if err != nil {
-// 		a.Logger.Error("Failed to execute an update query", map[string]any{
-// 			"query": query,
-// 			"args":  app,
-// 			"err":   err.Error(),
-// 		})
-// 	}
-// 	return nil
-// }
-
-func (a *AppRepository) DeleteApp(ctx context.Context, id int) error {
+func (a *AppRepository) DeleteApp(ctx context.Context, id string) error {
 	query := `DELETE FROM apps WHERE id = $1`
 	stmt, err := a.Db.PrepareContext(ctx, query)
 	if err != nil {
@@ -189,9 +161,9 @@ func (a *AppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppToChec
 	    a.is_docker,
 	    a.ip_address,
 	    a.port,
-      aps.status
+			COALESCE(aps.status, 'stopped')
     FROM apps a
-		INNER JOIN apps_statuses aps ON a.id = aps.app_id`
+		LEFT JOIN apps_statuses aps ON a.id = aps.app_id`
 	stmt, err := a.Db.PrepareContext(ctx, query)
 	if err != nil {
 		a.Logger.Error("Failed to prepare statement", map[string]any{
@@ -231,6 +203,31 @@ func (a *AppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppToChec
 		return nil, err
 	}
 	return apps, nil
+}
+
+func (a *AppRepository) UpdateApp(ctx context.Context, appId string, app schema.UpdateApp) error {
+	query := "UPDATE apps SET name = $1 , description = $2, ip_address = $3, port = $4, discord_webhook = $5, slack_webhook = $6 WHERE id = $7 "
+	stmt, err := a.Db.PrepareContext(ctx, query)
+	if err != nil {
+		a.Logger.Error("Failed to prepare statement", map[string]any{
+			"query": query,
+			"err":   err.Error(),
+		})
+		return err
+	}
+	_, err = stmt.ExecContext(ctx, app.Name, app.Description, app.IpAddress, app.Port, app.DiscordWebhook, app.SlackWebhook, appId)
+	if err != nil {
+		a.Logger.Error("Failed to execute a update query", map[string]any{
+			"query": query,
+			"args": map[string]any{
+				"appId":   appId,
+				"appInfo": app,
+			},
+			"err": err.Error(),
+		})
+		return err
+	}
+	return nil
 }
 
 func (a *AppRepository) InsertAppStatuses(ctx context.Context, appsStatuses []DTO.AppStatus) error {
@@ -301,8 +298,7 @@ func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsSta
 	FROM apps a
 	INNER JOIN apps_statuses aps ON aps.app_id = a.id
 	INNER JOIN users u ON u.id = a.owner_id
-	WHERE a.id IN (%s)
-	`, values)
+	WHERE a.id IN (%s)`, values)
 	stmt, err := a.Db.PrepareContext(ctx, query)
 	if err != nil {
 		a.Logger.Error("Failed to prepared statement for execution", map[string]any{

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"regexp"
 	"strings"
 
 	z "github.com/Oudwins/zog"
@@ -27,6 +28,10 @@ type contextKey string
 
 const ErrorKey contextKey = "Error"
 
+func StripANSI(str string) string {
+	ansiRegex := regexp.MustCompile(`\x1b\[[0-9;]*[mGKH]`)
+	return ansiRegex.ReplaceAllString(str, "")
+}
 func SetContext(r *http.Request, key any, data any) *http.Request {
 	ctx := context.WithValue(r.Context(), key, data)
 	return r.WithContext(ctx)

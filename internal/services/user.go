@@ -7,16 +7,16 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/repository"
 	"github.com/slodkiadrianek/octopus/internal/schema"
-	"github.com/slodkiadrianek/octopus/internal/utils/logger"
+	"github.com/slodkiadrianek/octopus/internal/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService struct {
-	LoggerService  *logger.Logger
+	LoggerService  *utils.Logger
 	UserRepository *repository.UserRepository
 }
 
-func NewUserService(loggerService *logger.Logger, userRepository *repository.UserRepository) *UserService {
+func NewUserService(loggerService *utils.Logger, userRepository *repository.UserRepository) *UserService {
 	return &UserService{
 		LoggerService:  loggerService,
 		UserRepository: userRepository,
@@ -62,7 +62,7 @@ func (u *UserService) UpdateUserNotifications(ctx context.Context, userId int, u
 }
 
 func (u *UserService) DeleteUser(ctx context.Context, userId int, password string) error {
-	user,err := u.UserRepository.FindUserById(ctx, userId)
+	user, err := u.UserRepository.FindUserById(ctx, userId)
 	if err != nil {
 		return err
 	}

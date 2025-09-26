@@ -40,7 +40,6 @@ func validateHandler[T any](next http.Handler, validationType string, validation
 		case "params":
 			paramsMap, err := utils.ReadAllParams(r)
 			if err != nil {
-				fmt.Println(err)
 				utils.SendResponse(w, http.StatusBadRequest, "Invalid request body")
 				return
 			}
@@ -55,6 +54,7 @@ func validateHandler[T any](next http.Handler, validationType string, validation
 				utils.SendResponse(w, http.StatusBadRequest, err)
 				return
 			}
+			fmt.Println(param)
 			errMap := utils.ValidateInput(validationSchema, param)
 			if errMap != nil {
 				utils.SendResponse(w, 422, errMap["$first"])

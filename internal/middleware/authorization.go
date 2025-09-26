@@ -11,7 +11,6 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/config"
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/utils"
-	"github.com/slodkiadrianek/octopus/internal/utils/logger"
 )
 
 type userClaims struct {
@@ -25,11 +24,11 @@ type userClaims struct {
 
 type JWT struct {
 	Token        string
-	Logger       logger.Logger
+	Logger       utils.Logger
 	CacheService config.CacheService
 }
 
-func NewJWT(token string, logger logger.Logger, cacheService config.CacheService) *JWT {
+func NewJWT(token string, logger utils.Logger, cacheService config.CacheService) *JWT {
 	return &JWT{
 		Token:        token,
 		Logger:       logger,

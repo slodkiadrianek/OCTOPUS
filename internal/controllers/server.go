@@ -1,19 +1,19 @@
 package controllers
 
 import (
+	"net/http"
+
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/services"
 	"github.com/slodkiadrianek/octopus/internal/utils"
-	"github.com/slodkiadrianek/octopus/internal/utils/logger"
-	"net/http"
 )
 
 type ServerController struct {
-	Logger        *logger.Logger
+	Logger        *utils.Logger
 	ServerService *services.ServerService
 }
 
-func NewServerController(logger *logger.Logger, serverService *services.ServerService) *ServerController {
+func NewServerController(logger *utils.Logger, serverService *services.ServerService) *ServerController {
 	return &ServerController{
 		ServerService: serverService,
 		Logger:        logger,

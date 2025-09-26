@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"runtime"
 	"sync"
 	"time"
 
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/config"
@@ -17,17 +19,16 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/repository"
 	"github.com/slodkiadrianek/octopus/internal/schema"
 	"github.com/slodkiadrianek/octopus/internal/utils"
-	"github.com/slodkiadrianek/octopus/internal/utils/logger"
 )
 
 type AppService struct {
 	AppRepository *repository.AppRepository
-	Logger        *logger.Logger
+	Logger        *utils.Logger
 	CacheService  *config.CacheService
 	DockerHost    string
 }
 
-func NewAppService(appRepository *repository.AppRepository, logger *logger.Logger, cacheService *config.CacheService, dockerHost string) *AppService {
+func NewAppService(appRepository *repository.AppRepository, logger *utils.Logger, cacheService *config.CacheService, dockerHost string) *AppService {
 	return &AppService{
 		AppRepository: appRepository,
 		Logger:        logger,
@@ -57,11 +58,6 @@ func (a *AppService) GetApp(ctx context.Context, id int) (*models.App, error) {
 	return app, nil
 }
 
-func (a *AppService) UpdateApp(ctx context.Context, id int, app schema.UpdateApp) error {
-	// appDto := DTO.NewUpdateApp(id, app.Name, app.Description, app.DbLink, app.ApiLink, app.DiscordWebhook, app.SlackWebhook)
-	return nil
-}
-
 func (a *AppService) GetAppStatus(ctx context.Context, id string) (DTO.AppStatus, error) {
 	cacheKey := fmt.Sprintf("status-%s", id)
 	doesExist, err := a.CacheService.ExistsData(ctx, cacheKey)
@@ -88,12 +84,40 @@ func (a *AppService) GetAppStatus(ctx context.Context, id string) (DTO.AppStatus
 	return appStatus, nil
 }
 
-func (a *AppService) DeleteApp(ctx context.Context, id int) error {
+func (a *AppService) DeleteApp(ctx context.Context, id string) error {
 	err := a.AppRepository.DeleteApp(ctx, id)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (a *AppService) GetLogs(ctx context.Context, appId string) (string, error) {
+	cli, err := client.NewClientWithOpts(client.WithHost(a.DockerHost), client.WithAPIVersionNegotiation())
+	if err != nil {
+		return "", err
+	}
+	options := container.LogsOptions{
+		ShowStdout: true,
+		ShowStderr: true,
+		Follow:     false,
+		Timestamps: true,
+		Since:      "",
+		Until:      "",
+		Tail:       "100",
+	}
+	reader, err := cli.ContainerLogs(ctx, appId, options)
+	if err != nil {
+		return "", err
+	}
+	defer reader.Close()
+	var buf bytes.Buffer
+	_, err = io.Copy(&buf, reader)
+	if err != nil {
+		return "", err
+	}
+	logs := utils.StripANSI(buf.String())
+	return logs, nil
 }
 
 func (a *AppService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatus, error) {
@@ -202,7 +226,9 @@ func (a *AppService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatus, erro
 	}
 	close(jobs)
 	wg.Wait()
-	err = a.AppRepository.InsertAppStatuses(ctx, appsStatuses)
+	if len(appsStatuses) > 0 {
+		err = a.AppRepository.InsertAppStatuses(ctx, appsStatuses)
+	}
 	return appsToSendNotification, err
 }
 
@@ -282,6 +308,14 @@ func (a *AppService) SendNotifications(ctx context.Context, appsStatuses []DTO.A
 
 		client := &http.Client{}
 		client.Do(req)
+	}
+	return nil
+}
+
+func (a *AppService) UpdateApp(ctx context.Context, appId string, app schema.UpdateApp) error {
+	err := a.AppRepository.UpdateApp(ctx, appId, app)
+	if err != nil {
+		return err
 	}
 	return nil
 }

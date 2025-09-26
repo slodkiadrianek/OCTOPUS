@@ -41,6 +41,10 @@ func (u *UserController) InsertUser(w http.ResponseWriter, r *http.Request) {
 
 func (u *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	userBody, err := utils.ReadBody[schema.UpdateUser](r)
+	if err != nil {
+		utils.SetError(w, r, err)
+		return
+	}
 	userIdString, err := utils.ReadParam(r, "userId")
 	if err != nil {
 		utils.SetError(w, r, err)
@@ -117,8 +121,8 @@ func (u *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Reque
 	userId, err := strconv.Atoi(userIdString)
 	if userBody.NewPassword != userBody.ConfirmPassword {
 		err = fmt.Errorf("passwords do not match")
-		errBucket ,ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
-		if ok {	
+		errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
+		if ok {
 			errBucket.Err = err
 		}
 		utils.SendResponse(w, 400, map[string]string{
@@ -129,10 +133,10 @@ func (u *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Reque
 	}
 	err = u.UserService.ChangeUserPassword(r.Context(), userId, userBody.CurrentPassword, userBody.NewPassword)
 	if err != nil {
-		errBucket ,ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
-		if ok {	
+		errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
+		if ok {
 			errBucket.Err = err
-	}
+		}
 		utils.SendResponse(w, 500, map[string]string{
 			"errorCategory":    "Server",
 			"errorDescription": "Internal server error",

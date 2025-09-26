@@ -10,15 +10,14 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/config"
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/utils"
-	"github.com/slodkiadrianek/octopus/internal/utils/logger"
 )
 
 type ServerService struct {
-	Logger       *logger.Logger
+	Logger       *utils.Logger
 	CacheService *config.CacheService
 }
 
-func NewServerService(logger *logger.Logger, cacheService *config.CacheService) *ServerService {
+func NewServerService(logger *utils.Logger, cacheService *config.CacheService) *ServerService {
 	return &ServerService{
 		Logger:       logger,
 		CacheService: cacheService,

@@ -10,17 +10,17 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/repository"
-	"github.com/slodkiadrianek/octopus/internal/utils/logger"
+	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
 type DockerService struct {
 	DockerRepository *repository.DockerRepository
 	AppRepository    *repository.AppRepository
 	DockerHost       string
-	Logger           *logger.Logger
+	Logger           *utils.Logger
 }
 
-func NewDockerService(dockerRepository *repository.DockerRepository, appRepository *repository.AppRepository, logger *logger.Logger, dockerHost string) *DockerService {
+func NewDockerService(dockerRepository *repository.DockerRepository, appRepository *repository.AppRepository, logger *utils.Logger, dockerHost string) *DockerService {
 	return &DockerService{
 		DockerRepository: dockerRepository,
 		AppRepository:    appRepository,

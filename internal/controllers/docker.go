@@ -6,15 +6,14 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/services"
 	"github.com/slodkiadrianek/octopus/internal/utils"
-	"github.com/slodkiadrianek/octopus/internal/utils/logger"
 )
 
 type DockerController struct {
 	DockerService *services.DockerService
-	Logger        *logger.Logger
+	Logger        *utils.Logger
 }
 
-func NewDockerController(service *services.DockerService, logger *logger.Logger) *DockerController {
+func NewDockerController(service *services.DockerService, logger *utils.Logger) *DockerController {
 	return &DockerController{
 		DockerService: service,
 		Logger:        logger,

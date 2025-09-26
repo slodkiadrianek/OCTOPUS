@@ -8,15 +8,15 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/schema"
-	"github.com/slodkiadrianek/octopus/internal/utils/logger"
+	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
 type UserRepository struct {
 	Db            *sql.DB
-	LoggerService *logger.Logger
+	LoggerService *utils.Logger
 }
 
-func NewUserRepository(db *sql.DB, loggerService *logger.Logger) *UserRepository {
+func NewUserRepository(db *sql.DB, loggerService *utils.Logger) *UserRepository {
 	return &UserRepository{
 		Db:            db,
 		LoggerService: loggerService,
@@ -136,7 +136,17 @@ func (u *UserRepository) DeleteUser(ctx context.Context, password string, userId
 }
 
 func (u *UserRepository) FindUserById(ctx context.Context, userId int) (models.User, error) {
-	query := `SELECT * FROM users WHERE id = $1`
+	query := `
+	SELECT 
+		id,
+		email,
+		name,
+		surname,
+		password,
+		discord_notifications,
+		email_notifications,
+		slack_notifications 
+	FROM users WHERE id = $1`
 	stmt, err := u.Db.PrepareContext(ctx, query)
 	if err != nil {
 		u.LoggerService.Info("failed to prepare query for execution", map[string]any{

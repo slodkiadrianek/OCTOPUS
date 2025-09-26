@@ -8,11 +8,11 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/config"
 	"github.com/slodkiadrianek/octopus/internal/repository"
 	"github.com/slodkiadrianek/octopus/internal/services"
-	"github.com/slodkiadrianek/octopus/internal/utils/logger"
+	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
 func main() {
-	loggerService := logger.NewLogger("./logs", "02.01.2006")
+	loggerService := utils.NewLogger("./logs", "02.01.2006")
 	cfg, err := config.SetConfig("./.env")
 	if err != nil {
 		loggerService.Error("Failed to load config", err)
@@ -36,7 +36,7 @@ func main() {
 	ticker(ctx, appService, serverService, loggerService)
 }
 
-func ticker(ctx context.Context, appService *services.AppService, serverService *services.ServerService, logger *logger.Logger) {
+func ticker(ctx context.Context, appService *services.AppService, serverService *services.ServerService, logger *utils.Logger) {
 	ticker := time.NewTicker(15 * time.Second)
 	defer ticker.Stop()
 	for {

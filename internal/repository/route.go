@@ -3,15 +3,15 @@ package repository
 import (
 	"database/sql"
 
-	"github.com/slodkiadrianek/octopus/internal/utils/logger"
+	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
 type RouteRepository struct {
 	Db     *sql.DB
-	Logger *logger.Logger
+	Logger *utils.Logger
 }
 
-func NewRouteRepository(db *sql.DB, logger *logger.Logger) *RouteRepository {
+func NewRouteRepository(db *sql.DB, logger *utils.Logger) *RouteRepository {
 	return &RouteRepository{
 		Db:     db,
 		Logger: logger,

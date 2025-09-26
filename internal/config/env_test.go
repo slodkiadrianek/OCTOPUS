@@ -73,14 +73,10 @@ func TestSetConfig(t *testing.T) {
 			pathToFile:    "../../.env.test",
 			expectedError: nil,
 			expectedData: Env{
-				Port:         "3009",
-				JWTSecret:    "jf3420f98234f",
-				DbLink:       "postgres://adrian:zaqwerfvbgtyhn@192.168.0.100:5433/octopus?sslmode=disable",
-				CacheLink:    "redis://zaqwerfvbgtyhn@192.168.0.100:6379/0",
-				EmailService: "fj3402f",
-				EmailUser:    "32jf023hnf2",
-				EmailFrom:    "32rj9230hf",
-				EmailPass:    "390f32hjf",
+				Port:      "3009",
+				JWTSecret: "jf3420f98234f",
+				DbLink:    "postgres://adrian:zaqwerfvbgtyhn@192.168.0.100:5433/octopus?sslmode=disable",
+				CacheLink: "redis://zaqwerfvbgtyhn@192.168.0.100:6379/0",
 			},
 		},
 		{
