@@ -7,7 +7,6 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/middleware"
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/repository"
-	"github.com/slodkiadrianek/octopus/internal/schema"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -26,7 +25,7 @@ func NewAuthService(loggerService *utils.Logger, userRepository *repository.User
 	}
 }
 
-func (a AuthService) LoginUser(ctx context.Context, loginData schema.LoginUser) (string, error) {
+func (a AuthService) LoginUser(ctx context.Context, loginData DTO.LoginUser) (string, error) {
 	user, err := a.UserRepository.FindUserByEmail(ctx, loginData.Email)
 	if err != nil && err.Error() != "User not found" {
 		return "", err

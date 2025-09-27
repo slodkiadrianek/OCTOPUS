@@ -36,7 +36,6 @@ func (ws *WsService) Logs(ctx context.Context, appId string, conn *websocket.Con
 	conn.SetPongHandler(func(string) error {
 		return nil
 	})
-
 	options := container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
@@ -94,3 +93,39 @@ func (ws *WsService) Logs(ctx context.Context, appId string, conn *websocket.Con
 		}
 	}
 }
+
+//ctx := context.Background()
+//cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+//if err != nil {
+//panic(err)
+//}
+//defer cli.Close()
+//
+//// Replace "mycontainer" with your container's name or ID
+//execConfig := types.ExecConfig{
+//Cmd:          []string{"sh"},
+//AttachStdin:  true,
+//AttachStdout: true,
+//AttachStderr: true,
+//Tty:          true,
+//}
+//
+//execIDResp, err := cli.ContainerExecCreate(ctx, "mycontainer", execConfig)
+//if err != nil {
+//panic(err)
+//}
+//
+//resp, err := cli.ContainerExecAttach(ctx, execIDResp.ID, types.ExecStartCheck{Tty: true})
+//if err != nil {
+//panic(err)
+//}
+//defer resp.Close()
+//
+//// Copy input/output between your terminal and the container
+//go func() {
+//	_, _ = os.Stdin.Read(make([]byte, 1)) // Keep stdin open
+//}()
+//_, _ = os.Stdout.ReadFrom(resp.Reader)
+//
+//fmt.Println("Shell session ended")
+//}

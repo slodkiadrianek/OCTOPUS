@@ -3,6 +3,7 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,11 +25,11 @@ type userClaims struct {
 
 type JWT struct {
 	Token        string
-	Logger       utils.Logger
-	CacheService config.CacheService
+	Logger       *utils.Logger
+	CacheService *config.CacheService
 }
 
-func NewJWT(token string, logger utils.Logger, cacheService config.CacheService) *JWT {
+func NewJWT(token string, logger *utils.Logger, cacheService *config.CacheService) *JWT {
 	return &JWT{
 		Token:        token,
 		Logger:       logger,
@@ -67,25 +68,25 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 			}
 		}
 		tokenString := strings.Split(authHeader, " ")[1]
-		// result, err := j.CacheService.ExistsData(r.Context(), "blacklist-"+tokenString)
-		// if err != nil {
-		// 	j.Logger.Info("Failed to check blacklist", err)
-		// 	err := models.NewError(401, "Authorization", "Failed to check blacklist")
-		// 	errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
-		// 	if ok {
-		// 		errBucket.Err = err
-		// 		return
-		// 	}
-		// }
-		// if result > 0 {
-		// 	j.Logger.Info("Token is blacklisted", tokenString)
-		// 	err := models.NewError(401, "Authorization", "Token is blacklisted")
-		// 	errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
-		// 	if ok {
-		// 		errBucket.Err = err
-		// 		return
-		// 	}
-		// }
+		result, err := j.CacheService.ExistsData(r.Context(), "blacklist-"+tokenString)
+		if err != nil {
+			j.Logger.Info("Failed to check blacklist", err)
+			err := models.NewError(401, "Authorization", "Failed to check blacklist")
+			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
+			if ok {
+				errBucket.Err = err
+				return
+			}
+		}
+		if result > 0 {
+			j.Logger.Info("Token is blacklisted", tokenString)
+			err := models.NewError(401, "Authorization", "Token is blacklisted")
+			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
+			if ok {
+				errBucket.Err = err
+				return
+			}
+		}
 		var user userClaims
 		token, err := jwt.ParseWithClaims(tokenString, &user, func(token *jwt.Token) (any, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -176,7 +177,7 @@ func (j JWT) BlacklistUser(next http.Handler) http.Handler {
 			}
 		}
 		expirationTime := time.Until(user.ExpiresAt.Time)
-		err = j.CacheService.SetData(r.Context(), "blackist-"+user.ID, "true", expirationTime)
+		err = j.CacheService.SetData(r.Context(), "blacklist-"+strconv.Itoa(user.Id), "true", expirationTime)
 		if err != nil {
 			j.Logger.Info("Failed to read data properly", tokenString)
 			err := models.NewError(401, "Authorization", "Failed to read token")
@@ -186,5 +187,6 @@ func (j JWT) BlacklistUser(next http.Handler) http.Handler {
 				return
 			}
 		}
+		next.ServeHTTP(w, r)
 	})
 }

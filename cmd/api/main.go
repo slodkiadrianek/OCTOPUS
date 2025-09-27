@@ -19,10 +19,16 @@ import (
 )
 
 func main() {
-	loggerService := utils.NewLogger("./logs", "02.01.2006")
+	loggerService := utils.NewLogger("./logs", "2006-01-02 15:04:05")
+	loggerService.CreateLogger()
 	cfg, err := config.SetConfig("./.env")
 	if err != nil {
 		loggerService.Error("Failed to load config", err)
+		return
+	}
+	err = cfg.Validate()
+	if err != nil {
+		loggerService.Error("Configuration validation failed", err)
 		return
 	}
 	cacheService, err := config.NewCacheService(cfg.CacheLink)
@@ -39,11 +45,11 @@ func main() {
 	userService := services.NewUserService(loggerService, userRepository)
 	appRepository := repository.NewAppRepository(db.DbConnection, loggerService)
 	dockerRepository := repository.NewDockerRepository(db.DbConnection, loggerService)
-	appService := services.NewAppService(appRepository, loggerService, *&cacheService, cfg.DockerHost)
+	appService := services.NewAppService(appRepository, loggerService, cacheService, cfg.DockerHost)
 	wsService := services.NewWsService(loggerService, cfg.DockerHost)
 	serverService := services.NewServerService(loggerService, cacheService)
 	dockerService := services.NewDockerService(dockerRepository, appRepository, loggerService, cfg.DockerHost)
-	jwt := middleware.NewJWT(cfg.JWTSecret, *loggerService, *cacheService)
+	jwt := middleware.NewJWT(cfg.JWTSecret, loggerService, cacheService)
 	authService := services.NewAuthService(loggerService, userRepository, jwt)
 	authController := controllers.NewAuthController(authService, jwt)
 	userController := controllers.NewUserController(userService)

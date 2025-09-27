@@ -17,7 +17,6 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/config"
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/repository"
-	"github.com/slodkiadrianek/octopus/internal/schema"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
@@ -37,7 +36,7 @@ func NewAppService(appRepository *repository.AppRepository, logger *utils.Logger
 	}
 }
 
-func (a *AppService) CreateApp(ctx context.Context, app schema.CreateApp, ownerId int) error {
+func (a *AppService) CreateApp(ctx context.Context, app DTO.CreateApp, ownerId int) error {
 	id, err := utils.GenerateID()
 	if err != nil {
 		return err
@@ -312,7 +311,7 @@ func (a *AppService) SendNotifications(ctx context.Context, appsStatuses []DTO.A
 	return nil
 }
 
-func (a *AppService) UpdateApp(ctx context.Context, appId string, app schema.UpdateApp) error {
+func (a *AppService) UpdateApp(ctx context.Context, appId string, app DTO.UpdateApp) error {
 	err := a.AppRepository.UpdateApp(ctx, appId, app)
 	if err != nil {
 		return err

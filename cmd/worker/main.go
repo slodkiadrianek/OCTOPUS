@@ -12,10 +12,16 @@ import (
 )
 
 func main() {
-	loggerService := utils.NewLogger("./logs", "02.01.2006")
+	loggerService := utils.NewLogger("./logs", "2006-01-02 15:04:05")
+	loggerService.CreateLogger()
 	cfg, err := config.SetConfig("./.env")
 	if err != nil {
 		loggerService.Error("Failed to load config", err)
+		return
+	}
+	err = cfg.Validate()
+	if err != nil {
+		loggerService.Error("Configuration validation failed", err)
 		return
 	}
 	cacheService, err := config.NewCacheService(cfg.CacheLink)
@@ -37,7 +43,8 @@ func main() {
 }
 
 func ticker(ctx context.Context, appService *services.AppService, serverService *services.ServerService, logger *utils.Logger) {
-	ticker := time.NewTicker(15 * time.Second)
+	period := 15 * time.Second
+	ticker := time.NewTicker(period)
 	defer ticker.Stop()
 	for {
 		select {

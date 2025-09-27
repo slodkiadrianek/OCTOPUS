@@ -1,19 +1,17 @@
 package DTO
 
 type CreateRoute struct {
-	Id                 string `json:"id" example:"route1"`
+	Path               string `json:"path" example:"/users"`
 	Method             string `json:"method" example:"GET"`
-	Path               string `json:"path" example:"/users/:id"`
-	QueryData          string `json:"queryData" example:"{page:1, limit:10}"`
-	ParamData          string `json:"paramData" example:"{id:123}"`
-	BodyData           string `json:"bodyData" example:"{name:John, age:30}"`
-	ExpectedStatusCode int    `json:expectedStatusCode" example:"200"`
-	ExpectedBodyData   string `json:expectedBodyData" example:"{name:John, age:30}"`
+	QueryData          string `json:"queryData" example:"id=1"`
+	ParamData          string `json:"paramData" example:"id=1"`
+	BodyData           string `json:"bodyData" example:"id=1"`
+	ExpectedStatusCode int    `json:"expectedStatusCode" example:"200"`
+	ExpectedBodyData   string `json:"expectedBodyData" example:"id=1"`
 }
 
-func NewCreateRoute(id, method, path, queryData, paramData, bodyData string, expectedStatusCode int, predictedBodyData string, appId int) *CreateRoute {
+func NewCreateRoute(method, path, queryData, paramData, bodyData string, expectedStatusCode int, predictedBodyData string, appId int) *CreateRoute {
 	return &CreateRoute{
-		Id:                 id,
 		Method:             method,
 		Path:               path,
 		QueryData:          queryData,

@@ -78,21 +78,7 @@ func (s *Server) SetupRoutes() {
 	wsHandler.SetupWebsocketHandlers(*s.Router)
 	serverHandler.SetupServerHandlers(*s.Router)
 	userHandler.SetupUserHandlers(*s.Router)
-	//usersApi := s.router.Group("/users")
-	//usersApi.GET("/us", func(w http.ResponseWriter, r *http.Request) {
-	//	fmt.Println("Hi")
-	//	w.WriteHeader(http.StatusOK)
-	//	w.Write([]byte("Hi from server"))
-	//})
-	//s.router.GET("/users/:userIdd", func(w http.ResponseWriter, r *http.Request) {
-	//	userId, err := utils.ReadBody[map[string]string](r)
-	//	if err != nil {
-	//		panic(err)
-	//	}
-	//	fmt.Println(userId)
-	//	w.WriteHeader(http.StatusOK)
-	//	w.Write([]byte(`Body readed successfully`))
-	//})
+
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {

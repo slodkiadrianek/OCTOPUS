@@ -5,7 +5,6 @@ import (
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
-	"github.com/slodkiadrianek/octopus/internal/schema"
 	"github.com/slodkiadrianek/octopus/internal/services"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
@@ -25,7 +24,7 @@ func NewAppController(appService *services.AppService, logger *utils.Logger) *Ap
 }
 
 func (a *AppController) CreateApp(w http.ResponseWriter, r *http.Request) {
-	appBody, err := utils.ReadBody[schema.CreateApp](r)
+	appBody, err := utils.ReadBody[DTO.CreateApp](r)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
@@ -47,7 +46,7 @@ func (a *AppController) CreateApp(w http.ResponseWriter, r *http.Request) {
 func (a *AppController) GetApp(w http.ResponseWriter, r *http.Request) {}
 
 func (a *AppController) UpdateApp(w http.ResponseWriter, r *http.Request) {
-	app, err := utils.ReadBody[schema.UpdateApp](r)
+	app, err := utils.ReadBody[DTO.UpdateApp](r)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return

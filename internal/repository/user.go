@@ -7,7 +7,6 @@ import (
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
-	"github.com/slodkiadrianek/octopus/internal/schema"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
@@ -78,7 +77,7 @@ func (u *UserRepository) UpdateUser(ctx context.Context, user DTO.CreateUser, us
 	stmt, err := u.Db.PrepareContext(ctx, query)
 	if err != nil {
 		u.LoggerService.Info("failed to prepare query for execution", query)
-		return models.NewError(500, "Database", "Failed to update data in  database")
+		return models.NewError(500, "Database", "Failed to update data in database")
 	}
 	_, err = stmt.ExecContext(ctx, user.Name, user.Surname, user.Email, userId)
 	if err != nil {
@@ -87,17 +86,18 @@ func (u *UserRepository) UpdateUser(ctx context.Context, user DTO.CreateUser, us
 			"args":  []any{user.Name, user.Surname, user.Email, userId},
 			"err":   err.Error(),
 		})
-		return models.NewError(500, "Database", "Failed to insert data to the database")
+		return models.NewError(500, "Database", "Failed to update data in database")
 	}
 	return nil
 }
 
-func (u *UserRepository) UpdateUserNotifications(ctx context.Context, userId int, userNotifications schema.UpdateUserNotifications) error {
+func (u *UserRepository) UpdateUserNotifications(ctx context.Context, userId int,
+	userNotifications DTO.UpdateUserNotifications) error {
 	query := `UPDATE users SET discord_notifications=$1, slack_notifications=$2, email_notifications=$3 WHERE id=$4`
 	stmt, err := u.Db.PrepareContext(ctx, query)
 	if err != nil {
 		u.LoggerService.Info("failed to prepare query for execution", query)
-		return models.NewError(500, "Database", "Failed to update data in  database")
+		return models.NewError(500, "Database", "Failed to update data in database")
 	}
 
 	_, err = stmt.ExecContext(ctx, userNotifications.DiscordNotifications, userNotifications.SlackNotifications, userNotifications.EmailNotifications, userId)
@@ -107,7 +107,7 @@ func (u *UserRepository) UpdateUserNotifications(ctx context.Context, userId int
 			"args":  []any{userNotifications, userId},
 			"err":   err.Error(),
 		})
-		return models.NewError(500, "Database", "Failed to insert data to the database")
+		return models.NewError(500, "Database", "Failed to update data in database")
 	}
 	return nil
 }
@@ -120,7 +120,7 @@ func (u *UserRepository) DeleteUser(ctx context.Context, password string, userId
 			"query": query,
 			"err":   err.Error(),
 		})
-		return models.NewError(500, "Database", "Failed to update data in  database")
+		return models.NewError(500, "Database", "Failed to delete data from database")
 	}
 
 	_, err = stmt.ExecContext(ctx, userId)
@@ -130,7 +130,7 @@ func (u *UserRepository) DeleteUser(ctx context.Context, password string, userId
 			"args":  []any{password, userId},
 			"err":   err.Error(),
 		})
-		return models.NewError(500, "Database", "Failed to insert data to the database")
+		return models.NewError(500, "Database", "Failed to delete data from database")
 	}
 	return nil
 }
@@ -182,7 +182,7 @@ func (u *UserRepository) ChangeUserPassword(ctx context.Context, userId int, new
 	stmt, err := u.Db.PrepareContext(ctx, query)
 	if err != nil {
 		u.LoggerService.Info("failed to prepare query for execution", query)
-		return models.NewError(500, "Database", "Failed to update data in  database")
+		return models.NewError(500, "Database", "Failed to update data in database")
 	}
 	_, err = stmt.ExecContext(ctx, newPassword, userId)
 	if err != nil {
@@ -191,7 +191,7 @@ func (u *UserRepository) ChangeUserPassword(ctx context.Context, userId int, new
 			"args":  []any{newPassword, userId},
 			"err":   err.Error(),
 		})
-		return models.NewError(500, "Database", "Failed to insert data to the database")
+		return models.NewError(500, "Database", "Failed to update data in database")
 	}
 	return nil
 }

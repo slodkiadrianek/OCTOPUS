@@ -3,6 +3,7 @@ package config
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 )
@@ -18,20 +19,49 @@ type Env struct {
 func ReadFile(filepath string) (map[string]string, error) {
 	file, err := os.OpenFile(filepath, os.O_RDONLY, 0o644)
 	if err != nil {
-		return map[string]string{}, errors.New("failed to open a file")
+		return nil, fmt.Errorf("failed to open file %s: %w", filepath, err)
 	}
 	defer file.Close()
 	envVariables := make(map[string]string)
 	scanner := bufio.NewScanner(file)
+	lineNum := 0
 	for scanner.Scan() {
-		line := scanner.Text()
-		lineSplitted := strings.SplitN(line, "=", 2)
-		envVariables[lineSplitted[0]] = lineSplitted[1]
+		lineNum++
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid format at line %d: %s", lineNum, line)
+		}
+		key := strings.TrimSpace(parts[0])
+		value := strings.TrimSpace(parts[1])
+		if key == "" {
+			return nil, fmt.Errorf("empty key at line %d", lineNum)
+		}
+		envVariables[key] = value
 	}
-	if err := scanner.Err(); err != nil {
-		return map[string]string{}, errors.New("failed to scan a file")
+	return envVariables, scanner.Err()
+}
+
+func (e *Env) Validate() error {
+	if e.Port == "" {
+		return errors.New("PORT is required")
 	}
-	return envVariables, nil
+	if e.JWTSecret == "" {
+		return errors.New("JWT_SECRET is required")
+	}
+	if e.DbLink == "" {
+		return errors.New("DbLink is required")
+	}
+	if e.CacheLink == "" {
+		return errors.New("CacheLink is required")
+	}
+	if e.DockerHost == "" {
+		return errors.New("DockerHost is required")
+	}
+	return nil
 }
 
 func SetConfig(filepath string) (*Env, error) {
@@ -44,6 +74,6 @@ func SetConfig(filepath string) (*Env, error) {
 		JWTSecret:  envVariables["JWTSecret"],
 		DbLink:     envVariables["DbLink"],
 		CacheLink:  envVariables["CacheLink"],
-		DockerHost: envVariables["DOCKER_HOST"],
+		DockerHost: envVariables["DockerHost"],
 	}, nil
 }

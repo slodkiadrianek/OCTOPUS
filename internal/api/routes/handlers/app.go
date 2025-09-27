@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/api/routes"
 	"github.com/slodkiadrianek/octopus/internal/controllers"
 	"github.com/slodkiadrianek/octopus/internal/middleware"
@@ -23,13 +24,15 @@ func NewAppAppHandler(appController *controllers.AppController, dockerController
 
 func (a AppSettingsHandlers) SetupAppHandlers(router routes.Router) {
 	appGroup := router.Group("/api/v1/app")
-	appGroup.POST("", a.JWT.VerifyToken, middleware.ValidateMiddleware[schema.CreateApp]("body", schema.CreateAppSchema), a.AppController.CreateApp)
+	appGroup.POST("", a.JWT.VerifyToken, middleware.ValidateMiddleware[DTO.CreateApp]("body", schema.CreateAppSchema),
+		a.AppController.CreateApp)
 	appGroup.POST("/docker/import", a.JWT.VerifyToken, a.DockerController.ImportDockerContainers)
 	appGroup.GET("/:appId/logs", a.JWT.VerifyToken, a.AppController.GetLogs)
-	appGroup.GET("/:appId/status", a.JWT.VerifyToken, middleware.ValidateMiddleware[schema.AppId]("params", schema.AppIdSchema), a.AppController.GetAppStatus)
-	appGroup.PUT("/:appId", a.JWT.VerifyToken, middleware.ValidateMiddleware[schema.AppId]("params", schema.AppIdSchema),
-		middleware.ValidateMiddleware[schema.UpdateApp]("body", schema.UpdateAppSchema), a.AppController.UpdateApp)
-	appGroup.DELETE("/:appId", a.JWT.VerifyToken, middleware.ValidateMiddleware[schema.AppId]("params",
+	appGroup.GET("/:appId/status", a.JWT.VerifyToken, middleware.ValidateMiddleware[DTO.AppId]("params",
+		schema.AppIdSchema), a.AppController.GetAppStatus)
+	appGroup.PUT("/:appId", a.JWT.VerifyToken, middleware.ValidateMiddleware[DTO.AppId]("params", schema.AppIdSchema),
+		middleware.ValidateMiddleware[DTO.UpdateApp]("body", schema.UpdateAppSchema), a.AppController.UpdateApp)
+	appGroup.DELETE("/:appId", a.JWT.VerifyToken, middleware.ValidateMiddleware[DTO.AppId]("params",
 		schema.AppIdSchema), a.AppController.DeleteApp)
 
 }

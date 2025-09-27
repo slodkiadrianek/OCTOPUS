@@ -9,7 +9,6 @@ import (
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
-	"github.com/slodkiadrianek/octopus/internal/schema"
 	"github.com/slodkiadrianek/octopus/internal/services"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
@@ -25,7 +24,7 @@ func NewUserController(userService *services.UserService) *UserController {
 }
 
 func (u *UserController) InsertUser(w http.ResponseWriter, r *http.Request) {
-	userBody, err := utils.ReadBody[schema.CreateUser](r)
+	userBody, err := utils.ReadBody[DTO.CreateUser](r)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
@@ -40,7 +39,7 @@ func (u *UserController) InsertUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	userBody, err := utils.ReadBody[schema.UpdateUser](r)
+	userBody, err := utils.ReadBody[DTO.UpdateUser](r)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
@@ -64,7 +63,7 @@ func (u *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	utils.SendResponse(w, 204, map[string]string{})
 }
 func (u *UserController) UpdateUserNotifications(w http.ResponseWriter, r *http.Request) {
-	userBody, err := utils.ReadBody[schema.UpdateUserNotifications](r)
+	userBody, err := utils.ReadBody[DTO.UpdateUserNotifications](r)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
@@ -88,7 +87,7 @@ func (u *UserController) UpdateUserNotifications(w http.ResponseWriter, r *http.
 }
 
 func (u *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	userBody, err := utils.ReadBody[schema.DeleteUser](r)
+	userBody, err := utils.ReadBody[DTO.DeleteUser](r)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
@@ -109,8 +108,9 @@ func (u *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Request) {
-	userBody, err := utils.ReadBody[schema.ChangeUserPassword](r)
+	userBody, err := utils.ReadBody[DTO.ChangeUserPassword](r)
 	if err != nil {
+		utils.SetError(w, r, err)
 		return
 	}
 	userIdString, err := utils.ReadParam(r, "userId")

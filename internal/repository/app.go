@@ -7,7 +7,6 @@ import (
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
-	"github.com/slodkiadrianek/octopus/internal/schema"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
@@ -71,7 +70,7 @@ func (a *AppRepository) GetApp(ctx context.Context, id int) (*models.App, error)
 			"args":  id,
 			"err":   err.Error(),
 		})
-		return nil, err
+		return nil, models.NewError(500, "Database", "Failed to get data from database")
 	}
 	return &app, nil
 }
@@ -93,40 +92,9 @@ func (a *AppRepository) DeleteApp(ctx context.Context, id string) error {
 			"args":  id,
 			"err":   err.Error(),
 		})
+		return models.NewError(500, "Database", "Failed to delete app from database")
 	}
 	return nil
-}
-
-func (a *AppRepository) GetAppServerAddress(ctx context.Context, id int) (string, error) {
-	query := `SELECT apiLink FROM apps WHERE id = $1`
-	row := a.Db.QueryRowContext(ctx, query, id)
-	var appServerAddress string
-	err := row.Scan(&appServerAddress)
-	if err != nil {
-		a.Logger.Error("Failed to execute a select query", map[string]any{
-			"query": query,
-			"args":  id,
-			"err":   err.Error(),
-		})
-		return "", err
-	}
-	return appServerAddress, nil
-}
-
-func (a *AppRepository) GetDbServerAddress(ctx context.Context, id int) (string, error) {
-	query := `SELECT dbLink FROM apps WHERE id = $1`
-	row := a.Db.QueryRowContext(ctx, query, id)
-	var dbServerAddress string
-	err := row.Scan(&dbServerAddress)
-	if err != nil {
-		a.Logger.Error("Failed to execute a select query", map[string]any{
-			"query": query,
-			"args":  id,
-			"err":   err.Error(),
-		})
-		return "", err
-	}
-	return dbServerAddress, nil
 }
 
 func (a *AppRepository) GetAppStatus(ctx context.Context, id string) (DTO.AppStatus, error) {
@@ -137,7 +105,7 @@ func (a *AppRepository) GetAppStatus(ctx context.Context, id string) (DTO.AppSta
 			"query": query,
 			"err":   err.Error(),
 		})
-		return DTO.AppStatus{}, err
+		return DTO.AppStatus{}, models.NewError(500, "Database", "Failed to get data from database")
 	}
 	defer stmt.Close()
 	var appStatus DTO.AppStatus
@@ -148,20 +116,21 @@ func (a *AppRepository) GetAppStatus(ctx context.Context, id string) (DTO.AppSta
 			"args":  id,
 			"err":   err.Error(),
 		})
-		return DTO.AppStatus{}, err
+		return DTO.AppStatus{}, models.NewError(500, "Database", "Failed to get data from database")
 	}
 	return appStatus, nil
 }
 
 func (a *AppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppToCheck, error) {
-	query := `SELECT
+	query := `
+	SELECT
 	    a.id,
 	    a.name,
-			a.owner_id,
+		a.owner_id,
 	    a.is_docker,
 	    a.ip_address,
 	    a.port,
-			COALESCE(aps.status, 'stopped')
+		COALESCE(aps.status, 'stopped')
     FROM apps a
 		LEFT JOIN apps_statuses aps ON a.id = aps.app_id`
 	stmt, err := a.Db.PrepareContext(ctx, query)
@@ -170,7 +139,7 @@ func (a *AppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppToChec
 			"query": query,
 			"err":   err.Error(),
 		})
-		return nil, err
+		return nil, models.NewError(500, "Database", "Failed to get data from database")
 	}
 	defer stmt.Close()
 	rows, err := stmt.QueryContext(ctx)
@@ -179,7 +148,7 @@ func (a *AppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppToChec
 			"query": query,
 			"err":   err.Error(),
 		})
-		return nil, err
+		return nil, models.NewError(500, "Database", "Failed to get data from database")
 	}
 	defer rows.Close()
 	apps := make([]*models.AppToCheck, 0)
@@ -191,7 +160,7 @@ func (a *AppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppToChec
 				"query": query,
 				"err":   err.Error(),
 			})
-			return nil, err
+			return nil, models.NewError(500, "Database", "Failed to get data from database")
 		}
 		apps = append(apps, app)
 	}
@@ -200,12 +169,12 @@ func (a *AppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppToChec
 			"query": query,
 			"err":   err.Error(),
 		})
-		return nil, err
+		return nil, models.NewError(500, "Database", "Failed to get data from database")
 	}
 	return apps, nil
 }
 
-func (a *AppRepository) UpdateApp(ctx context.Context, appId string, app schema.UpdateApp) error {
+func (a *AppRepository) UpdateApp(ctx context.Context, appId string, app DTO.UpdateApp) error {
 	query := "UPDATE apps SET name = $1 , description = $2, ip_address = $3, port = $4, discord_webhook = $5, slack_webhook = $6 WHERE id = $7 "
 	stmt, err := a.Db.PrepareContext(ctx, query)
 	if err != nil {
@@ -213,7 +182,7 @@ func (a *AppRepository) UpdateApp(ctx context.Context, appId string, app schema.
 			"query": query,
 			"err":   err.Error(),
 		})
-		return err
+		return models.NewError(500, "Database", "Failed to update data in the database")
 	}
 	_, err = stmt.ExecContext(ctx, app.Name, app.Description, app.IpAddress, app.Port, app.DiscordWebhook, app.SlackWebhook, appId)
 	if err != nil {
@@ -225,7 +194,7 @@ func (a *AppRepository) UpdateApp(ctx context.Context, appId string, app schema.
 			},
 			"err": err.Error(),
 		})
-		return err
+		return models.NewError(500, "Database", "Failed to update data in the database")
 	}
 	return nil
 }
@@ -286,18 +255,18 @@ func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsSta
 	}
 	query := fmt.Sprintf(`
 	SELECT
-    a.id,
-    a.name,
+		a.id,
+		a.name,
 		aps.status,
-    a.discord_webhook,
-    a.slack_webhook,
-    u.email,
-    u.email_notifications,
-    u.discord_notifications,
-    u.slack_notifications
+		a.discord_webhook,
+		a.slack_webhook,
+		u.email,
+		u.email_notifications,
+		u.discord_notifications,
+		u.slack_notifications
 	FROM apps a
-	INNER JOIN apps_statuses aps ON aps.app_id = a.id
-	INNER JOIN users u ON u.id = a.owner_id
+		INNER JOIN apps_statuses aps ON aps.app_id = a.id
+		INNER JOIN users u ON u.id = a.owner_id
 	WHERE a.id IN (%s)`, values)
 	stmt, err := a.Db.PrepareContext(ctx, query)
 	if err != nil {
@@ -306,7 +275,7 @@ func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsSta
 			"args":  appsStatuses,
 			"err":   err.Error(),
 		})
-		return []models.SendNotificationTo{}, models.NewError(500, "Database", "Failed to get app from  the database")
+		return []models.SendNotificationTo{}, models.NewError(500, "Database", "Failed to get app from the database")
 	}
 	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
@@ -326,7 +295,7 @@ func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsSta
 				"query": query,
 				"err":   err.Error(),
 			})
-			return nil, err
+			return nil, models.NewError(500, "Database", "Failed to get app from the database")
 		}
 		dataToSendNotifications = append(dataToSendNotifications, objectToSendNotification)
 	}
@@ -335,7 +304,7 @@ func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsSta
 			"query": query,
 			"err":   err.Error(),
 		})
-		return nil, err
+		return nil, models.NewError(500, "Database", "Failed to get app from the database")
 	}
 	return dataToSendNotifications, nil
 }
