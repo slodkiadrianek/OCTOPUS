@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/slodkiadrianek/octopus/internal/models"
@@ -19,12 +20,12 @@ func ErrorHandler(next http.Handler) http.Handler {
 		if errVal == nil {
 			return
 		}
-
 		err, ok := errVal.(error)
 		if !ok || err == nil {
 			return
 		}
-		customErr, isCustomErr := err.(*models.Error)
+		var customErr *models.Error
+		isCustomErr := errors.As(err, &customErr)
 		if isCustomErr {
 			if customErr == nil {
 				utils.SendResponse(w, 500, map[string]string{

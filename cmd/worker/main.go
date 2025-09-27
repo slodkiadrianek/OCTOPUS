@@ -14,6 +14,8 @@ import (
 func main() {
 	loggerService := utils.NewLogger("./logs", "2006-01-02 15:04:05")
 	loggerService.CreateLogger()
+	defer loggerService.Close()
+
 	cfg, err := config.SetConfig("./.env")
 	if err != nil {
 		loggerService.Error("Failed to load config", err)

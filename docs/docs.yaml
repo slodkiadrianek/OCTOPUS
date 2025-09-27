@@ -1,0 +1,250 @@
+openapi: 3.0.4
+info:
+  title: OCTOPUS
+  description: |-
+    This is a simple app to manage your apps from docker and other environments
+  termsOfService: https://swagger.io/terms/
+  contact:
+    email: adikurek11@gmail.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+  - url: /api/v1
+
+tags:
+  - name: auth
+    description: Everything about authentication,login and registering
+  - name: app
+    description: All unique operations on applications
+  - name: docker
+    description: All operations on docker containers
+  - name: websocket
+    description: All websocket operations
+  - name: user
+    description: Operations on user
+paths:
+  /users/{userId}:
+    put:
+      tags:
+        - user
+      summary: Update user
+      description: Update users account.
+      operationId: updateUser
+      parameters:
+        - name: userId
+          in: path
+          description: The ID of the user
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Updated user object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUser'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/UpdateUser'
+      responses:
+        '204':
+          description: Successful operation
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      tags:
+        - user
+      summary: Change user's password
+      description: Change the password for a specific user
+      operationId: changeUserPassword
+      parameters:
+        - name: userId
+          in: path
+          description: The ID of the user
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Password change object
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currentPassword:
+                  type: string
+                newPassword:
+                  type: string
+                confirmPassword:
+                  type: string
+              required:
+                - currentPassword
+                - newPassword
+                - confirmPassword
+      responses:
+        '204':
+          description: Password changed successfully
+          headers:
+            X-Rate-Limit:
+              description: Calls per hour allowed by the user
+              schema:
+                type: integer
+                format: int32
+            X-Expires-After:
+              description: Date in UTC when token expires
+              schema:
+                type: string
+                format: date-time
+        '400':
+          description: Invalid username/password supplied
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags:
+        - user
+      summary: Delete user resource.
+      description: This can only be done by the logged in user.
+      operationId: deleteUser
+      parameters:
+        - name: userId
+          in: path
+          description: The name that needs to be deleted
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: User deleted
+        '400':
+          description: Invalid userId supplied
+        '404':
+          description: User not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /users/{userId}/notifications:
+    put:
+      tags:
+        - user
+      summary: Update user notifications settings.
+      description: Update user notifications settings.
+      operationId: UpdateUsersNotificationsSettings
+      parameters:
+        - name: userId
+          in: path
+          description: The id of the user
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/UpdateUserNotifications'
+      responses:
+        '204':
+          description: Successful operation
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    UpdateUser:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Joe
+        surname:
+          type: string
+          example: Doe
+        email:
+          type: string
+          example: john@email.com
+      xml:
+        name: updateUser
+    UpdateUserNotifications:
+      type: object
+      properties:
+        discordNotifications:
+          type: boolean
+          example: true
+        slackNotifications:
+          type: boolean
+          example: false
+        emailNotifications:
+          type: boolean
+          example: false
+      xml:
+        name: updateUserNotifications
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 10
+        username:
+          type: string
+          example: theUser
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: James
+        email:
+          type: string
+          example: john@email.com
+        password:
+          type: string
+          example: '12345'
+        phone:
+          type: string
+          example: '12345'
+        userStatus:
+          type: integer
+          description: User Status
+          format: int32
+          example: 1
+      xml:
+        name: user
+    Error:
+      type: object
+      properties:
+        errorCategory:
+          type: string
+        errorDescription:
+          type: string
+      required:
+        - errorCategory
+        - errorDescription
+  requestBodies:
+    UserArray:
+      description: List of user object
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/User'

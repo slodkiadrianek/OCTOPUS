@@ -130,3 +130,9 @@ func (l *Logger) Validate() {
 		l.File = file
 	}
 }
+func (l *Logger) Close() error {
+	if l.File != nil {
+		return l.File.Close()
+	}
+	return nil
+}
