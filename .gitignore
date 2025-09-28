@@ -19,3 +19,23 @@ Thumbs.db
 *.out
 
 .env
+# Go build stuff
+bin/
+*.out
+
+# Git files
+.git
+.gitignore
+
+# Tests
+tests/
+coverage.out
+
+# Env files (better to mount at runtime)
+.env
+.env.*
+test.env
+
+# IDE/editor configs
+.vscode/
+*.swp
