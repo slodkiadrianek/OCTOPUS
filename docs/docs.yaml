@@ -2,35 +2,312 @@ openapi: 3.1.0
 info:
   title: OCTOPUS
   description: |-
-    This is a simple app to manage your apps from docker and other environments
+    OCTOPUS is a simple app to manage your applications from Docker and other environments.
   termsOfService: https://swagger.io/terms/
   contact:
     email: adikurek11@gmail.com
   license:
-    name: Apache 2.0
-    url: https://www.apache.org/licenses/LICENSE-2.0.html
+    name: MIT
   version: 1.0.0
+
 servers:
   - url: /api/v1
 
 tags:
   - name: auth
-    description: Everything about authentication,login and registering
+    description: Everything about authentication, login and registering
   - name: app
-    description: All unique operations on applications
+    description: All operations related to applications
+  - name: server
+    description: Server metrics and resource data
   - name: docker
-    description: All operations on docker containers
+    description: Operations on Docker containers
   - name: websocket
-    description: All websocket operations
+    description: WebSocket operations
   - name: user
-    description: Operations on user
+    description: Operations related to users
+
 paths:
+  /apps/{appId}/logs:
+    get:
+      tags:
+        - websocket
+      summary: Stream live logs of an app
+      description: Establish a WebSocket connection to stream live logs for the specified app.
+      operationId: liveLogsApp
+      parameters:
+        - name: appId
+          in: path
+          description: The ID of the app
+          required: true
+          schema:
+            type: string
+      servers:
+        - url: /ws/v1
+      responses:
+        '101':
+          description: WebSocket protocol upgrade (Switching Protocols)
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /apps/docker/import:
+    post:
+      security:
+        - bearerAuth: []
+      tags:
+        - docker
+      summary: Import applications from Docker
+      description: Import applications available in Docker into the system.
+      operationId: dockerImportApp
+      responses:
+        '201':
+          description: Applications imported successfully
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /apps:
+    post:
+      security:
+        - bearerAuth: []
+      tags:
+        - app
+      summary: Create a new app
+      description: Create a new application.
+      operationId: createApp
+      requestBody:
+        description: Create app object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateApp'
+      responses:
+        '201':
+          description: Application created successfully
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /apps/{appId}:
+    put:
+      security:
+        - bearerAuth: []
+      tags:
+        - app
+      summary: Update an app
+      description: Update an existing application.
+      operationId: updateApp
+      parameters:
+        - name: appId
+          in: path
+          description: The ID of the app
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Update app object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateApp'
+      responses:
+        '204':
+          description: App updated successfully
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    delete:
+      security:
+        - bearerAuth: []
+      tags:
+        - app
+      summary: Delete an app
+      description: Delete an existing application.
+      operationId: deleteApp
+      parameters:
+        - name: appId
+          in: path
+          description: The ID of the app
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: App deleted successfully
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /apps/{appId}/status:
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - app
+      summary: Get status of an app
+      description: Retrieve the current status of an application.
+      operationId: statusApp
+      parameters:
+        - name: appId
+          in: path
+          description: The ID of the app
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusApp"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/register:
+    post:
+      tags:
+        - auth
+      summary: Register a new user
+      description: Register a new user account.
+      operationId: registerUser
+      requestBody:
+        description: Create user object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUser'
+      responses:
+        '201':
+          description: User registered successfully
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/login:
+    post:
+      tags:
+        - auth
+      summary: User login
+      description: Authenticate a user and return a token.
+      operationId: loginUser
+      requestBody:
+        description: Login user object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginUser'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/check:
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - auth
+      summary: Check if user is logged in
+      description: Verify if the current user session is valid.
+      operationId: loginCheckUser
+      responses:
+        '204':
+          description: User is logged in
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/logout:
+    delete:
+      security:
+        - bearerAuth: []
+      tags:
+        - auth
+      summary: Log out a user
+      description: Invalidate the current user session.
+      operationId: logoutUser
+      responses:
+        '204':
+          description: User logged out successfully
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /server/metrics:
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - server
+      summary: Get server metrics
+      description: Retrieve information about server resource usage.
+      operationId: serverMetrics
+      responses:
+        '200':
+          description: Server metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerMetrics"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /users/{userId}:
     put:
+      security:
+        - bearerAuth: []
       tags:
         - user
       summary: Update user
-      description: Update users account.
+      description: Update a user’s account information.
       operationId: updateUser
       parameters:
         - name: userId
@@ -46,23 +323,23 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateUser'
-          application/xml:
-            schema:
-              $ref: '#/components/schemas/UpdateUser'
       responses:
         '204':
-          description: Successful operation
+          description: User updated successfully
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+
     patch:
+      security:
+        - bearerAuth: []
       tags:
         - user
-      summary: Change user's password
-      description: Change the password for a specific user
+      summary: Change user password
+      description: Change the password for a specific user.
       operationId: changeUserPassword
       parameters:
         - name: userId
@@ -92,41 +369,33 @@ paths:
       responses:
         '204':
           description: Password changed successfully
-          headers:
-            X-Rate-Limit:
-              description: Calls per hour allowed by the user
-              schema:
-                type: integer
-                format: int32
-            X-Expires-After:
-              description: Date in UTC when token expires
-              schema:
-                type: string
-                format: date-time
         '400':
-          description: Invalid username/password supplied
+          description: Invalid username or password supplied
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+
     delete:
+      security:
+        - bearerAuth: []
       tags:
         - user
-      summary: Delete user resource.
-      description: This can only be done by the logged in user.
+      summary: Delete a user
+      description: Delete a user account. This can only be done by the logged-in user.
       operationId: deleteUser
       parameters:
         - name: userId
           in: path
-          description: The name that needs to be deleted
+          description: The ID of the user
           required: true
           schema:
             type: string
       responses:
         '204':
-          description: User deleted
+          description: User deleted successfully
         '400':
           description: Invalid userId supplied
         '404':
@@ -137,17 +406,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+
   /users/{userId}/notifications:
     put:
+      security:
+        - bearerAuth: []
       tags:
         - user
-      summary: Update user notifications settings.
-      description: Update user notifications settings.
-      operationId: UpdateUsersNotificationsSettings
+      summary: Update user notification settings
+      description: Update notification preferences for a specific user.
+      operationId: updateUserNotificationsSettings
       parameters:
         - name: userId
           in: path
-          description: The id of the user
+          description: The ID of the user
           required: true
           schema:
             type: string
@@ -160,15 +432,44 @@ paths:
                 $ref: '#/components/schemas/UpdateUserNotifications'
       responses:
         '204':
-          description: Successful operation
+          description: Notification settings updated successfully
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
+    ServerMetrics:
+      type: array
+      items:
+        type: object
+        properties:
+          CPU:
+            type: integer
+            example: 2
+          RAM:
+            type: integer
+            example: 22
+          Disk:
+            type: integer
+            example: 43
+          Date:
+            type: string
+            example: "2025-04-07"
+        xml:
+          name: serverMetric
+      xml:
+        name: serverMetrics
+
     UpdateUser:
       type: object
       properties:
@@ -183,6 +484,7 @@ components:
           example: john@email.com
       xml:
         name: updateUser
+
     UpdateUserNotifications:
       type: object
       properties:
@@ -197,38 +499,112 @@ components:
           example: false
       xml:
         name: updateUserNotifications
-    User:
+
+    CreateApp:
       type: object
       properties:
-        id:
+        name:
+          type: string
+          example: My app
+        description:
+          type: string
+          example: Weather app
+        ipAddress:
+          type: string
+          example: 192.168.0.100
+        port:
+          type: string
+          example: 3020
+        discordWebhook:
+          type: string
+          example: https://discord.com/api/webhooks/1234567890/abcdefghijklmnopqrstuvwxyz
+        slackWebhook:
+          type: string
+          example: https://hooks.slack.com/services/1234567890/abcdefghijklmnopqrstuvwxyz
+      xml:
+        name: createApp
+
+    UpdateApp:
+      type: object
+      properties:
+        name:
+          type: string
+          example: My app
+        description:
+          type: string
+          example: Weather app
+        ipAddress:
+          type: string
+          example: 192.168.0.100
+        port:
+          type: string
+          example: 3020
+        discordWebhook:
+          type: string
+          example: https://discord.com/api/webhooks/1234567890/abcdefghijklmnopqrstuvwxyz
+        slackWebhook:
+          type: string
+          example: https://hooks.slack.com/services/1234567890/abcdefghijklmnopqrstuvwxyz
+      xml:
+        name: updateApp
+
+    StatusApp:
+      type: object
+      properties:
+        appId:
+          type: string
+          example: d23jd9823hd239hd238d
+        status:
+          type: string
+          example: running
+        changedAt:
+          type: string
+          example: 2025-06-07 12:23:24
+        duration:
           type: integer
-          format: int64
-          example: 10
-        username:
+          example: 23423
+      xml:
+        name: statusApp
+
+    CreateUser:
+      type: object
+      properties:
+        name:
           type: string
-          example: theUser
-        firstName:
+          example: Joe
+        surname:
           type: string
-          example: John
-        lastName:
-          type: string
-          example: James
+          example: Doe
         email:
           type: string
           example: john@email.com
         password:
           type: string
-          example: '12345'
-        phone:
-          type: string
-          example: '12345'
-        userStatus:
-          type: integer
-          description: User Status
-          format: int32
-          example: 1
+          example: jzaq!2234RFv@
       xml:
-        name: user
+        name: createUser
+
+    LoginUser:
+      type: object
+      properties:
+        email:
+          type: string
+          example: john@email.com
+        password:
+          type: string
+          example: jzaq!2234RFv@
+      xml:
+        name: loginUser
+
+    Token:
+      type: object
+      properties:
+        token:
+          type: string
+          example: d23dj328dd32092823udd23423423423e32xr23rx23
+      xml:
+        name: token
+
     Error:
       type: object
       properties:
@@ -239,12 +615,3 @@ components:
       required:
         - errorCategory
         - errorDescription
-  requestBodies:
-    UserArray:
-      description: List of user object
-      content:
-        application/json:
-          schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/User'
