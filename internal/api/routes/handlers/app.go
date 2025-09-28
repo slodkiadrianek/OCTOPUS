@@ -23,11 +23,11 @@ func NewAppAppHandler(appController *controllers.AppController, dockerController
 }
 
 func (a AppSettingsHandlers) SetupAppHandlers(router routes.Router) {
-	appGroup := router.Group("/api/v1/app")
+	appGroup := router.Group("/api/v1/apps")
 	appGroup.POST("", a.JWT.VerifyToken, middleware.ValidateMiddleware[DTO.CreateApp]("body", schema.CreateAppSchema),
 		a.AppController.CreateApp)
 	appGroup.POST("/docker/import", a.JWT.VerifyToken, a.DockerController.ImportDockerContainers)
-	appGroup.GET("/:appId/logs", a.JWT.VerifyToken, a.AppController.GetLogs)
+	//appGroup.GET("/:appId/logs", a.JWT.VerifyToken, a.AppController.GetLogs)
 	appGroup.GET("/:appId/status", a.JWT.VerifyToken, middleware.ValidateMiddleware[DTO.AppId]("params",
 		schema.AppIdSchema), a.AppController.GetAppStatus)
 	appGroup.PUT("/:appId", a.JWT.VerifyToken, middleware.ValidateMiddleware[DTO.AppId]("params", schema.AppIdSchema),

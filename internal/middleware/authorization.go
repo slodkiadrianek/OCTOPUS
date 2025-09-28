@@ -3,7 +3,6 @@ package middleware
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -177,7 +176,7 @@ func (j JWT) BlacklistUser(next http.Handler) http.Handler {
 			}
 		}
 		expirationTime := time.Until(user.ExpiresAt.Time)
-		err = j.CacheService.SetData(r.Context(), "blacklist-"+strconv.Itoa(user.Id), "true", expirationTime)
+		err = j.CacheService.SetData(r.Context(), "blacklist-"+tokenString, "true", expirationTime)
 		if err != nil {
 			j.Logger.Info("Failed to read data properly", tokenString)
 			err := models.NewError(401, "Authorization", "Failed to read token")
