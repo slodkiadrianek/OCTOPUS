@@ -45,7 +45,8 @@ func (dc *DockerService) RestartContainer(ctx context.Context, appId string) err
 		return err
 	}
 	defer cli.Close()
-	err = cli.ContainerRestart(ctx, appId, containertypes.StopOptions{})
+	err = cli.ContainerStop(ctx, appId, containertypes.StopOptions{})
+	err = cli.ContainerStart(ctx, appId, containertypes.StartOptions{})
 	return err
 }
 

@@ -26,7 +26,7 @@ func (a AppSettingsHandlers) SetupAppHandlers(router routes.Router) {
 	appGroup := router.Group("/api/v1/apps")
 	appGroup.POST("", a.JWT.VerifyToken, middleware.ValidateMiddleware[DTO.CreateApp]("body", schema.CreateAppSchema),
 		a.AppController.CreateApp)
-	appGroup.GET("/:appId/docker/stop", a.JWT.VerifyToken, a.DockerController.StopContainer)
+	appGroup.PUT("/:appId/docker/stop", a.JWT.VerifyToken, a.DockerController.StopContainer)
 	appGroup.PUT("/:appId/docker/start", a.JWT.VerifyToken, a.DockerController.StartContainer)
 	appGroup.PUT("/:appId/docker/restart", a.JWT.VerifyToken, a.DockerController.RestartContainer)
 	appGroup.PUT("/:appId/docker/pause", a.JWT.VerifyToken, a.DockerController.PauseContainer)
