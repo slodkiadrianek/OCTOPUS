@@ -6,6 +6,7 @@ import (
 
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
+	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/mem"
 	"github.com/slodkiadrianek/octopus/internal/config"
 	"github.com/slodkiadrianek/octopus/internal/models"
@@ -36,6 +37,41 @@ func (s *ServerService) GetServerMetrics(ctx context.Context) ([]models.ServerMe
 		return nil, err
 	}
 	return *existingMetrics, nil
+}
+
+func (s *ServerService) GetServerInfo() (models.ServerInfo, error) {
+	cpuInfo, err := cpu.Info()
+	if err != nil {
+		s.Logger.Warn("Failed to read cpu data", err)
+		return models.ServerInfo{}, err
+	}
+	ram, err := mem.VirtualMemory()
+	if err != nil {
+		s.Logger.Warn("Failed to read memory data", err)
+		return models.ServerInfo{}, err
+	}
+	diskUsage, err := disk.Usage("./")
+	if err != nil {
+		s.Logger.Warn("Failed to read disk data", err)
+		return models.ServerInfo{}, err
+	}
+	workTime, err := host.Uptime()
+	if err != nil {
+		s.Logger.Warn("Failed to uptime  data", err)
+		return models.ServerInfo{}, err
+	}
+	info, err := host.Info()
+	if err != nil {
+		s.Logger.Warn("Failed to info data", err)
+		return models.ServerInfo{}, err
+	}
+
+	modelName := cpuInfo[0].ModelName
+	uptime := workTime / 60
+	ramTotal := ram.Total / 1000 / 1000 / 1000
+	diskTotal := diskUsage.Total / 1000 / 1000 / 1000
+	serverInfo := models.NewServerInfo(modelName, info.OS, info.Platform, info.KernelVersion, ramTotal, diskTotal, uptime)
+	return *serverInfo, nil
 }
 
 func (s *ServerService) InsertServerMetrics(ctx context.Context) error {

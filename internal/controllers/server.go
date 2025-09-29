@@ -20,6 +20,15 @@ func NewServerController(logger *utils.Logger, serverService *services.ServerSer
 	}
 }
 
+func (s *ServerController) GetServerInfo(w http.ResponseWriter, r *http.Request) {
+	serverInfo, err := s.ServerService.GetServerInfo()
+	if err != nil {
+		utils.SetError(w, r, err)
+		return
+	}
+	utils.SendResponse(w, 200, serverInfo)
+}
+
 func (s *ServerController) GetServerMetrics(w http.ResponseWriter, r *http.Request) {
 	serverMetrics, err := s.ServerService.GetServerMetrics(r.Context())
 	if err != nil {
