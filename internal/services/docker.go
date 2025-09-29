@@ -29,6 +29,55 @@ func NewDockerService(dockerRepository *repository.DockerRepository, appReposito
 	}
 }
 
+func (dc *DockerService) PauseContainer(ctx context.Context, appId string) error {
+	cli, err := client.NewClientWithOpts(client.WithHost(dc.DockerHost), client.WithAPIVersionNegotiation())
+	if err != nil {
+		return err
+	}
+	defer cli.Close()
+	err = cli.ContainerPause(ctx, appId)
+	return err
+}
+
+func (dc *DockerService) RestartContainer(ctx context.Context, appId string) error {
+	cli, err := client.NewClientWithOpts(client.WithHost(dc.DockerHost), client.WithAPIVersionNegotiation())
+	if err != nil {
+		return err
+	}
+	defer cli.Close()
+	err = cli.ContainerRestart(ctx, appId, containertypes.StopOptions{})
+	return err
+}
+
+func (dc *DockerService) StartContainer(ctx context.Context, appId string) error {
+	cli, err := client.NewClientWithOpts(client.WithHost(dc.DockerHost), client.WithAPIVersionNegotiation())
+	if err != nil {
+		return err
+	}
+	defer cli.Close()
+	err = cli.ContainerStart(ctx, appId, containertypes.StartOptions{})
+	return err
+}
+
+func (dc *DockerService) UnpauseContainer(ctx context.Context, appId string) error {
+	cli, err := client.NewClientWithOpts(client.WithHost(dc.DockerHost), client.WithAPIVersionNegotiation())
+	if err != nil {
+		return err
+	}
+	defer cli.Close()
+	err = cli.ContainerUnpause(ctx, appId)
+	return err
+}
+func (dc *DockerService) StopContainer(ctx context.Context, appId string) error {
+	cli, err := client.NewClientWithOpts(client.WithHost(dc.DockerHost), client.WithAPIVersionNegotiation())
+	if err != nil {
+		return err
+	}
+	defer cli.Close()
+	err = cli.ContainerStop(ctx, appId, containertypes.StopOptions{})
+	return err
+}
+
 func (dc *DockerService) ImportContainers(ctx context.Context, ownerId int) error {
 	cli, err := client.NewClientWithOpts(client.WithHost(dc.DockerHost), client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -40,7 +89,8 @@ func (dc *DockerService) ImportContainers(ctx context.Context, ownerId int) erro
 		dc.Logger.Error("Failed to list containers", err)
 		return err
 	}
-	appsData := []DTO.App{}
+	//appsData := {}
+	var appsData []DTO.App
 	workerCount := runtime.NumCPU()
 	jobs := make(chan containertypes.Summary, len(containers))
 	var wg sync.WaitGroup
