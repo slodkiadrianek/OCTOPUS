@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"time"
 
@@ -52,6 +53,7 @@ func ticker(ctx context.Context, appService *services.AppService, serverService 
 		select {
 		case <-ticker.C:
 			appsToSendNotification, err := appService.CheckAppsStatus(ctx)
+			fmt.Println()
 			if err != nil {
 				logger.Error("Something went wrong during checking statuses of apps", err)
 			}

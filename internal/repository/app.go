@@ -60,7 +60,8 @@ func (a *AppRepository) InsertApp(ctx context.Context, app []DTO.App) error {
 }
 
 func (a *AppRepository) GetApp(ctx context.Context, id string) (*models.App, error) {
-	query := `SELECT * FROM apps WHERE id = $1`
+	query := `SELECT id,name,description,is_docker,owner_id,discord_webhook,slack_webhook,port,
+ip_address FROM apps WHERE id = $1`
 	row := a.Db.QueryRowContext(ctx, query, id)
 	var app models.App
 	err := row.Scan(&app.Id, &app.Name, &app.Description, &app.IsDocker, &app.OwnerID, &app.SlackWebhook, &app.DiscordWebhook, &app.IpAddress, &app.Port)
@@ -75,7 +76,8 @@ func (a *AppRepository) GetApp(ctx context.Context, id string) (*models.App, err
 	return &app, nil
 }
 func (a *AppRepository) GetApps(ctx context.Context) ([]models.App, error) {
-	query := `SELECT * FROM apps`
+	query := `SELECT id, name, COALESCE(description, ''), is_docker,owner_id,COALESCE(slack_webhook, ''),COALESCE(discord_webhook, ''),
+ip_address,port FROM apps`
 	rows, err := a.Db.QueryContext(ctx, query)
 	if err != nil {
 		a.Logger.Error("Failed to execute select query", map[string]any{

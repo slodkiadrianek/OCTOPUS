@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
@@ -25,7 +26,9 @@ func NewAppController(appService *services.AppService, logger *utils.Logger) *Ap
 
 func (a *AppController) GetInfoAboutApps(w http.ResponseWriter, r *http.Request) {
 	apps, err := a.AppService.GetApps(r.Context())
+	fmt.Println("TEST")
 	if err != nil {
+		fmt.Println(err)
 		utils.SetError(w, r, err)
 		return
 	}
