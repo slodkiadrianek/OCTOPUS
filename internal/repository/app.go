@@ -59,7 +59,7 @@ func (a *AppRepository) InsertApp(ctx context.Context, app []DTO.App) error {
 	return nil
 }
 
-func (a *AppRepository) GetApp(ctx context.Context, id int) (*models.App, error) {
+func (a *AppRepository) GetApp(ctx context.Context, id string) (*models.App, error) {
 	query := `SELECT * FROM apps WHERE id = $1`
 	row := a.Db.QueryRowContext(ctx, query, id)
 	var app models.App
@@ -73,6 +73,38 @@ func (a *AppRepository) GetApp(ctx context.Context, id int) (*models.App, error)
 		return nil, models.NewError(500, "Database", "Failed to get data from database")
 	}
 	return &app, nil
+}
+func (a *AppRepository) GetApps(ctx context.Context) ([]models.App, error) {
+	query := `SELECT * FROM apps`
+	rows, err := a.Db.QueryContext(ctx, query)
+	if err != nil {
+		a.Logger.Error("Failed to execute select query", map[string]any{
+			"query": query,
+			"err":   err.Error(),
+		})
+		return nil, models.NewError(500, "Database", "Failed to get data from database")
+	}
+	defer rows.Close()
+	var apps []models.App
+	for rows.Next() {
+		var app models.App
+		err := rows.Scan(
+			&app.Id,
+			&app.Name,
+			&app.IsDocker,
+			&app.OwnerID,
+			&app.SlackWebhook,
+			&app.DiscordWebhook,
+			&app.IpAddress,
+			&app.Port,
+		)
+		if err != nil {
+			return nil, err
+		}
+		apps = append(apps, app)
+	}
+
+	return apps, nil
 }
 
 func (a *AppRepository) DeleteApp(ctx context.Context, id string) error {

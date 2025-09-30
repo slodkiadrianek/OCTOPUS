@@ -49,12 +49,20 @@ func (a *AppService) CreateApp(ctx context.Context, app DTO.CreateApp, ownerId i
 	return nil
 }
 
-func (a *AppService) GetApp(ctx context.Context, id int) (*models.App, error) {
+func (a *AppService) GetApp(ctx context.Context, id string) (*models.App, error) {
 	app, err := a.AppRepository.GetApp(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 	return app, nil
+}
+
+func (a *AppService) GetApps(ctx context.Context) ([]models.App, error) {
+	apps, err := a.AppRepository.GetApps(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return apps, nil
 }
 
 func (a *AppService) GetAppStatus(ctx context.Context, id string) (DTO.AppStatus, error) {

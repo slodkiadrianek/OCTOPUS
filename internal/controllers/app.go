@@ -23,6 +23,29 @@ func NewAppController(appService *services.AppService, logger *utils.Logger) *Ap
 	}
 }
 
+func (a *AppController) GetInfoAboutApps(w http.ResponseWriter, r *http.Request) {
+	apps, err := a.AppService.GetApps(r.Context())
+	if err != nil {
+		utils.SetError(w, r, err)
+		return
+	}
+	utils.SendResponse(w, 200, apps)
+}
+
+func (a *AppController) GetInfoAboutApp(w http.ResponseWriter, r *http.Request) {
+	appId, err := utils.ReadParam(r, "appId")
+	if err != nil {
+		utils.SetError(w, r, err)
+		return
+	}
+	app, err := a.AppService.GetApp(r.Context(), appId)
+	if err != nil {
+		utils.SetError(w, r, err)
+		return
+	}
+	utils.SendResponse(w, 200, app)
+}
+
 func (a *AppController) CreateApp(w http.ResponseWriter, r *http.Request) {
 	appBody, err := utils.ReadBody[DTO.CreateApp](r)
 	if err != nil {
@@ -42,8 +65,6 @@ func (a *AppController) CreateApp(w http.ResponseWriter, r *http.Request) {
 	}
 	utils.SendResponse(w, 201, map[string]string{})
 }
-
-func (a *AppController) GetApp(w http.ResponseWriter, r *http.Request) {}
 
 func (a *AppController) UpdateApp(w http.ResponseWriter, r *http.Request) {
 	app, err := utils.ReadBody[DTO.UpdateApp](r)

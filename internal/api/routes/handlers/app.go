@@ -24,6 +24,9 @@ func NewAppAppHandler(appController *controllers.AppController, dockerController
 
 func (a AppSettingsHandlers) SetupAppHandlers(router routes.Router) {
 	appGroup := router.Group("/api/v1/apps")
+	appGroup.GET("", a.JWT.VerifyToken, a.AppController.GetInfoAboutApps)
+	appGroup.GET("/:appId", a.JWT.VerifyToken, middleware.ValidateMiddleware[DTO.AppId]("params",
+		schema.AppIdSchema), a.AppController.GetInfoAboutApp)
 	appGroup.POST("", a.JWT.VerifyToken, middleware.ValidateMiddleware[DTO.CreateApp]("body", schema.CreateAppSchema),
 		a.AppController.CreateApp)
 	appGroup.POST("/docker/import", a.JWT.VerifyToken, a.DockerController.ImportDockerContainers)
