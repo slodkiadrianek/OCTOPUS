@@ -23,6 +23,21 @@ func NewUserController(userService *services.UserService) *UserController {
 	}
 }
 
+func (u *UserController) GetUserInfo(w http.ResponseWriter, r *http.Request) {
+	userIdString, err := utils.ReadParam(r, "userId")
+	if err != nil {
+		utils.SetError(w, r, err)
+		return
+	}
+	userId, err := strconv.Atoi(userIdString)
+	user, err := u.UserService.GetUser(r.Context(), userId)
+	if err != nil {
+		utils.SetError(w, r, err)
+		return
+	}
+	utils.SendResponse(w, 200, user)
+}
+
 func (u *UserController) InsertUser(w http.ResponseWriter, r *http.Request) {
 	userBody, err := utils.ReadBody[DTO.CreateUser](r)
 	if err != nil {

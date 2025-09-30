@@ -21,7 +21,13 @@ func NewUserService(loggerService *utils.Logger, userRepository *repository.User
 		UserRepository: userRepository,
 	}
 }
-
+func (u *UserService) GetUser(ctx context.Context, userId int) (models.User, error) {
+	user, err := u.UserRepository.FindUserById(ctx, userId)
+	if err != nil {
+		return models.User{}, err
+	}
+	return user, nil
+}
 func (u *UserService) InsertUserToDb(ctx context.Context, user DTO.CreateUser, password string) error {
 	doesUserExists, err := u.UserRepository.FindUserByEmail(ctx, user.Email)
 	if err != nil && err.Error() != "User not found" {
