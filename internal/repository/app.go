@@ -60,7 +60,7 @@ func (a *AppRepository) InsertApp(ctx context.Context, app []DTO.App) error {
 }
 
 func (a *AppRepository) GetApp(ctx context.Context, id string) (*models.App, error) {
-	query := `SELECT SELECT id, name, COALESCE(description, ''), is_docker,owner_id,COALESCE(slack_webhook, ''),COALESCE(discord_webhook, ''),
+	query := `SELECT  id, name, COALESCE(description, ''), is_docker,owner_id,COALESCE(slack_webhook, ''),COALESCE(discord_webhook, ''),
 ip_address,port  FROM apps WHERE id = $1`
 	row := a.Db.QueryRowContext(ctx, query, id)
 	var app models.App
