@@ -2,8 +2,8 @@ package services
 
 import (
 	"context"
-	"fmt"
 	"runtime"
+	"strings"
 	"sync"
 
 	containertypes "github.com/docker/docker/api/types/container"
@@ -30,19 +30,24 @@ func NewDockerService(dockerRepository *repository.DockerRepository, appReposito
 }
 
 func (dc *DockerService) ImportContainers(ctx context.Context, ownerId int) error {
-	cli, err := client.NewClientWithOpts(client.WithHost(dc.DockerHost), client.WithAPIVersionNegotiation())
+	cli, err := client.NewClientWithOpts(
+		client.WithHost(dc.DockerHost),
+		client.WithAPIVersionNegotiation(),
+	)
 	if err != nil {
 		return err
 	}
 	defer cli.Close()
+
 	containers, err := cli.ContainerList(ctx, containertypes.ListOptions{})
 	if err != nil {
 		dc.Logger.Error("Failed to list containers", err)
 		return err
 	}
-	appsData := []DTO.App{}
+
 	workerCount := runtime.NumCPU()
 	jobs := make(chan containertypes.Summary, len(containers))
+	results := make(chan DTO.App, len(containers))
 	var wg sync.WaitGroup
 
 	for i := 0; i < workerCount; i++ {
@@ -50,17 +55,38 @@ func (dc *DockerService) ImportContainers(ctx context.Context, ownerId int) erro
 		go func(workerID int) {
 			defer wg.Done()
 			for job := range jobs {
-				preparedName := job.Names[0][1:]
-				appsData = append(appsData, *DTO.NewApp(job.ID, preparedName, "", true, ownerId, "", ""))
+				if len(job.Names) == 0 {
+					continue
+				}
+				// Strip leading "/" from container name
+				preparedName := strings.TrimPrefix(job.Names[0], "/")
+				app := DTO.NewApp(job.ID, preparedName, "", true, ownerId, "", "")
+				results <- *app
 			}
 		}(i + 1)
 	}
+
 	for _, container := range containers {
 		jobs <- container
 	}
 	close(jobs)
-	wg.Wait()
-	fmt.Println("Using", workerCount, "workers")
-	err = dc.AppRepository.InsertApp(ctx, appsData)
-	return err
+
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	var appsData []DTO.App
+	for app := range results {
+		appsData = append(appsData, app)
+	}
+
+	dc.Logger.Info("Collected apps", "count", len(appsData), "workers", workerCount)
+
+	if err := dc.AppRepository.InsertApp(ctx, appsData); err != nil {
+		dc.Logger.Error("Failed to insert apps", err)
+		return err
+	}
+
+	return nil
 }
