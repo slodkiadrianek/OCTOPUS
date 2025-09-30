@@ -137,16 +137,7 @@ func (u *UserRepository) DeleteUser(ctx context.Context, password string, userId
 
 func (u *UserRepository) FindUserById(ctx context.Context, userId int) (models.User, error) {
 	query := `
-	SELECT 
-		id,
-		email,
-		name,
-		surname,
-		password,
-		discord_notifications,
-		email_notifications,
-		slack_notifications 
-	FROM users WHERE id = $1`
+	SELECT * FROM users WHERE id = $1`
 	stmt, err := u.Db.PrepareContext(ctx, query)
 	if err != nil {
 		u.LoggerService.Info("failed to prepare query for execution", map[string]any{
@@ -157,7 +148,8 @@ func (u *UserRepository) FindUserById(ctx context.Context, userId int) (models.U
 	}
 	defer stmt.Close()
 	var user models.User
-	err = stmt.QueryRowContext(ctx, userId).Scan(&user.Id, &user.Email, &user.Name, &user.Surname, &user.Password, &user.DiscordNotifications, &user.EmailNotifications, &user.SlackNotifications)
+	err = stmt.QueryRowContext(ctx, userId).Scan(&user.Id, &user.Email, &user.Name, &user.Surname, &user.Password,
+		&user.DiscordNotifications, &user.EmailNotifications, &user.SlackNotifications, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			u.LoggerService.Info("user not found", map[string]any{

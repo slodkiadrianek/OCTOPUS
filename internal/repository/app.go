@@ -63,7 +63,7 @@ func (a *AppRepository) GetApp(ctx context.Context, id string) (*models.App, err
 	query := `SELECT * FROM apps WHERE id = $1`
 	row := a.Db.QueryRowContext(ctx, query, id)
 	var app models.App
-	err := row.Scan(&app.Id, &app.Name, &app.IsDocker, &app.OwnerID, &app.SlackWebhook, &app.DiscordWebhook, &app.IpAddress, &app.Port)
+	err := row.Scan(&app.Id, &app.Name, &app.Description, &app.IsDocker, &app.OwnerID, &app.SlackWebhook, &app.DiscordWebhook, &app.IpAddress, &app.Port)
 	if err != nil {
 		a.Logger.Error("Failed to execute a select query", map[string]any{
 			"query": query,
@@ -91,6 +91,7 @@ func (a *AppRepository) GetApps(ctx context.Context) ([]models.App, error) {
 		err := rows.Scan(
 			&app.Id,
 			&app.Name,
+			&app.Description,
 			&app.IsDocker,
 			&app.OwnerID,
 			&app.SlackWebhook,

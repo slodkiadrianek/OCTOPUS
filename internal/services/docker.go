@@ -58,7 +58,6 @@ func (dc *DockerService) ImportContainers(ctx context.Context, ownerId int) erro
 				if len(job.Names) == 0 {
 					continue
 				}
-				// Strip leading "/" from container name
 				preparedName := strings.TrimPrefix(job.Names[0], "/")
 				app := DTO.NewApp(job.ID, preparedName, "", true, ownerId, "", "")
 				results <- *app
