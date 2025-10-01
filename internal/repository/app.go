@@ -59,10 +59,10 @@ func (a *AppRepository) InsertApp(ctx context.Context, app []DTO.App) error {
 	return nil
 }
 
-func (a *AppRepository) GetApp(ctx context.Context, id string) (*models.App, error) {
+func (a *AppRepository) GetApp(ctx context.Context, id string, ownerId int) (*models.App, error) {
 	query := `SELECT  id, name, COALESCE(description, ''), is_docker,owner_id,COALESCE(slack_webhook, ''),COALESCE(discord_webhook, ''),
-ip_address,port  FROM apps WHERE id = $1`
-	row := a.Db.QueryRowContext(ctx, query, id)
+ip_address,port  FROM apps WHERE id = $1 AND owner_id = $2`
+	row := a.Db.QueryRowContext(ctx, query, id, ownerId)
 	var app models.App
 	err := row.Scan(&app.Id, &app.Name, &app.Description, &app.IsDocker, &app.OwnerID, &app.SlackWebhook, &app.DiscordWebhook, &app.IpAddress, &app.Port)
 	if err != nil {
@@ -75,10 +75,10 @@ ip_address,port  FROM apps WHERE id = $1`
 	}
 	return &app, nil
 }
-func (a *AppRepository) GetApps(ctx context.Context) ([]models.App, error) {
+func (a *AppRepository) GetApps(ctx context.Context, ownerId int) ([]models.App, error) {
 	query := `SELECT id, name, COALESCE(description, ''), is_docker,owner_id,COALESCE(slack_webhook, ''),COALESCE(discord_webhook, ''),
-ip_address,port FROM apps`
-	rows, err := a.Db.QueryContext(ctx, query)
+ip_address,port FROM apps WHERE owner_id = $1`
+	rows, err := a.Db.QueryContext(ctx, query, ownerId)
 	if err != nil {
 		a.Logger.Error("Failed to execute select query", map[string]any{
 			"query": query,
@@ -110,8 +110,8 @@ ip_address,port FROM apps`
 	return apps, nil
 }
 
-func (a *AppRepository) DeleteApp(ctx context.Context, id string) error {
-	query := `DELETE FROM apps WHERE id = $1`
+func (a *AppRepository) DeleteApp(ctx context.Context, id string, ownerId int) error {
+	query := `DELETE FROM apps WHERE id = $1 AND owner_id = $2 `
 	stmt, err := a.Db.PrepareContext(ctx, query)
 	if err != nil {
 		a.Logger.Error("Failed to prepared statement for execution", map[string]any{
@@ -120,7 +120,7 @@ func (a *AppRepository) DeleteApp(ctx context.Context, id string) error {
 		})
 		return models.NewError(500, "Database", "Failed to delete app from the database")
 	}
-	_, err = stmt.ExecContext(ctx, id)
+	_, err = stmt.ExecContext(ctx, id, ownerId)
 	if err != nil {
 		a.Logger.Error("Failed to execute a delete query", map[string]any{
 			"query": query,
@@ -132,8 +132,8 @@ func (a *AppRepository) DeleteApp(ctx context.Context, id string) error {
 	return nil
 }
 
-func (a *AppRepository) GetAppStatus(ctx context.Context, id string) (DTO.AppStatus, error) {
-	query := "SELECT * FROM apps_statuses WHERE apps_statuses.app_id = $1	"
+func (a *AppRepository) GetAppStatus(ctx context.Context, id string, ownerId int) (DTO.AppStatus, error) {
+	query := "SELECT * FROM apps_statuses WHERE apps_statuses.app_id = $1 AND owner_id = $2	"
 	stmt, err := a.Db.PrepareContext(ctx, query)
 	if err != nil {
 		a.Logger.Error("Failed to prepare statement", map[string]any{
@@ -144,7 +144,8 @@ func (a *AppRepository) GetAppStatus(ctx context.Context, id string) (DTO.AppSta
 	}
 	defer stmt.Close()
 	var appStatus DTO.AppStatus
-	err = stmt.QueryRowContext(ctx, id).Scan(&appStatus.AppId, &appStatus.Status, &appStatus.ChangedAt, &appStatus.Duration)
+	err = stmt.QueryRowContext(ctx, id, ownerId).Scan(&appStatus.AppId, &appStatus.Status, &appStatus.ChangedAt,
+		&appStatus.Duration)
 	if err != nil {
 		a.Logger.Error("Failed to execute a select query", map[string]any{
 			"query": query,
@@ -209,8 +210,18 @@ func (a *AppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppToChec
 	return apps, nil
 }
 
-func (a *AppRepository) UpdateApp(ctx context.Context, appId string, app DTO.UpdateApp) error {
-	query := "UPDATE apps SET name = $1 , description = $2, ip_address = $3, port = $4, discord_webhook = $5, slack_webhook = $6 WHERE id = $7 "
+func (a *AppRepository) UpdateApp(ctx context.Context, appId string, app DTO.UpdateApp, ownerId int) error {
+	query := `
+	UPDATE apps SET 
+        name = $1,
+        description = $2,
+        ip_address = $3,
+        port = $4,
+        discord_webhook = $5,
+		slack_webhook = $6 
+	WHERE 
+	    id = $7 
+	  	AND owner_id = $8 `
 	stmt, err := a.Db.PrepareContext(ctx, query)
 	if err != nil {
 		a.Logger.Error("Failed to prepare statement", map[string]any{
@@ -219,7 +230,8 @@ func (a *AppRepository) UpdateApp(ctx context.Context, appId string, app DTO.Upd
 		})
 		return models.NewError(500, "Database", "Failed to update data in the database")
 	}
-	_, err = stmt.ExecContext(ctx, app.Name, app.Description, app.IpAddress, app.Port, app.DiscordWebhook, app.SlackWebhook, appId)
+	_, err = stmt.ExecContext(ctx, app.Name, app.Description, app.IpAddress, app.Port, app.DiscordWebhook,
+		app.SlackWebhook, appId, ownerId)
 	if err != nil {
 		a.Logger.Error("Failed to execute a update query", map[string]any{
 			"query": query,

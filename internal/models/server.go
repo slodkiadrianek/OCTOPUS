@@ -3,13 +3,13 @@ package models
 import "time"
 
 type ServerInfo struct {
-	ModelName     string
-	RamToTal      uint64
-	DiskTotal     uint64
-	OS            string
-	Platform      string
-	KernelVersion string
-	Uptime        uint64
+	ModelName     string `json:"model_name"`
+	RamToTal      uint64 `json:"ram_total"`
+	DiskTotal     uint64 `json:"disk_total"`
+	OS            string `json:"os"`
+	Platform      string `json:"platform"`
+	KernelVersion string `json:"kernel_version"`
+	Uptime        uint64 `json:"uptime"`
 }
 
 func NewServerInfo(modelName, os, platform, kernelVersion string, ramTotal, diskTotal, uptime uint64) *ServerInfo {

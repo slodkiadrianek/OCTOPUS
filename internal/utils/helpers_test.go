@@ -14,55 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type testData struct {
-	name          string
-	data          any
-	expectedError error
-	expectedData  any
-}
-
-type testReadQueryParamData struct {
-	name          string
-	data          []string
-	expectedError error
-	expectedData  string
-}
-
-type testReadParamData struct {
-	name          string
-	urlPath       string
-	routeKeyUrl   any
-	paramToRead   string
-	expectedError error
-	expectedData  string
-}
-
-type testMatchRoutesData struct {
-	name         string
-	routeKeyUrl  string
-	urlPath      string
-	expectedData bool
-}
-
-type testRemoveLastCharacterFromUrlData struct {
-	name         string
-	urlPath      string
-	expectedData string
-}
-type testReadBodyData struct {
-	name          string
-	bodyData      any
-	expectedError error
-	expectedData  any
-}
-
-type testValidateSchemaData struct {
-	name          string
-	schema        z.StructSchema
-	val           ValidateSchemaTestData
-	expectedError any
-}
-
 type ValidateSchemaTestData struct {
 	Name string `json:"name"`
 }
@@ -71,14 +22,14 @@ func ptr(s string) *string {
 	return &s
 }
 
-func TestSetContext(t *testing.T){
-	type args struct{
-		key string
+func TestSetContext(t *testing.T) {
+	type args struct {
+		key   string
 		value any
 	}
 	tests := []args{
 		{
-			key: "test",
+			key:   "test",
 			value: "testValue",
 		},
 	}
@@ -93,7 +44,15 @@ func TestSetContext(t *testing.T){
 }
 
 func TestValidateSchema(t *testing.T) {
-	testCases := []testValidateSchemaData{
+
+	type args struct {
+		name          string
+		schema        z.StructSchema
+		val           ValidateSchemaTestData
+		expectedError any
+	}
+
+	testCases := []args{
 		{
 			name: "Proper data",
 			schema: *z.Struct(z.Shape{
@@ -148,7 +107,13 @@ func TestValidateSchema(t *testing.T) {
 }
 
 func TestReadBody(t *testing.T) {
-	tests := []testReadBodyData{
+	type args struct {
+		name          string
+		bodyData      any
+		expectedError error
+		expectedData  any
+	}
+	tests := []args{
 		{
 			name:          "Test with proper data",
 			bodyData:      `{"name":"test"}`,
@@ -194,7 +159,12 @@ func TestReadBody(t *testing.T) {
 }
 
 func TestRemoveLastCharacterFromUrl(t *testing.T) {
-	test := testRemoveLastCharacterFromUrlData{
+	type args struct {
+		name         string
+		urlPath      string
+		expectedData string
+	}
+	test := args{
 		name:         "Testing remove last character from url",
 		urlPath:      "/url/",
 		expectedData: "/url",
@@ -207,7 +177,15 @@ func TestRemoveLastCharacterFromUrl(t *testing.T) {
 }
 
 func TestReadParam(t *testing.T) {
-	tests := []testReadParamData{
+	type args struct {
+		name          string
+		urlPath       string
+		routeKeyUrl   any
+		paramToRead   string
+		expectedError error
+		expectedData  string
+	}
+	tests := []args{
 		{
 			name:          "Proper urlPath and expectedData with 1 param in path",
 			urlPath:       "/users/1",
@@ -261,7 +239,14 @@ func TestReadParam(t *testing.T) {
 }
 
 func TestMatchRoutes(t *testing.T) {
-	tests := []testMatchRoutesData{
+	type args struct {
+		name         string
+		routeKeyUrl  string
+		urlPath      string
+		expectedData bool
+	}
+
+	tests := []args{
 		{
 			name:         "Test same urls",
 			routeKeyUrl:  "/url/v1/v1",
@@ -303,7 +288,13 @@ func TestMatchRoutes(t *testing.T) {
 }
 
 func TestReadQueryParam(t *testing.T) {
-	tests := []testReadQueryParamData{
+	type args struct {
+		name          string
+		data          []string
+		expectedError error
+		expectedData  string
+	}
+	tests := []args{
 		{
 			name:          "Read query param properly",
 			data:          []string{"name", "test"},
@@ -326,7 +317,13 @@ func TestReadQueryParam(t *testing.T) {
 }
 
 func TestUnmarshalData(t *testing.T) {
-	tests := []testData{
+	type args struct {
+		name          string
+		data          any
+		expectedError error
+		expectedData  any
+	}
+	tests := []args{
 		{
 			name: "Unmarshal simple object",
 			data: []byte(`{
@@ -359,7 +356,13 @@ func TestUnmarshalData(t *testing.T) {
 }
 
 func TestMarshalData(t *testing.T) {
-	tests := []testData{
+	type args struct {
+		name          string
+		data          any
+		expectedError error
+		expectedData  any
+	}
+	tests := []args{
 		{
 			name: "Marshal simple object",
 			data: map[string]string{

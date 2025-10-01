@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
-	"github.com/slodkiadrianek/octopus/internal/middleware"
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/services"
 	"github.com/slodkiadrianek/octopus/internal/utils"
@@ -12,11 +11,13 @@ import (
 
 type AuthController struct {
 	AuthService *services.AuthService
+	Logger      *utils.Logger
 }
 
-func NewAuthController(authService *services.AuthService, jwt *middleware.JWT) *AuthController {
+func NewAuthController(authService *services.AuthService, logger *utils.Logger) *AuthController {
 	return &AuthController{
 		AuthService: authService,
+		Logger:      logger,
 	}
 }
 
@@ -49,7 +50,13 @@ func (a AuthController) LoginUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a AuthController) VerifyUser(w http.ResponseWriter, r *http.Request) {
-	utils.SendResponse(w, 204, map[string]string{})
+	userId := utils.ReadUserIdFromToken(w, r, a.Logger)
+	if userId == 0 {
+		return
+	}
+	utils.SendResponse(w, 204, map[string]int{
+		"userId": userId,
+	})
 }
 
 func (a AuthController) LogoutUser(w http.ResponseWriter, r *http.Request) {

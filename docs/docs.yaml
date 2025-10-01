@@ -98,7 +98,27 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - app
+      summary: Shows all users apps
+      description: Shows all users apps.
+      operationId: getApps
+      responses:
+        '200':
+          description: Applications downloaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetApps"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /apps/{appId}:
     put:
       security:
@@ -125,6 +145,34 @@ paths:
       responses:
         '204':
           description: App updated successfully
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - app
+      summary: Get an app
+      description: Get an existing application.
+      operationId: getApp
+      parameters:
+        - name: appId
+          in: path
+          description: The ID of the app
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: App downloaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetApp"
         default:
           description: Unexpected error
           content:
@@ -251,6 +299,10 @@ paths:
       responses:
         '204':
           description: User is logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerifyUser"
         default:
           description: Unexpected error
           content:
@@ -299,6 +351,28 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /server:
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - server
+      summary: Get info about the server
+      description: Retrieve information about server.
+      operationId: serverInfo
+      responses:
+        '200':
+          description: Server informations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerInfo"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
   /users/{userId}:
     put:
@@ -326,6 +400,34 @@ paths:
       responses:
         '204':
           description: User updated successfully
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - user
+      summary: Get user
+      description: Get a user’s account information.
+      operationId: getUser
+      parameters:
+        - name: userId
+          in: path
+          description: The ID of the user
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Users data downloaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetUser"
         default:
           description: Unexpected error
           content:
@@ -595,7 +697,121 @@ components:
           example: jzaq!2234RFv@
       xml:
         name: loginUser
-
+    GetApps:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+            example: 27cf4966c158762ceb9495fbdd044a73325efd3bd2a4f9646fc45662ef59490d
+          name:
+            type: string
+            example: solar panels
+          description:
+            type: string
+            example: test
+          is_docker:
+            type: boolean
+            example: true
+          owner_id:
+            type: integer
+            example: 12
+          ip_address:
+            type: string
+            example: 192.168.0.100
+          port:
+            type: string
+            example: 3020
+          email_notifications:
+            type: boolean
+            example: true
+          slack_webhook:
+            type: string
+            example: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
+          discord_webhook:
+            type: string
+            example: https://discord.com/api/webhooks/1234567890/abcdefghijklmnopqrstuvwxyz
+        xml:
+          name: getApps
+    GetApp:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 27cf4966c158762ceb9495fbdd044a73325efd3bd2a4f9646fc45662ef59490d
+        name:
+          type: string
+          example: solar panels
+        description:
+          type: string
+          example: test
+        is_docker:
+          type: boolean
+          example: true
+        owner_id:
+          type: integer
+          example: 12
+        ip_address:
+          type: string
+          example: 192.168.0.100
+        port:
+          type: string
+          example: 3020
+        email_notifications:
+          type: boolean
+          example: true
+        slack_webhook:
+          type: string
+          example: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
+        discord_webhook:
+          type: string
+          example: https://discord.com/api/webhooks/1234567890/abcdefghijklmnopqrstuvwxyz
+      xml:
+        name: getApp
+    GetUser:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 23
+        name:
+          type: string
+          example: Joe
+        surname:
+          type: string
+          example: Doe
+        email:
+          type: string
+          example: john@email.com
+        password:
+          type: string
+          example: jzaq!2234RFv@
+        discord_notifications:
+          type: boolean
+          example: false
+        slack_notifications:
+          type: boolean
+          example: true
+        email_notifications:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          example: 2025-06-07 12:23:24
+        updated_at:
+          type: string
+          example: 2025-06-07 12:23:24
+      xml:
+        name: getUser
+    VerifyUser:
+      type: object
+      properties:
+        userId:
+          type: integer
+          example: 23
+      xml:
+        name: verifyUser
     Token:
       type: object
       properties:
@@ -604,7 +820,32 @@ components:
           example: d23dj328dd32092823udd23423423423e32xr23rx23
       xml:
         name: token
-
+    ServerInfo:
+      type: object
+      properties:
+        model_name:
+          type: string
+          example: Intel I5
+        ram_total:
+          type: integer
+          example: 32
+        disk_total:
+          type: integer
+          example: 1000
+        os:
+          type: string
+          example: Linux
+        platform:
+          type: string
+          example: ArchLinux
+        kernel_version:
+          type: string
+          example: 1.2.443
+        uptime:
+          type: integer
+          example: 231213
+      xml:
+        name: serverInfo
     Error:
       type: object
       properties:
