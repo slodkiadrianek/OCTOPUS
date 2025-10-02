@@ -17,7 +17,7 @@ type Logger struct {
 	LogDir     string
 	DateFormat string
 	File       *os.File
-	StartTime  time.Time
+	StartTime  string
 }
 
 func NewLogger(logDir string, dateFormat string) *Logger {
@@ -35,8 +35,12 @@ func (l *Logger) CreateLogger() {
 	}
 
 	actualDate := time.Now()
-	l.StartTime = actualDate
-	fileName := actualDate.Format(l.DateFormat)
+	year := actualDate.Year()
+	month := int(actualDate.Month())
+	day := actualDate.Day()
+	l.StartTime = fmt.Sprintf("%d.%d.%d", day, month, year)
+	fileName := fmt.Sprintf("%d.%d.%d", day, month, year)
+	logTime := actualDate.Format("2006-01-02 15:04:05")
 
 	file, err := os.OpenFile(l.LogDir+"/"+fileName+".log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o666)
 	if err != nil {
@@ -46,7 +50,8 @@ func (l *Logger) CreateLogger() {
 
 	fmt.Println(GREEN + "[INFO: " + actualDate.Format(l.DateFormat) + "] Logger created successfully" + RESET)
 
-	fileRes := fmt.Sprintf("date:%s,type:success,message:Successfully created a logger,data:%v\n", fileName, map[string]interface{}{})
+	fileRes := fmt.Sprintf("date:%s,type:success,message:Successfully created a logger,data:%v\n", logTime,
+		map[string]interface{}{})
 	_, err = l.File.Write([]byte(fileRes))
 	if err != nil {
 		fmt.Println("Something went wrong during writing to data to the file")
@@ -113,15 +118,18 @@ func (l *Logger) Error(msg string, data ...any) {
 
 func (l *Logger) Validate() {
 	actualDate := time.Now()
-	if actualDate.Truncate(24*time.Hour) != l.StartTime.Truncate(24*time.Hour) {
+	year := actualDate.Year()
+	month := int(actualDate.Month())
+	day := actualDate.Day()
+	actualDateFormat := fmt.Sprintf("%d.%d.%d", day, month, year)
+	if actualDateFormat != l.StartTime {
 		fmt.Println("Closing old file and creating the new one for new date")
 		err := l.File.Close()
 		if err != nil {
 			fmt.Println("Something went wrong during writing to data to the file")
 		}
-		actualDate := time.Now()
-		l.StartTime = actualDate
-		fileName := actualDate.Format(l.DateFormat)
+		l.StartTime = actualDateFormat
+		fileName := actualDateFormat
 
 		file, err := os.OpenFile(l.LogDir+"/"+fileName+".log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o666)
 		if err != nil {

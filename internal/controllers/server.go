@@ -1,19 +1,24 @@
 package controllers
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/slodkiadrianek/octopus/internal/models"
-	"github.com/slodkiadrianek/octopus/internal/services"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
+type serverService interface {
+	GetServerMetrics(ctx context.Context) ([]models.ServerMetrics, error)
+	GetServerInfo() (models.ServerInfo, error)
+	InsertServerMetrics(ctx context.Context) error
+}
 type ServerController struct {
 	Logger        *utils.Logger
-	ServerService *services.ServerService
+	ServerService serverService
 }
 
-func NewServerController(logger *utils.Logger, serverService *services.ServerService) *ServerController {
+func NewServerController(logger *utils.Logger, serverService serverService) *ServerController {
 	return &ServerController{
 		ServerService: serverService,
 		Logger:        logger,

@@ -8,17 +8,16 @@ import (
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/mem"
-	"github.com/slodkiadrianek/octopus/internal/config"
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
 type ServerService struct {
 	Logger       *utils.Logger
-	CacheService *config.CacheService
+	CacheService cacheService
 }
 
-func NewServerService(logger *utils.Logger, cacheService *config.CacheService) *ServerService {
+func NewServerService(logger *utils.Logger, cacheService cacheService) *ServerService {
 	return &ServerService{
 		Logger:       logger,
 		CacheService: cacheService,

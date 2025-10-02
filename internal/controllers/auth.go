@@ -1,20 +1,24 @@
 package controllers
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
-	"github.com/slodkiadrianek/octopus/internal/services"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
+type authService interface {
+	LoginUser(ctx context.Context, loginData DTO.LoginUser) (string, error)
+}
+
 type AuthController struct {
-	AuthService *services.AuthService
+	AuthService authService
 	Logger      *utils.Logger
 }
 
-func NewAuthController(authService *services.AuthService, logger *utils.Logger) *AuthController {
+func NewAuthController(authService authService, logger *utils.Logger) *AuthController {
 	return &AuthController{
 		AuthService: authService,
 		Logger:      logger,

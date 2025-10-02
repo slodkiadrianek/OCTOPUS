@@ -6,10 +6,11 @@ import (
 
 	"github.com/slodkiadrianek/octopus/internal/config"
 	"github.com/slodkiadrianek/octopus/internal/utils"
+	"github.com/slodkiadrianek/octopus/tests/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
-func CreateServerService() *ServerService {
+func CreateServerService(mockCacheSerice cacheService) *ServerService {
 	loggerService := utils.NewLogger("./logs", "2006-01-02 15:04:05")
 	loggerService.CreateLogger()
 	cfg, err := config.SetConfig("../../.env")
@@ -28,12 +29,13 @@ func CreateServerService() *ServerService {
 		return nil
 	}
 	defer loggerService.Close()
-	serverService := NewServerService(loggerService, cacheService)
+	serverService := NewServerService(loggerService, mockCacheSerice)
 	return serverService
 }
 
 func TestGetServerMetrics(t *testing.T) {
-	serverService := CreateServerService()
+	cacheService := mocks.NewMockCacheService()
+	serverService := CreateServerService(cacheService)
 	type args struct {
 		name          string
 		expectedError *string
@@ -53,6 +55,32 @@ func TestGetServerMetrics(t *testing.T) {
 			}
 			if err != nil {
 				assert.Empty(t, res)
+			}
+		})
+	}
+}
+
+func TestInsertServerMetrics(t *testing.T) {
+	serverService := CreateServerService()
+	type args struct {
+		name          string
+		expectedError *string
+	}
+	tests := []args{
+		{
+			name:          "Proper data",
+			expectedError: nil,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctx := context.Background()
+			err := serverService.InsertServerMetrics(ctx)
+			if test.expectedError == nil {
+				assert.Nil(t, err)
+			}
+			if err != nil {
+				assert.Equal(t, *test.expectedError, err)
 			}
 		})
 	}
