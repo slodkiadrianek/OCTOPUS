@@ -1,19 +1,28 @@
 package controllers
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/slodkiadrianek/octopus/internal/models"
-	"github.com/slodkiadrianek/octopus/internal/services"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
+type DockerService interface {
+	PauseContainer(ctx context.Context, appId string) error
+	RestartContainer(ctx context.Context, appId string) error
+	StartContainer(ctx context.Context, appId string) error
+	UnpauseContainer(ctx context.Context, appId string) error
+	StopContainer(ctx context.Context, appId string) error
+	ImportContainers(ctx context.Context, ownerId int) error
+}
+
 type DockerController struct {
-	DockerService *services.DockerService
+	DockerService DockerService
 	Logger        *utils.Logger
 }
 
-func NewDockerController(service *services.DockerService, logger *utils.Logger) *DockerController {
+func NewDockerController(service DockerService, logger *utils.Logger) *DockerController {
 	return &DockerController{
 		DockerService: service,
 		Logger:        logger,

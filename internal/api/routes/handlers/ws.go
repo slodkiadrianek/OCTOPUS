@@ -1,17 +1,21 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/slodkiadrianek/octopus/internal/api/routes"
-	"github.com/slodkiadrianek/octopus/internal/controllers"
 	"github.com/slodkiadrianek/octopus/internal/middleware"
 )
 
+type wsController interface {
+	Logs(w http.ResponseWriter, r *http.Request)
+}
 type WebSocketHandlers struct {
-	WsController *controllers.WsController
+	WsController wsController
 	JWT          *middleware.JWT
 }
 
-func NewWebsocketHandler(wsController *controllers.WsController, jwt *middleware.JWT) *WebSocketHandlers {
+func NewWebsocketHandler(wsController wsController, jwt *middleware.JWT) *WebSocketHandlers {
 	return &WebSocketHandlers{
 		WsController: wsController,
 		JWT:          jwt,

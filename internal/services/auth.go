@@ -6,18 +6,17 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/middleware"
 	"github.com/slodkiadrianek/octopus/internal/models"
-	"github.com/slodkiadrianek/octopus/internal/repository"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService struct {
 	LoggerService  *utils.Logger
-	UserRepository *repository.UserRepository
+	UserRepository userRepository
 	JWT            *middleware.JWT
 }
 
-func NewAuthService(loggerService *utils.Logger, userRepository *repository.UserRepository, jwt *middleware.JWT) *AuthService {
+func NewAuthService(loggerService *utils.Logger, userRepository userRepository, jwt *middleware.JWT) *AuthService {
 	return &AuthService{
 		LoggerService:  loggerService,
 		UserRepository: userRepository,

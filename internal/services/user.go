@@ -5,17 +5,25 @@ import (
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
-	"github.com/slodkiadrianek/octopus/internal/repository"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
+type userRepository interface {
+	FindUserByEmail(ctx context.Context, email string) (models.User, error)
+	InsertUserToDb(ctx context.Context, user DTO.CreateUser, password string) error
+	UpdateUser(ctx context.Context, user DTO.CreateUser, userId int) error
+	UpdateUserNotifications(ctx context.Context, userId int, userNotifications DTO.UpdateUserNotifications) error
+	DeleteUser(ctx context.Context, password string, userId int) error
+	FindUserById(ctx context.Context, userId int) (models.User, error)
+	ChangeUserPassword(ctx context.Context, userId int, newPassword string) error
+}
 type UserService struct {
 	LoggerService  *utils.Logger
-	UserRepository *repository.UserRepository
+	UserRepository userRepository
 }
 
-func NewUserService(loggerService *utils.Logger, userRepository *repository.UserRepository) *UserService {
+func NewUserService(loggerService *utils.Logger, userRepository userRepository) *UserService {
 	return &UserService{
 		LoggerService:  loggerService,
 		UserRepository: userRepository,

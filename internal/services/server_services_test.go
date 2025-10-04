@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func CreateServerService(mockCacheSerice cacheService) *ServerService {
+func CreateCacheService() CacheService {
 	loggerService := utils.NewLogger("./logs", "2006-01-02 15:04:05")
 	loggerService.CreateLogger()
 	cfg, err := config.SetConfig("../../.env")
@@ -28,22 +28,28 @@ func CreateServerService(mockCacheSerice cacheService) *ServerService {
 		loggerService.Error("Failed to connect to cache", err)
 		return nil
 	}
-	defer loggerService.Close()
-	serverService := NewServerService(loggerService, mockCacheSerice)
-	return serverService
+	return cacheService
 }
 
 func TestGetServerMetrics(t *testing.T) {
-	cacheService := mocks.NewMockCacheService()
-	serverService := CreateServerService(cacheService)
+	MockedCacheService := mocks.NewMockCacheService()
+	cacheService := CreateCacheService()
+	//serverService :=
 	type args struct {
 		name          string
 		expectedError *string
+		cacheService  CacheService
 	}
 	tests := []args{
 		{
 			name:          "Proper data",
 			expectedError: nil,
+			cacheService:  cacheService,
+		},
+		{
+			name:          "Error in cache service",
+			expectedError: nil,
+			cacheService:  MockedCacheService,
 		},
 	}
 	for _, test := range tests {

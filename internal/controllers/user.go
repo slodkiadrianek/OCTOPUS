@@ -3,22 +3,30 @@ package controllers
 import (
 	// "context"
 
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
-	"github.com/slodkiadrianek/octopus/internal/services"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
+type userService interface {
+	GetUser(ctx context.Context, userId int) (models.User, error)
+	InsertUserToDb(ctx context.Context, user DTO.CreateUser, password string) error
+	UpdateUser(ctx context.Context, user DTO.CreateUser, userId int) error
+	UpdateUserNotifications(ctx context.Context, userId int, userNotifications DTO.UpdateUserNotifications) error
+	DeleteUser(ctx context.Context, userId int, password string) error
+	ChangeUserPassword(ctx context.Context, userId int, currentPassword string, newPassword string) error
+}
 type UserController struct {
-	UserService *services.UserService
+	UserService userService
 	Logger      *utils.Logger
 }
 
-func NewUserController(userService *services.UserService, logger *utils.Logger) *UserController {
+func NewUserController(userService userService, logger *utils.Logger) *UserController {
 	return &UserController{
 		UserService: userService,
 		Logger:      logger,

@@ -15,12 +15,13 @@ import (
 
 type DockerService struct {
 	DockerRepository *repository.DockerRepository
-	AppRepository    *repository.AppRepository
+	AppRepository    appRepository
 	DockerHost       string
 	Logger           *utils.Logger
 }
 
-func NewDockerService(dockerRepository *repository.DockerRepository, appRepository *repository.AppRepository, logger *utils.Logger, dockerHost string) *DockerService {
+func NewDockerService(dockerRepository *repository.DockerRepository, appRepository appRepository, logger *utils.Logger,
+	dockerHost string) *DockerService {
 	return &DockerService{
 		DockerRepository: dockerRepository,
 		AppRepository:    appRepository,

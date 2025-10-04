@@ -1,17 +1,22 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/slodkiadrianek/octopus/internal/api/routes"
-	"github.com/slodkiadrianek/octopus/internal/controllers"
 	"github.com/slodkiadrianek/octopus/internal/middleware"
 )
 
+type serverController interface {
+	GetServerInfo(w http.ResponseWriter, r *http.Request)
+	GetServerMetrics(w http.ResponseWriter, r *http.Request)
+}
 type ServerHandlers struct {
-	ServerController *controllers.ServerController
+	ServerController serverController
 	JWT              *middleware.JWT
 }
 
-func NewServerHandlers(serverController *controllers.ServerController, jwt *middleware.JWT) *ServerHandlers {
+func NewServerHandlers(serverController serverController, jwt *middleware.JWT) *ServerHandlers {
 	return &ServerHandlers{
 		JWT:              jwt,
 		ServerController: serverController,

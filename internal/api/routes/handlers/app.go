@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/api/routes"
 	"github.com/slodkiadrianek/octopus/internal/controllers"
@@ -8,13 +10,33 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/schema"
 )
 
+type appController interface {
+	GetInfoAboutApps(w http.ResponseWriter, r *http.Request)
+	GetInfoAboutApp(w http.ResponseWriter, r *http.Request)
+	CreateApp(w http.ResponseWriter, r *http.Request)
+	UpdateApp(w http.ResponseWriter, r *http.Request)
+	DeleteApp(w http.ResponseWriter, r *http.Request)
+	GetAppStatus(w http.ResponseWriter, r *http.Request)
+	GetDbStatus(w http.ResponseWriter, r *http.Request)
+}
+
+type dockerController interface {
+	PauseContainer(w http.ResponseWriter, r *http.Request)
+	RestartContainer(w http.ResponseWriter, r *http.Request)
+	StartContainer(w http.ResponseWriter, r *http.Request)
+	UnpauseContainer(w http.ResponseWriter, r *http.Request)
+	StopContainer(w http.ResponseWriter, r *http.Request)
+	ImportDockerContainers(w http.ResponseWriter, r *http.Request)
+}
+
 type AppSettingsHandlers struct {
-	AppController    *controllers.AppController
-	DockerController *controllers.DockerController
+	AppController    appController
+	DockerController dockerController
 	JWT              *middleware.JWT
 }
 
-func NewAppAppHandler(appController *controllers.AppController, dockerController *controllers.DockerController, jwt *middleware.JWT) *AppSettingsHandlers {
+func NewAppAppHandler(appController appController, dockerController *controllers.DockerController,
+	jwt *middleware.JWT) *AppSettingsHandlers {
 	return &AppSettingsHandlers{
 		AppController:    appController,
 		DockerController: dockerController,

@@ -1,19 +1,28 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/api/routes"
-	"github.com/slodkiadrianek/octopus/internal/controllers"
 	"github.com/slodkiadrianek/octopus/internal/middleware"
 	"github.com/slodkiadrianek/octopus/internal/schema"
 )
 
+type userController interface {
+	GetUserInfo(w http.ResponseWriter, r *http.Request)
+	InsertUser(w http.ResponseWriter, r *http.Request)
+	UpdateUser(w http.ResponseWriter, r *http.Request)
+	UpdateUserNotifications(w http.ResponseWriter, r *http.Request)
+	DeleteUser(w http.ResponseWriter, r *http.Request)
+	ChangeUserPassword(w http.ResponseWriter, r *http.Request)
+}
 type UserHandlers struct {
-	UserController *controllers.UserController
+	UserController userController
 	JWT            *middleware.JWT
 }
 
-func NewUserHandler(userController *controllers.UserController, jwt *middleware.JWT) *UserHandlers {
+func NewUserHandler(userController userController, jwt *middleware.JWT) *UserHandlers {
 	return &UserHandlers{
 		UserController: userController,
 		JWT:            jwt,

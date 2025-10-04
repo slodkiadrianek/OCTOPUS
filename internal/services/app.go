@@ -12,20 +12,30 @@ import (
 
 	"github.com/docker/docker/client"
 	"github.com/slodkiadrianek/octopus/internal/DTO"
-	"github.com/slodkiadrianek/octopus/internal/config"
 	"github.com/slodkiadrianek/octopus/internal/models"
-	"github.com/slodkiadrianek/octopus/internal/repository"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
+type appRepository interface {
+	InsertApp(ctx context.Context, app []DTO.App) error
+	GetApp(ctx context.Context, id string, ownerId int) (*models.App, error)
+	GetApps(ctx context.Context, ownerId int) ([]models.App, error)
+	DeleteApp(ctx context.Context, id string, ownerId int) error
+	GetAppStatus(ctx context.Context, id string, ownerId int) (DTO.AppStatus, error)
+	GetAppsToCheck(ctx context.Context) ([]*models.AppToCheck, error)
+	UpdateApp(ctx context.Context, appId string, app DTO.UpdateApp, ownerId int) error
+	InsertAppStatuses(ctx context.Context, appsStatuses []DTO.AppStatus) error
+	GetUsersToSendNotifications(ctx context.Context, appsStatuses []DTO.AppStatus) ([]models.SendNotificationTo, error)
+}
 type AppService struct {
-	AppRepository *repository.AppRepository
+	AppRepository appRepository
 	Logger        *utils.Logger
-	CacheService  *config.CacheService
+	CacheService  CacheService
 	DockerHost    string
 }
 
-func NewAppService(appRepository *repository.AppRepository, logger *utils.Logger, cacheService *config.CacheService, dockerHost string) *AppService {
+func NewAppService(appRepository appRepository, logger *utils.Logger, cacheService CacheService,
+	dockerHost string) *AppService {
 	return &AppService{
 		AppRepository: appRepository,
 		Logger:        logger,
@@ -201,20 +211,15 @@ func (a *AppService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatus, erro
 }
 
 func (a *AppService) SendNotifications(ctx context.Context, appsStatuses []DTO.AppStatus) error {
-	fmt.Println("IS STATUS", appsStatuses)
 	if len(appsStatuses) == 0 {
 		return nil
 	}
-
 	a.Logger.Info("Started sending Notifications to users")
-
-	// Fetch users to notify
 	appsToSendNotifications, err := a.AppRepository.GetUsersToSendNotifications(ctx, appsStatuses)
 	if err != nil {
 		return err
 	}
 
-	// Group apps by notification type
 	sortedData := map[string][]models.SendNotificationTo{
 		"Discord": {},
 		"Slack":   {},
@@ -233,7 +238,6 @@ func (a *AppService) SendNotifications(ctx context.Context, appsStatuses []DTO.A
 		}
 	}
 
-	// Aggregate messages per webhook
 	discordMessages := map[string]string{}
 	slackMessages := map[string]string{}
 

@@ -14,10 +14,10 @@ import (
 
 type ServerService struct {
 	Logger       *utils.Logger
-	CacheService cacheService
+	CacheService CacheService
 }
 
-func NewServerService(logger *utils.Logger, cacheService cacheService) *ServerService {
+func NewServerService(logger *utils.Logger, cacheService CacheService) *ServerService {
 	return &ServerService{
 		Logger:       logger,
 		CacheService: cacheService,

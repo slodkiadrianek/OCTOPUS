@@ -5,16 +5,19 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
-	"github.com/slodkiadrianek/octopus/internal/services"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
+type wsService interface {
+	Logs(ctx context.Context, appId string, conn *websocket.Conn)
+}
+
 type WsController struct {
-	WsService *services.WsService
+	WsService wsService
 	Logger    *utils.Logger
 }
 
-func NewWsController(wsService *services.WsService, logger *utils.Logger) *WsController {
+func NewWsController(wsService wsService, logger *utils.Logger) *WsController {
 	return &WsController{
 		WsService: wsService,
 		Logger:    logger,

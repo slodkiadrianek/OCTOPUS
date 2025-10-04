@@ -1,21 +1,32 @@
 package controllers
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
-	"github.com/slodkiadrianek/octopus/internal/services"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
+type appService interface {
+	CreateApp(ctx context.Context, app DTO.CreateApp, ownerId int) error
+	GetApp(ctx context.Context, id string, ownerId int) (*models.App, error)
+	GetApps(ctx context.Context, ownerId int) ([]models.App, error)
+	GetAppStatus(ctx context.Context, id string, ownerId int) (DTO.AppStatus, error)
+	DeleteApp(ctx context.Context, id string, ownerId int) error
+	CheckAppsStatus(ctx context.Context) ([]DTO.AppStatus, error)
+	SendNotifications(ctx context.Context, appsStatuses []DTO.AppStatus) error
+	UpdateApp(ctx context.Context, appId string, app DTO.UpdateApp, ownerId int) error
+}
+
 type AppController struct {
-	AppService *services.AppService
+	AppService appService
 	Logger     *utils.Logger
 }
 
-func NewAppController(appService *services.AppService, logger *utils.Logger) *AppController {
+func NewAppController(appService appService, logger *utils.Logger) *AppController {
 	return &AppController{
 		AppService: appService,
 		Logger:     logger,
@@ -28,7 +39,6 @@ func (a *AppController) GetInfoAboutApps(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	apps, err := a.AppService.GetApps(r.Context(), ownerId)
-	fmt.Println("TEST")
 	if err != nil {
 		fmt.Println(err)
 		utils.SetError(w, r, err)
