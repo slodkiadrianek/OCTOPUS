@@ -27,12 +27,12 @@ func NewServerService(logger *utils.Logger, cacheService CacheService) *ServerSe
 func (s *ServerService) GetServerMetrics(ctx context.Context) ([]models.ServerMetrics, error) {
 	serverMetricsData, err := s.CacheService.GetData(ctx, "server_metrics")
 	if err != nil {
-		s.Logger.Warn("Failed to get server metrics from cache", err)
+		s.Logger.Error("Failed to get server metrics from cache", err)
 		return nil, err
 	}
 	existingMetrics, err := utils.UnmarshalData[[]models.ServerMetrics]([]byte(serverMetricsData))
 	if err != nil {
-		s.Logger.Warn("Failed to unmarshal server metrics data", err)
+		s.Logger.Error("Failed to unmarshal server metrics data", err)
 		return nil, err
 	}
 	return *existingMetrics, nil
@@ -98,7 +98,6 @@ func (s *ServerService) InsertServerMetrics(ctx context.Context) error {
 		"Disk": int(diskUsage.UsedPercent),
 		"Date": actualDate,
 	})
-	//fmt.Println(metricsData)
 	doesExist, err := s.CacheService.ExistsData(ctx, "server_metrics")
 	var existingMetrics *[]models.ServerMetrics
 	if err != nil {

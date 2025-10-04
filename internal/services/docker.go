@@ -9,24 +9,21 @@ import (
 	containertypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/slodkiadrianek/octopus/internal/DTO"
-	"github.com/slodkiadrianek/octopus/internal/repository"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
 type DockerService struct {
-	DockerRepository *repository.DockerRepository
-	AppRepository    appRepository
-	DockerHost       string
-	Logger           *utils.Logger
+	AppRepository appRepository
+	DockerHost    string
+	Logger        *utils.Logger
 }
 
-func NewDockerService(dockerRepository *repository.DockerRepository, appRepository appRepository, logger *utils.Logger,
+func NewDockerService(appRepository appRepository, logger *utils.Logger,
 	dockerHost string) *DockerService {
 	return &DockerService{
-		DockerRepository: dockerRepository,
-		AppRepository:    appRepository,
-		DockerHost:       dockerHost,
-		Logger:           logger,
+		AppRepository: appRepository,
+		DockerHost:    dockerHost,
+		Logger:        logger,
 	}
 }
 

@@ -1,12 +1,8 @@
 logs
 *.tmp
-.idea/
-.zed/
-.vscode/
 *.swp
 *.swo
 *.bak
-*.tmp
 .DS_Store
 Thumbs.db
 *.log
@@ -16,7 +12,6 @@ Thumbs.db
 *.so
 *.dylib
 *.test
-*.out
 
 .env
 # Go build stuff
@@ -34,10 +29,11 @@ tests/*
 coverage.out
 
 # Env files (better to mount at runtime)
-.env
 .env.*
 test.env
 
 # IDE/editor configs
+.idea/
+.zed/
 .vscode/
 *.swp
