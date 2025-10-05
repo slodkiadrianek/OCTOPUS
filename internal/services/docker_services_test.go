@@ -3,12 +3,69 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
+	"github.com/docker/docker/api/types/container"
+	image2 "github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/client"
+	"github.com/slodkiadrianek/octopus/internal/utils"
 	"github.com/slodkiadrianek/octopus/tests/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"testing"
+	"time"
 )
 
+func createTestContainer(image string, cmd []string, loggerService *utils.Logger) (string, error) {
+	ctx := context.Background()
+
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return "", err
+	}
+	defer cli.Close()
+
+	_, err = cli.ImagePull(ctx, image, image2.PullOptions{})
+	if err != nil {
+		loggerService.Error("failed to pull image", map[string]any{
+			"image": image,
+			"error": err,
+		})
+		return "", fmt.Errorf("failed to pull image %s: %w", image, err)
+	}
+
+	resp, err := cli.ContainerCreate(ctx, &container.Config{
+		Image: image,
+		Cmd:   cmd,
+		Tty:   false,
+	}, nil, nil, nil, "")
+	if err != nil {
+		loggerService.Error("failed to create a new container", err)
+		return "", err
+	}
+
+	if err := cli.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+		loggerService.Error("failed to create a start container", err)
+		return "", err
+	}
+
+	return resp.ID, nil
+}
+
+func killAndRemoveContainer(ctx context.Context, cli *client.Client, containerID string, loggerService *utils.Logger) error {
+	timeout := 5 * time.Second
+	timeAsInt := int(timeout)
+	loggerService.Info("Stopping container", containerID)
+	if err := cli.ContainerStop(ctx, containerID, container.StopOptions{Timeout: &timeAsInt}); err != nil {
+		loggerService.Info("ContainerStop failed, trying ContainerKill...", err)
+		_ = cli.ContainerKill(ctx, containerID, "SIGKILL")
+	}
+	if err := cli.ContainerRemove(ctx, containerID, container.RemoveOptions{Force: true}); err != nil {
+		loggerService.Error("failed to remove container", err)
+		return err
+	}
+
+	return nil
+}
 func TestDockerService_ImportContainers(t *testing.T) {
 	loggerService := createLogger()
 	type args struct {
@@ -57,6 +114,53 @@ func TestDockerService_ImportContainers(t *testing.T) {
 			err := dockerService.ImportContainers(ctx, 1)
 			if test.expectedError == nil {
 				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), *test.expectedError)
+			}
+		})
+	}
+}
+
+func TestDockerService_PauseContainer(t *testing.T) {
+	loggerService := createLogger()
+	type args struct {
+		name          string
+		dockerHost    string
+		appId         string
+		expectedError *string
+	}
+	tests := []args{
+		{
+			name:          "Test with proper data",
+			expectedError: nil,
+			appId:         "e9530eae6aa752af79b79a2d9c1398fe59eee4a3d786734d9e2076e6d2415772",
+			dockerHost:    "tcp://100.100.188.29:2375",
+		},
+		{
+			name:          "Invalid docker host",
+			expectedError: ptr("no such host"),
+			appId:         "e9530eae6aa752af79b79a2d9c1398fe59eee4a3d786734d9e2076e6d2415772",
+			dockerHost:    "tcp://100.100.188.329:2375",
+		},
+		{
+			name:          "Invalid app Id",
+			expectedError: ptr("No such container"),
+			appId:         "e9530eae6aa752adf79b79a2d9c1398fe59eee4a3d786734d9e2076e6d2415772",
+			dockerHost:    "tcp://100.100.188.29:2375",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			appRepositoryMock := new(mocks.MockAppRepository)
+			dockerService := NewDockerService(appRepositoryMock, loggerService, test.dockerHost)
+			ctx := context.Background()
+			err := dockerService.PauseContainer(ctx, test.appId)
+			if test.expectedError == nil {
+				res := assert.NoError(t, err)
+				if res {
+					_ = dockerService.RestartContainer(ctx, test.appId)
+				}
 			} else {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), *test.expectedError)
