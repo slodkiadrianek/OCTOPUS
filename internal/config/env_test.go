@@ -20,7 +20,7 @@ func TestReadFile(t *testing.T) {
 	testCases := []args{
 		{
 			name:          "Test with proper data",
-			pathToFile:    "../../.env.test",
+			pathToFile:    ".env.test",
 			expectedError: nil,
 			expectedData: &map[string]string{
 				"Port":         "3009",
@@ -35,13 +35,13 @@ func TestReadFile(t *testing.T) {
 		},
 		{
 			name:          "Read file which does not exist",
-			pathToFile:    "../../../.env.test",
-			expectedError: String("failed to open a file"),
+			pathToFile:    ".env.test2",
+			expectedError: String("failed to open file .env.test2: open .env.test2: no such file or directory"),
 			expectedData:  &map[string]string{},
 		},
 		{
 			name:          "Too big file",
-			pathToFile:    "../../test.env",
+			pathToFile:    "./test.env",
 			expectedError: String("failed to scan a file"),
 			expectedData:  &map[string]string{},
 		},
@@ -55,7 +55,7 @@ func TestReadFile(t *testing.T) {
 			} else {
 				assert.Equal(t, *testCase.expectedError, err.Error())
 			}
-			assert.Equal(t, *testCase.expectedData, res)
+			assert.Equal(t, testCase.expectedData, res)
 		})
 	}
 }
@@ -70,7 +70,7 @@ func TestSetConfig(t *testing.T) {
 	testCases := []args{
 		{
 			name:          "Proper data",
-			pathToFile:    "../../.env.test",
+			pathToFile:    ".env.test",
 			expectedError: nil,
 			expectedData: Env{
 				Port:      "3009",
@@ -81,8 +81,8 @@ func TestSetConfig(t *testing.T) {
 		},
 		{
 			name:          "Wrong file provided",
-			pathToFile:    "../../../.env.test",
-			expectedError: String("failed to open a file"),
+			pathToFile:    ".env.test2",
+			expectedError: String("failed to open file .env.test2: open .env.test2: no such file or directory"),
 			expectedData:  Env{},
 		},
 	}

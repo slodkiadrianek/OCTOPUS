@@ -249,10 +249,8 @@ func (a *AppService) SendNotifications(ctx context.Context, appsStatuses []DTO.A
 		slackMessages[val.SlackWebhook] += fmt.Sprintf("%s - %s - %s\n", val.Id, val.Name, val.Status)
 	}
 
-	// Reuse HTTP client
 	client := &http.Client{}
 
-	// Helper function to send POST requests with context
 	sendWebhook := func(ctx context.Context, url string, payload map[string]interface{}) {
 		jsonData, err := utils.MarshalData(payload)
 		if err != nil {
@@ -280,7 +278,6 @@ func (a *AppService) SendNotifications(ctx context.Context, appsStatuses []DTO.A
 		}
 	}
 
-	// Send Discord notifications
 	for webhookURL, message := range discordMessages {
 		payload := map[string]interface{}{
 			"content":  message,
@@ -289,7 +286,6 @@ func (a *AppService) SendNotifications(ctx context.Context, appsStatuses []DTO.A
 		sendWebhook(ctx, webhookURL, payload)
 	}
 
-	// Send Slack notifications
 	for webhookURL, message := range slackMessages {
 		payload := map[string]interface{}{
 			"text": message,

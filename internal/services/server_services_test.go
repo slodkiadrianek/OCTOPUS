@@ -3,8 +3,9 @@ package services
 import (
 	"context"
 	"errors"
-	"github.com/stretchr/testify/mock"
 	"testing"
+
+	"github.com/stretchr/testify/mock"
 
 	"github.com/slodkiadrianek/octopus/internal/config"
 	"github.com/slodkiadrianek/octopus/internal/utils"
@@ -84,8 +85,8 @@ func TestServerService_GetServerMetrics(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			mockCache := test.setupMock
-			serverService := NewServerService(loggerService, mockCache())
+			cache := test.setupMock()
+			serverService := NewServerService(loggerService, cache)
 			ctx := context.Background()
 			res, err := serverService.GetServerMetrics(ctx)
 			if test.expectedError == nil {
@@ -173,8 +174,8 @@ func TestServerService_InsertServerMetrics(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			mockCache := test.setupMock
-			serverService := NewServerService(loggerService, mockCache())
+			cache := test.setupMock()
+			serverService := NewServerService(loggerService, cache)
 			ctx := context.Background()
 			err := serverService.InsertServerMetrics(ctx)
 			if test.expectedError == nil {

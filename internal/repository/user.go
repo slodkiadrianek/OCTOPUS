@@ -91,8 +91,9 @@ func (u *UserRepository) UpdateUser(ctx context.Context, user DTO.CreateUser, us
 	return nil
 }
 
-func (u *UserRepository) UpdateUserNotifications(ctx context.Context, userId int,
-	userNotifications DTO.UpdateUserNotifications) error {
+func (u *UserRepository) UpdateUserNotifications(ctx context.Context, userNotifications DTO.UpdateUserNotifications,
+	userId int,
+) error {
 	query := `UPDATE users SET discord_notifications=$1, slack_notifications=$2, email_notifications=$3 WHERE id=$4`
 	stmt, err := u.Db.PrepareContext(ctx, query)
 	if err != nil {

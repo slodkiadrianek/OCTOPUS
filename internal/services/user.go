@@ -38,8 +38,12 @@ func (u *UserService) GetUser(ctx context.Context, userId int) (models.User, err
 }
 func (u *UserService) InsertUserToDb(ctx context.Context, user DTO.CreateUser, password string) error {
 	doesUserExists, err := u.UserRepository.FindUserByEmail(ctx, user.Email)
-	if err != nil && err.Error() != "User not found" {
-		return err
+	if err != nil {
+		if err.Error() == "User not found" {
+			u.LoggerService.Info("User not found", user.Email)
+			return models.NewError(400, "NotFound", "User not found")
+		}
+		return models.NewError(500, "InternalError", err.Error())
 	}
 	if doesUserExists.Id > 0 {
 		u.LoggerService.Info("User with this email already exists", user.Email)

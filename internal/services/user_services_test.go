@@ -1,0 +1,401 @@
+package services
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/slodkiadrianek/octopus/internal/DTO"
+	"github.com/slodkiadrianek/octopus/internal/models"
+	"github.com/slodkiadrianek/octopus/tests/mocks"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+)
+
+func TestUserService_InsertUserToDb(t *testing.T) {
+	type args struct {
+		name          string
+		expectedError *string
+		password      string
+		setupMock     func() userRepository
+	}
+	tests := []args{
+		{
+			name:          "Proper data",
+			expectedError: nil,
+			password:      "fdEW4$#f4303",
+			setupMock: func() userRepository {
+				m := new(mocks.MockUserRepository)
+				m.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
+					models.User{}, nil)
+				m.On("InsertUserToDb", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				return m
+			},
+		},
+		{
+			name:          "User not found",
+			expectedError: ptr("User not found"),
+			password:      "fdEW4$#f4303",
+			setupMock: func() userRepository {
+				m := new(mocks.MockUserRepository)
+				m.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
+					models.User{}, errors.New("User not found"))
+				return m
+			},
+		},
+		{
+			name:          "Failed to find user by email",
+			expectedError: ptr("Failed to execute query"),
+			password:      "fdEW4$#f4303",
+			setupMock: func() userRepository {
+				m := new(mocks.MockUserRepository)
+				m.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
+					models.User{}, errors.New("Failed to execute query"))
+				return m
+			},
+		},
+		{
+			name:          "User already exists",
+			expectedError: ptr("User with this email already exists"),
+			password:      "fdEW4$#f4303",
+			setupMock: func() userRepository {
+				m := new(mocks.MockUserRepository)
+				m.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
+					models.User{
+						Id: 1,
+					}, nil)
+				return m
+			},
+		},
+		{
+			name:          "Failed to hash password",
+			expectedError: ptr("bcrypt: password length exceeds 72 bytes"),
+			password:      "fdEW4$#f4303r3er236575467nfw7f9348htx0f94378xfh349fxyh349xf8@#34RFDFE42423423423",
+			setupMock: func() userRepository {
+				m := new(mocks.MockUserRepository)
+				m.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
+					models.User{
+						Id: 0,
+					}, nil)
+				return m
+			},
+		},
+		{
+			name:          "Failed to insert user to db",
+			expectedError: ptr("Failed to insert user to db"),
+			password:      "fdEW4$#f4303",
+			setupMock: func() userRepository {
+				m := new(mocks.MockUserRepository)
+				m.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
+					models.User{
+						Id: 0,
+					}, nil)
+
+				m.On("InsertUserToDb", mock.Anything, mock.Anything,
+					mock.Anything).Return(errors.New("Failed to insert user to db"))
+				return m
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctx := context.Background()
+			loggerService := createLogger()
+			userRepository := test.setupMock()
+			userService := NewUserService(loggerService, userRepository)
+			user := DTO.NewCreateUser("adikurek@cos.com", "Adrian", "Kurek")
+			err := userService.InsertUserToDb(ctx, *user, test.password)
+			if test.expectedError == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), *test.expectedError)
+			}
+		})
+	}
+}
+
+func TestUserService_UpdateUser(t *testing.T) {
+	type args struct {
+		name          string
+		expectedError *string
+		setupMock     func() userRepository
+	}
+	tests := []args{
+		{
+			name:          "Proper data",
+			expectedError: nil,
+			setupMock: func() userRepository {
+				m := new(mocks.MockUserRepository)
+				m.On("UpdateUser", mock.Anything, mock.Anything, mock.Anything).Return(
+					nil)
+				return m
+			},
+		},
+		{
+			name:          "Failed to update an user",
+			expectedError: ptr("Failed to update an user"),
+			setupMock: func() userRepository {
+				m := new(mocks.MockUserRepository)
+				m.On("UpdateUser", mock.Anything, mock.Anything, mock.Anything).Return(
+					errors.New("Failed to update an user"))
+				return m
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctx := context.Background()
+			loggerService := createLogger()
+			userRepository := test.setupMock()
+			userService := NewUserService(loggerService, userRepository)
+			user := DTO.NewCreateUser("adikurek@cos.com", "Adrina", "Kurek")
+			err := userService.UpdateUser(ctx, *user, 3)
+			if test.expectedError == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), *test.expectedError)
+			}
+		})
+	}
+}
+
+func TestUserService_UpdateUserNotifications(t *testing.T) {
+	type args struct {
+		name          string
+		expectedError *string
+		setupMock     func() userRepository
+	}
+	tests := []args{
+		{
+			name:          "Proper data",
+			expectedError: nil,
+			setupMock: func() userRepository {
+				m := new(mocks.MockUserRepository)
+				m.On("UpdateUserNotifications", mock.Anything, mock.Anything, mock.Anything).Return(
+					nil)
+				return m
+			},
+		},
+		{
+			name:          "Failed to update an user",
+			expectedError: ptr("Failed to update an user"),
+			setupMock: func() userRepository {
+				m := new(mocks.MockUserRepository)
+				m.On("UpdateUserNotifications", mock.Anything, mock.Anything, mock.Anything).Return(
+					errors.New("Failed to update an user"))
+				return m
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctx := context.Background()
+			loggerService := createLogger()
+			userRepository := test.setupMock()
+			userService := NewUserService(loggerService, userRepository)
+			user := DTO.UpdateUserNotifications{
+				DiscordNotifications: false,
+				SlackNotifications:   false,
+				EmailNotifications:   false,
+			}
+			err := userService.UpdateUserNotifications(ctx, 3, user)
+			if test.expectedError == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), *test.expectedError)
+			}
+		})
+	}
+}
+
+func TestUserService_DeleteUser(t *testing.T) {
+	type args struct {
+		name          string
+		expectedError *string
+		password      string
+		setupMock     func() userRepository
+	}
+	tests := []args{
+		{
+			name:          "Proper data",
+			expectedError: nil,
+			password:      "ci$#fm43980faz",
+			setupMock: func() userRepository {
+				m := new(mocks.MockUserRepository)
+				m.On("FindUserById", mock.Anything, mock.Anything).Return(
+					models.User{Id: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
+				m.On("DeleteUser", mock.Anything, mock.Anything, mock.Anything).Return(
+					nil)
+				return m
+			},
+		},
+		{
+			name:          "User does not exist",
+			expectedError: ptr("User with this id does not exist"),
+			password:      "ci$#fm43980faz",
+			setupMock: func() userRepository {
+				m := new(mocks.MockUserRepository)
+				m.On("FindUserById", mock.Anything, mock.Anything).Return(
+					models.User{Id: 0}, nil)
+				return m
+			},
+		},
+		{
+			name:          "Wrong password provided",
+			expectedError: ptr("Wrong password provided"),
+			password:      "ci$#fm43980faz2",
+			setupMock: func() userRepository {
+				m := new(mocks.MockUserRepository)
+				m.On("FindUserById", mock.Anything, mock.Anything).Return(
+					models.User{Id: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
+				return m
+			},
+		},
+		{
+			name:          "Failed to find a user",
+			expectedError: ptr("Failed to find a user"),
+			password:      "ci$#fm43980faz2",
+			setupMock: func() userRepository {
+				m := new(mocks.MockUserRepository)
+				m.On("FindUserById", mock.Anything, mock.Anything).Return(models.User{},
+					errors.New("Failed to find a user"))
+				return m
+			},
+		},
+		{
+			name:          "Failed to delete a user",
+			expectedError: ptr("Failed to delete a user"),
+			password:      "ci$#fm43980faz",
+			setupMock: func() userRepository {
+				m := new(mocks.MockUserRepository)
+				m.On("FindUserById", mock.Anything, mock.Anything).Return(
+					models.User{Id: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
+				m.On("DeleteUser", mock.Anything, mock.Anything, mock.Anything).Return(
+					errors.New("Failed to delete a user"))
+				return m
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctx := context.Background()
+			loggerService := createLogger()
+			userRepository := test.setupMock()
+			userService := NewUserService(loggerService, userRepository)
+			err := userService.DeleteUser(ctx, 3, test.password)
+			if test.expectedError == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), *test.expectedError)
+			}
+		})
+	}
+}
+
+func TestUserService_ChangeUserPassword(t *testing.T) {
+	type args struct {
+		name          string
+		expectedError *string
+		password      string
+		newPassword   string
+		setupMock     func() userRepository
+	}
+	tests := []args{
+		{
+			name:          "Proper data",
+			expectedError: nil,
+			password:      "ci$#fm43980faz",
+			newPassword:   "ci$#fm43980faz",
+			setupMock: func() userRepository {
+				m := new(mocks.MockUserRepository)
+				m.On("FindUserById", mock.Anything, mock.Anything).Return(
+					models.User{Id: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
+				m.On("ChangeUserPassword", mock.Anything, mock.Anything, mock.Anything).Return(
+					nil)
+				return m
+			},
+		},
+		{
+			name:          "User with this id does not exist",
+			expectedError: ptr("User with this id does not exist"),
+			password:      "ci$#fm43980faz",
+			newPassword:   "ci$#fm43980faz",
+			setupMock: func() userRepository {
+				m := new(mocks.MockUserRepository)
+				m.On("FindUserById", mock.Anything, mock.Anything).Return(
+					models.User{Id: 0}, nil)
+				return m
+			},
+		},
+		{
+			name:          "Wrong password provided",
+			expectedError: ptr("Wrong current password provided"),
+			password:      "ci$#fm43980faz2",
+			newPassword:   "ci$#fm43980faz",
+			setupMock: func() userRepository {
+				m := new(mocks.MockUserRepository)
+				m.On("FindUserById", mock.Anything, mock.Anything).Return(
+					models.User{Id: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
+				return m
+			},
+		},
+		{
+			name:          "Wrong password provid3ed",
+			expectedError: ptr("bcrypt: password length exceeds 72 bytes"),
+			password:      "ci$#fm43980faz",
+			newPassword:   "ci$#fm4398d432-89m52348-$#@rt43t43tZ#4t43t39ty4343324fn87634c8-t734tct43t430faz",
+			setupMock: func() userRepository {
+				m := new(mocks.MockUserRepository)
+				m.On("FindUserById", mock.Anything, mock.Anything).Return(
+					models.User{Id: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
+				return m
+			},
+		},
+		{
+			name:          "Failed to find a user",
+			expectedError: ptr("Failed to find a user"),
+			password:      "ci$#fm43980faz2",
+			newPassword:   "ci$#fm43980faz",
+			setupMock: func() userRepository {
+				m := new(mocks.MockUserRepository)
+				m.On("FindUserById", mock.Anything, mock.Anything).Return(models.User{},
+					errors.New("Failed to find a user"))
+				return m
+			},
+		},
+		{
+			name:          "Failed to change password",
+			expectedError: ptr("Failed to change password"),
+			password:      "ci$#fm43980faz",
+			newPassword:   "ci$#fm43980faz",
+			setupMock: func() userRepository {
+				m := new(mocks.MockUserRepository)
+				m.On("FindUserById", mock.Anything, mock.Anything).Return(
+					models.User{Id: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
+				m.On("ChangeUserPassword", mock.Anything, mock.Anything, mock.Anything).Return(
+					errors.New("Failed to change password"))
+				return m
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctx := context.Background()
+			loggerService := createLogger()
+			userRepository := test.setupMock()
+			userService := NewUserService(loggerService, userRepository)
+			err := userService.ChangeUserPassword(ctx, 3, test.password, test.newPassword)
+			if test.expectedError == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), *test.expectedError)
+			}
+		})
+	}
+}
