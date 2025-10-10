@@ -1,0 +1,37 @@
+-- Create custom ENUM type for HTTP methods
+CREATE TYPE requestMethod AS ENUM ('POST', 'GET', 'PUT', 'PATCH', 'DELETE');
+
+-- Routes table: stores API endpoint definitions
+CREATE TABLE IF NOT EXISTS routes (
+    id     SERIAL PRIMARY KEY,
+    path   VARCHAR(256) NOT NULL,
+    method requestMethod NOT NULL DEFAULT 'GET',
+    UNIQUE (method, path)
+);
+
+-- Routes responses table: stores possible response configurations
+CREATE TABLE IF NOT EXISTS routes_responses (
+    id          SERIAL PRIMARY KEY,
+    status_code INTEGER NOT NULL DEFAULT 200,
+    body_data   JSONB,
+    UNIQUE (status_code, body_data)
+);
+
+-- Routes requests table: stores request configurations
+CREATE TABLE IF NOT EXISTS routes_requests (
+    id         SERIAL PRIMARY KEY,
+    query_data JSONB,
+    param_data JSONB,
+    body_data  JSONB,
+    UNIQUE (query_data, param_data, body_data)
+);
+
+-- Working routes table: links routes with their request/response pairs
+CREATE TABLE IF NOT EXISTS working_routes (
+    id          SERIAL PRIMARY KEY,
+    route_id    INTEGER NOT NULL REFERENCES routes(id),
+    request_id  INTEGER NOT NULL REFERENCES routes_requests(id),
+    response_id INTEGER NOT NULL REFERENCES routes_responses(id),
+    parent_id   INTEGER REFERENCES working_routes(id),
+    app_id      VARCHAR(64) NOT NULL REFERENCES apps(app_id)
+);

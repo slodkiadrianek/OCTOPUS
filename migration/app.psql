@@ -1,0 +1,20 @@
+-- Apps table: stores application definitions
+CREATE TABLE IF NOT EXISTS apps (
+    id              VARCHAR(64) PRIMARY KEY,
+    name            VARCHAR(64) NOT NULL,
+    description     VARCHAR(256),
+    owner_id        INTEGER NOT NULL REFERENCES users(id),
+    slack_webhook   VARCHAR(256),
+    discord_webhook VARCHAR(256),
+    is_docker       BOOLEAN DEFAULT FALSE,
+    port            VARCHAR(32),
+    ip_address      VARCHAR(32)
+);
+
+-- Apps statuses table: tracks application status history
+CREATE TABLE IF NOT EXISTS apps_statuses (
+    app_id     VARCHAR(64) PRIMARY KEY REFERENCES apps(id),
+    status     VARCHAR(50),
+    changed_at TIMESTAMP,
+    duration   BIGINT
+);
