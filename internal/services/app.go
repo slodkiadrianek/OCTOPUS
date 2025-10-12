@@ -164,11 +164,9 @@ func (a *AppService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatus, erro
 				}
 
 				appsStatusesChan <- appStatus
-				fmt.Println(appStatus.Status, job.Status)
 				if appStatus.Status != job.Status {
 					appsToSendChan <- appStatus
 				}
-
 				bodyBytes, err := utils.MarshalData(appStatus)
 				if err != nil {
 					a.Logger.Error("Failed to marshal app status", map[string]any{"data": appStatus, "error": err.Error()})
@@ -215,7 +213,7 @@ func (a *AppService) SendNotifications(ctx context.Context, appsStatuses []DTO.A
 		return nil
 	}
 	a.Logger.Info("Started sending Notifications to users")
-	appsToSendNotifications, err := a.AppRepository.GetUsersToSendNotifications(ctx, appsStatuses)
+	usersToSendNotifications, err := a.AppRepository.GetUsersToSendNotifications(ctx, appsStatuses)
 	if err != nil {
 		return err
 	}
@@ -226,7 +224,7 @@ func (a *AppService) SendNotifications(ctx context.Context, appsStatuses []DTO.A
 		"Email":   {},
 	}
 
-	for _, app := range appsToSendNotifications {
+	for _, app := range usersToSendNotifications {
 		if app.DiscordNotifications {
 			sortedData["Discord"] = append(sortedData["Discord"], app)
 		}

@@ -34,7 +34,7 @@ func createCacheService(loggerService *utils.Logger) CacheService {
 }
 
 func createLogger() *utils.Logger {
-	loggerService := utils.NewLogger("./logs", "2006-01-02 15:04:05")
+	loggerService := utils.NewLogger("../../logs", "2006-01-02 15:04:05")
 	loggerService.CreateLogger()
 	return loggerService
 }
