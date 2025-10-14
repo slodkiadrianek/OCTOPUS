@@ -21,7 +21,6 @@ func CorsHandler(next http.Handler) http.Handler {
 				break
 			}
 		}
-
 		if !isMethodAllowed {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return

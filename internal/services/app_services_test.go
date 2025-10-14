@@ -599,6 +599,26 @@ func TestAppService_SendNotifications(t *testing.T) {
 				return mApp, mCache
 			},
 		},
+		{
+			name:          "Proper data",
+			expectedError: nil,
+			appsStatuses:  []DTO.AppStatus{{AppId: "32", Status: "running"}},
+			setupMock: func() (appRepository, CacheService) {
+				mCache := new(mocks.MockCacheService)
+				mApp := new(mocks.MockAppRepository)
+				mApp.On("GetUsersToSendNotifications", mock.Anything,
+					mock.Anything).Return([]models.SendNotificationTo{
+					{
+						Status:               "running",
+						SlackNotifications:   true,
+						DiscordNotifications: true,
+						DiscordWebhook:       "",
+						SlackWebhook:         "https://hooks.slack.com/services/T026/B09AY4T/zunu2tPqHARDJ",
+					},
+				}, nil)
+				return mApp, mCache
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
