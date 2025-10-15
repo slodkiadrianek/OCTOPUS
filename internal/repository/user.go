@@ -138,6 +138,7 @@ func (u *UserRepository) DeleteUser(ctx context.Context, password string, userId
 func (u *UserRepository) FindUserById(ctx context.Context, userId int) (models.User, error) {
 	query := `
 	SELECT * FROM users WHERE id = $1`
+	u.Db.SetMaxOpenConns(1000)
 	stmt, err := u.Db.PrepareContext(ctx, query)
 	if err != nil {
 		u.LoggerService.Info("failed to prepare query for execution", map[string]any{

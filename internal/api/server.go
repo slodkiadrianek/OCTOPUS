@@ -23,12 +23,13 @@ type DependencyConfig struct {
 	ServerController    *controllers.ServerController
 	WebSocketController *controllers.WsController
 	JWT                 *middleware.JWT
+	RateLimiter         *middleware.RateLimiter
 }
 
 func NewDependencyConfig(port string, userController *controllers.UserController,
 	appController *controllers.AppController, dockerController *controllers.DockerController,
 	authController *controllers.AuthController, jwt *middleware.JWT, serverController *controllers.ServerController,
-	wsController *controllers.WsController) *DependencyConfig {
+	wsController *controllers.WsController, rateLimiter *middleware.RateLimiter) *DependencyConfig {
 	return &DependencyConfig{
 		Port:                port,
 		UserController:      userController,
@@ -38,6 +39,7 @@ func NewDependencyConfig(port string, userController *controllers.UserController
 		ServerController:    serverController,
 		WebSocketController: wsController,
 		JWT:                 jwt,
+		RateLimiter:         rateLimiter,
 	}
 }
 
@@ -68,7 +70,7 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) SetupRoutes() {
-	authHandler := handlers.NewAuthHandler(s.Config.UserController, s.Config.AuthController, s.Config.JWT)
+	authHandler := handlers.NewAuthHandler(s.Config.UserController, s.Config.AuthController, s.Config.JWT, s.Config.RateLimiter)
 	userHandler := handlers.NewUserHandler(s.Config.UserController, s.Config.JWT)
 	appHandler := handlers.NewAppAppHandler(s.Config.AppController, s.Config.DockerController, s.Config.JWT)
 	serverHandler := handlers.NewServerHandlers(s.Config.ServerController, s.Config.JWT)

@@ -42,6 +42,7 @@ func main() {
 		loggerService.Error("Failed to connect to database", err)
 		return
 	}
+	rateLimiter := middleware.NewRateLimiter(5, 1*time.Minute, 5*time.Minute, 10*time.Minute, loggerService)
 	userRepository := repository.NewUserRepository(db.DbConnection, loggerService)
 	userService := services.NewUserService(loggerService, userRepository)
 	appRepository := repository.NewAppRepository(db.DbConnection, loggerService)
@@ -59,9 +60,10 @@ func main() {
 	WsController := controllers.NewWsController(wsService, loggerService)
 
 	dependenciesConfig := api.NewDependencyConfig(cfg.Port, userController, appController, dockerController,
-		authController, jwt, serverController, WsController)
+		authController, jwt, serverController, WsController, rateLimiter)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	server := api.NewServer(dependenciesConfig)
-
+	go rateLimiter.CleanWorker(ctx)
 	go func() {
 		loggerService.Info("Starting API server on port: " + cfg.Port)
 		if err := server.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -72,7 +74,6 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	<-quit
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
