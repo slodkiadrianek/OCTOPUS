@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"fmt"
 	"runtime"
 	"sync"
 
@@ -88,28 +87,30 @@ func (dc *DockerService) ImportContainers(ctx context.Context, ownerId int) erro
 		dc.Logger.Error("Failed to list containers", err)
 		return err
 	}
-	//appsData := {}
-	var appsData []DTO.App
 	workerCount := runtime.NumCPU()
 	jobs := make(chan containertypes.Summary, len(containers))
+	appsDataChan := make(chan DTO.App, len(containers))
 	var wg sync.WaitGroup
 
 	for i := 0; i < workerCount; i++ {
 		wg.Add(1)
-		go func(workerID int) {
+		go func() {
 			defer wg.Done()
 			for job := range jobs {
 				preparedName := job.Names[0][1:]
-				appsData = append(appsData, *DTO.NewApp(job.ID, preparedName, "", true, ownerId, "", ""))
+				appsDataChan <- *DTO.NewApp(job.ID, preparedName, "", true, ownerId, "", "")
 			}
-		}(i + 1)
+		}()
 	}
 	for _, container := range containers {
 		jobs <- container
 	}
-	close(jobs)
 	wg.Wait()
-	fmt.Println("Using", workerCount, "workers")
+	close(jobs)
+	var appsData []DTO.App
+	for app := range appsDataChan {
+		appsData = append(appsData, app)
+	}
 	err = dc.AppRepository.InsertApp(ctx, appsData)
 	return err
 }

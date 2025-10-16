@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
+
 	// "strings"
 	"time"
 
@@ -43,12 +45,10 @@ func RateLimiterMiddleware(rateLimiter RateLimiter) func(http.Handler) http.Hand
 func RateLimiterHandler(next http.Handler, rateLimiter RateLimiter) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ipAddress := r.RemoteAddr
-		// isExternal := strings.Contains(ipAddress, "[::1]")
-		// if !isExternal {
-		// 	ipAddress = strings.Split(ipAddress, ":")[0]
-		// }
-
-		fmt.Println(ipAddress, "Ip Address")
+		isExternal := strings.Contains(ipAddress, "[::1]")
+		if !isExternal {
+			ipAddress = strings.Split(ipAddress, ":")[0]
+		}
 		if _, exists := rateLimiter.Users[ipAddress]; exists {
 			res := rateLimiter.Allow(ipAddress)
 			if res {
