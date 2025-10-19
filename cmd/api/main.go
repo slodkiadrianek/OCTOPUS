@@ -45,6 +45,7 @@ func main() {
 	rateLimiter := middleware.NewRateLimiter(5, 1*time.Minute, 5*time.Minute, 10*time.Minute, loggerService)
 	userRepository := repository.NewUserRepository(db.DbConnection, loggerService)
 	userService := services.NewUserService(loggerService, userRepository)
+	routeService := services.NewRouteService(loggerService)
 	appRepository := repository.NewAppRepository(db.DbConnection, loggerService)
 	appService := services.NewAppService(appRepository, loggerService, cacheService, cfg.DockerHost)
 	wsService := services.NewWsService(loggerService, cfg.DockerHost)
@@ -53,6 +54,7 @@ func main() {
 	jwt := middleware.NewJWT(cfg.JWTSecret, loggerService, cacheService)
 	authService := services.NewAuthService(loggerService, userRepository, jwt)
 	authController := controllers.NewAuthController(authService, loggerService)
+	routeController := controllers.NewRouteController(routeService, loggerService)
 	userController := controllers.NewUserController(userService, loggerService)
 	appController := controllers.NewAppController(appService, loggerService)
 	dockerController := controllers.NewDockerController(dockerService, loggerService)
@@ -60,7 +62,7 @@ func main() {
 	WsController := controllers.NewWsController(wsService, loggerService)
 
 	dependenciesConfig := api.NewDependencyConfig(cfg.Port, userController, appController, dockerController,
-		authController, jwt, serverController, WsController, rateLimiter)
+		authController, jwt, serverController, WsController, rateLimiter, routeController)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	server := api.NewServer(dependenciesConfig)
 	go rateLimiter.CleanWorker(ctx)

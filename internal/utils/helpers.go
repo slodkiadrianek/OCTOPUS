@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"net/http"
+
+	"github.com/slodkiadrianek/octopus/internal/DTO"
 )
 
 func GenerateID() (string, error) {
@@ -38,4 +40,17 @@ func UnmarshalData[T any](dataBytes []byte) (*T, error) {
 		return nil, err
 	}
 	return data, nil
+}
+
+func InsertionSortForRoutes[T DTO.RoutesParentId](data []T) []T {
+	for i := 0; i < len(data); i++ {
+		item := data[i].GetParentId()
+		position := i
+		for position > 0 && data[position-1].GetParentId() > item {
+			data[position].SetParentId(data[position-1].GetParentId())
+			position--
+		}
+		data[position].SetParentId(item)
+	}
+	return data
 }

@@ -22,6 +22,7 @@ type DependencyConfig struct {
 	AuthController      *controllers.AuthController
 	ServerController    *controllers.ServerController
 	WebSocketController *controllers.WsController
+	RouteController     *controllers.RouteController
 	JWT                 *middleware.JWT
 	RateLimiter         *middleware.RateLimiter
 }
@@ -29,7 +30,7 @@ type DependencyConfig struct {
 func NewDependencyConfig(port string, userController *controllers.UserController,
 	appController *controllers.AppController, dockerController *controllers.DockerController,
 	authController *controllers.AuthController, jwt *middleware.JWT, serverController *controllers.ServerController,
-	wsController *controllers.WsController, rateLimiter *middleware.RateLimiter) *DependencyConfig {
+	wsController *controllers.WsController, rateLimiter *middleware.RateLimiter, routeController *controllers.RouteController) *DependencyConfig {
 	return &DependencyConfig{
 		Port:                port,
 		UserController:      userController,
@@ -38,6 +39,7 @@ func NewDependencyConfig(port string, userController *controllers.UserController
 		AuthController:      authController,
 		ServerController:    serverController,
 		WebSocketController: wsController,
+		RouteController:     routeController,
 		JWT:                 jwt,
 		RateLimiter:         rateLimiter,
 	}
@@ -75,11 +77,13 @@ func (s *Server) SetupRoutes() {
 	appHandler := handlers.NewAppAppHandler(s.Config.AppController, s.Config.DockerController, s.Config.JWT)
 	serverHandler := handlers.NewServerHandlers(s.Config.ServerController, s.Config.JWT)
 	wsHandler := handlers.NewWebsocketHandler(s.Config.WebSocketController, s.Config.JWT)
+	routeHandler := handlers.NewRouteHandlers(s.Config.RouteController)
 	authHandler.SetupAuthHandlers(*s.Router)
 	appHandler.SetupAppHandlers(*s.Router)
 	wsHandler.SetupWebsocketHandlers(*s.Router)
 	serverHandler.SetupServerHandlers(*s.Router)
 	userHandler.SetupUserHandlers(*s.Router)
+	routeHandler.SetupRouteHandler(*s.Router)
 
 }
 

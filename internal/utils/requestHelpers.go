@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/slodkiadrianek/octopus/internal/DTO"
+
 	z "github.com/Oudwins/zog"
 	"github.com/slodkiadrianek/octopus/internal/models"
 )
@@ -111,12 +113,105 @@ func ReadAllParams(r *http.Request) (map[string]string, error) {
 	return params, nil
 }
 
-func ValidateInput(schema *z.StructSchema, val any) z.ZogIssueMap {
+func ValidateInputStruct(schema *z.StructSchema, val any) z.ZogIssueMap {
 	errMap := schema.Validate(val)
 	if errMap != nil {
 		return errMap
 	}
 	return nil
+}
+
+func ValidateInputSlice(schema *z.SliceSchema, val any) z.ZogIssueMap {
+	errMap := schema.Validate(val)
+	if errMap != nil {
+		return errMap
+	}
+	return nil
+}
+
+func CheckRouteParams(actualRoute DTO.CreateRoute) bool {
+	countParamsFromPath := 0
+	splittedPath := strings.Split(actualRoute.Path, "/")
+	for _, val := range splittedPath {
+		leftBrace := strings.Contains(val, "{")
+		rightBrace := strings.Contains(val, "}")
+		if leftBrace && rightBrace {
+			param := val[1 : len(val)-1]
+			if _, exist := actualRoute.RequestParams[param]; !exist {
+				return false
+			}
+			countParamsFromPath++
+		}
+	}
+	if countParamsFromPath != len(actualRoute.RequestParams) {
+		return false
+	}
+	return true
+}
+
+func CheckIsNextRouteBodyInTheBodyAndInTheBodyOfTheNextRoute(actualRoute DTO.CreateRoute, nextRoute DTO.CreateRoute) bool {
+	for _, val := range actualRoute.NextRouteBody {
+		resBody := IsDataInResponseOrRequest[map[string]any](actualRoute.ResponseBody, val)
+		if !resBody {
+			return false
+		}
+		reqBody := IsDataInResponseOrRequest[map[string]any](nextRoute.RequestBody, val)
+		if !reqBody {
+			return false
+		}
+	}
+	return true
+}
+
+func CheckIsNextRouteQueryInTheBodyAndInTheQueryOfTheNextRoute(actualRoute DTO.CreateRoute, nextRoute DTO.CreateRoute) bool {
+	for _, val := range actualRoute.NextRouteQuery {
+		resBody := IsDataInResponseOrRequest[map[string]any](actualRoute.ResponseBody, val)
+		if !resBody {
+			return false
+		}
+		reqQuery := IsDataInResponseOrRequest[map[string]string](nextRoute.RequestQuery, val)
+		if !reqQuery {
+			return false
+		}
+	}
+	return true
+}
+
+func CheckIsNextRouteParamsInTheBodyAndInTheParamsOfTheNextRoute(actualRoute DTO.CreateRoute, nextRoute DTO.CreateRoute) bool {
+	for _, val := range actualRoute.NextRouteParams {
+		resBody := IsDataInResponseOrRequest[map[string]any](actualRoute.ResponseBody, val)
+		if !resBody {
+			return false
+		}
+		reqParams := IsDataInResponseOrRequest[map[string]string](nextRoute.RequestParams, val)
+		if !reqParams {
+			return false
+		}
+	}
+	return true
+}
+
+func IsDataInResponseOrRequest[T map[string]any | map[string]string](responseBody T, data string) bool {
+	switch body := any(responseBody).(type) {
+	case map[string]any:
+		for key, val := range body {
+			if key == data {
+				return true
+			}
+			if x, ok := val.(map[string]any); ok {
+				if IsDataInResponseOrRequest(x, data) {
+					return true
+				}
+			}
+		}
+	case map[string]string:
+		for key := range body {
+			if key == data {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func RemoveLatCharacterFromUrl(route string) string {

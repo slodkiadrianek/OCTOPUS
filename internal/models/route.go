@@ -10,3 +10,5 @@ type Route struct {
 	ExpectedStatusCode int    `json:"expectedStatusCode" example:"200"`
 	ExpectedBodyData   string `json:"expectedBodyData" example:"{status:success, message:User found}"`
 }
+
+type NextRouteData struct{}

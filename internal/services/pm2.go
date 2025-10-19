@@ -16,6 +16,6 @@ func NewPm2Service(appRepository appRepository, logger *utils.Logger) *DockerSer
 	}
 }
 
-func (pm *Pm2Service) ImportApps() error {
-	
-}
+//func (pm *Pm2Service) ImportApps() error {
+//
+//}

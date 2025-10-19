@@ -1,13 +1,27 @@
 package schema
 
-import z "github.com/Oudwins/zog"
+import (
+	z "github.com/Oudwins/zog"
+)
 
-var CreateRouteSchema = z.Slice(z.Slice(z.Struct(z.Shape{
-	"path":               z.String().Required(),
-	"method":             z.String().OneOf([]string{"POST", "GET", "PUT", "PATCH", "DELETE"}),
-	"query_data":         z.String().Optional(),
-	"param_data":         z.String().Optional(),
-	"body_data":          z.String().Optional(),
-	"expectedStatusCode": z.Int().Required(),
-	"expectedBodyData":   z.String().Required(),
-})))
+var CreateRouteSchema = z.Slice(z.Struct(z.Shape{
+	"path":                 z.String().Required(),
+	"method":               z.String().OneOf([]string{"POST", "GET", "PUT", "PATCH", "DELETE"}),
+	"requestAuthorization": z.String().Optional(),
+	"requestQuery": z.CustomFunc[map[string]string](func(val *map[string]string, ctx z.Ctx) bool {
+		return true
+	}),
+	"requestParams": z.CustomFunc[map[string]string](func(val *map[string]string, ctx z.Ctx) bool {
+		return true
+	}),
+	"requestBody": z.CustomFunc[map[string]any](func(val *map[string]any, ctx z.Ctx) bool {
+		return true
+	}),
+	"nextRouteBody":      z.Slice(z.String()).Optional(),
+	"nextRouteQuery":     z.Slice(z.String()).Optional(),
+	"nextRouteParams":    z.Slice(z.String()).Optional(),
+	"responseStatusCode": z.Int().Required(),
+	"responseBody": z.CustomFunc[map[string]any](func(val *map[string]any, ctx z.Ctx) bool {
+		return true
+	}),
+}))
