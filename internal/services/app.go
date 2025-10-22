@@ -3,16 +3,20 @@ package services
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
 	"runtime"
+	"slices"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/docker/docker/client"
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
+	"github.com/slodkiadrianek/octopus/internal/repository"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
@@ -28,19 +32,22 @@ type appRepository interface {
 	GetUsersToSendNotifications(ctx context.Context, appsStatuses []DTO.AppStatus) ([]models.SendNotificationTo, error)
 }
 type AppService struct {
-	AppRepository appRepository
-	Logger        *utils.Logger
-	CacheService  CacheService
-	DockerHost    string
+	AppRepository   appRepository
+	Logger          *utils.Logger
+	CacheService    CacheService
+	DockerHost      string
+	RouteRepository *repository.RouteRepository
 }
 
 func NewAppService(appRepository appRepository, logger *utils.Logger, cacheService CacheService,
-	dockerHost string) *AppService {
+	dockerHost string, routeRepository *repository.RouteRepository,
+) *AppService {
 	return &AppService{
-		AppRepository: appRepository,
-		Logger:        logger,
-		CacheService:  cacheService,
-		DockerHost:    dockerHost,
+		AppRepository:   appRepository,
+		Logger:          logger,
+		CacheService:    cacheService,
+		DockerHost:      dockerHost,
+		RouteRepository: routeRepository,
 	}
 }
 
@@ -206,6 +213,139 @@ func (a *AppService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatus, erro
 	}
 
 	return appsToSendNotification, nil
+}
+
+func (a *AppService) CheckRoutesStatus(ctx context.Context) error {
+	routesToTest, err := a.RouteRepository.GetWorkingRoutesToTest(ctx)
+	if err != nil {
+		return err
+	}
+	var sortedRoutesToTests map[string][]DTO.RouteToTest
+	for _, routeToTest := range routesToTest {
+		key := routeToTest.Name + routeToTest.AppId
+		if routeToTest.ParentId == 0 {
+			sortedRoutesToTests[key] = append([]DTO.RouteToTest{routeToTest},
+				sortedRoutesToTests[key]...)
+		} else {
+			sortedRoutesToTests[key] = append([]DTO.RouteToTest{routeToTest},
+				sortedRoutesToTests[key]...)
+		}
+	}
+	var routesStatuses map[int]string
+	client := &http.Client{}
+	for _, routesToTest := range sortedRoutesToTests {
+		var nextRouteBody map[string]any
+		var nextRouteParams map[string]string
+		var nextRouteQuery map[string]string
+		var nextRouteAuthorizationHeader string
+		for _, route := range routesToTest {
+			var routeStatus string
+			if len(nextRouteBody) > 0 {
+				route.RequestBody = nextRouteBody
+			}
+			if len(nextRouteParams) > 0 {
+				route.RequestParams = nextRouteParams
+			}
+			if len(nextRouteQuery) > 0 {
+				route.RequestQuery = nextRouteQuery
+			}
+			if len(nextRouteAuthorizationHeader) > 0 {
+				route.RequestAuthorization = nextRouteAuthorizationHeader
+			}
+			authorizationHeader := "Bearer " + route.RequestAuthorization
+			splittedPath := strings.Split(route.Path, "/")
+			for _, val := range splittedPath {
+				leftBrace := strings.Contains(val, "{")
+				rightBrace := strings.Contains(val, "}")
+				if leftBrace && rightBrace {
+					param := val[1 : len(val)-1]
+					val = route.RequestParams[param]
+				}
+			}
+			var query []string
+			for key, val := range route.RequestQuery {
+				query = append(query, key+"="+val)
+			}
+
+			path := strings.Join(splittedPath, "/")
+			url := route.IpAddress + ":" + route.Port + path + "?" + strings.Join(query, "&")
+			jsonData, err := utils.MarshalData(route.RequestBody)
+			if err != nil {
+				a.Logger.Error("Failed to marshal webhook payload", err)
+				return err
+			}
+
+			req, err := http.NewRequestWithContext(ctx, route.Method, url, bytes.NewBuffer(jsonData))
+			req.Header.Add("Authorization", authorizationHeader)
+			if err != nil {
+				a.Logger.Error("Failed to create webhook request", err)
+				return err
+			}
+
+			req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+
+			resp, err := client.Do(req)
+			if err != nil {
+				a.Logger.Error("Failed to send webhook request", err)
+				return err
+			}
+			defer resp.Body.Close()
+			var body map[string]any
+			err = json.NewDecoder(resp.Body).Decode(&body)
+			if err != nil {
+				a.Logger.Error("Failed to read body from the request", err)
+				return err
+			}
+			if len(body) != len(route.ResponseBody) {
+				routeStatus = "Failed;Different body"
+				routesStatuses[route.Id] = routeStatus
+				break
+			}
+			if resp.StatusCode != route.ResponseStatusCode {
+				routeStatus = "Failed;Status Code"
+				routesStatuses[route.Id] = routeStatus
+				break
+			}
+			for key, val := range body {
+				if slices.Contains(route.NextRouteBody, key) {
+					nextRouteBody[key] = val
+				}
+				if slices.Contains(route.NextRouteParams, key) {
+					valS, ok := val.(string)
+					if !ok {
+						routeStatus = "Failed;Wrong type of the property for param"
+						routesStatuses[route.Id] = routeStatus
+						break
+					}
+					nextRouteParams[key] = valS
+				}
+				if slices.Contains(route.NextRouteQuery, key) {
+					valS, ok := val.(string)
+					if !ok {
+						routeStatus = "Failed;Wrong type of the property for query"
+						routesStatuses[route.Id] = routeStatus
+						break
+					}
+					nextRouteQuery[key] = valS
+				}
+				if strings.Contains(route.NextAuthorizationHeader, key) {
+
+					valS, ok := val.(string)
+					if !ok {
+						routeStatus = "Failed;Wrong type of the property for authorization header"
+						routesStatuses[route.Id] = routeStatus
+						break
+					}
+					nextRouteAuthorizationHeader = valS
+				}
+			}
+			routeStatus = "success"
+			routesStatuses[route.Id] = routeStatus
+		}
+
+	}
+	fmt.Println(routesStatuses)
+	return nil
 }
 
 func (a *AppService) SendNotifications(ctx context.Context, appsStatuses []DTO.AppStatus) error {

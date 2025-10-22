@@ -22,7 +22,8 @@ func NewRouteHandlers(routeController *controllers.RouteController) *RouteHandle
 func (rh *RouteHandlers) SetupRouteHandler(router routes.Router) {
 	routeGroup := router.Group("/api/v1/app/:appId/routes")
 	//routeGroup.GET("/", rh.RouteController.GetRoutes)
-	routeGroup.POST("/", middleware.ValidateMiddleware[[]DTO.CreateRoute, *zog.SliceSchema]("body", schema.CreateRouteSchema), rh.RouteController.AddWorkingRoutes)
+	routeGroup.POST("/", middleware.ValidateMiddleware[DTO.CreateRouteData, *zog.StructSchema]("body", schema.CreateRouteSchema),
+		rh.RouteController.AddWorkingRoutes)
 	//routeGroup.PUT("/:routeId", rh.RouteController.UpdateRoute)
 	//routeGroup.DELETE("/:routeId", rh.RouteController.DeleteRoute)
 }

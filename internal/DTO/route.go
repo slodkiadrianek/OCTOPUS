@@ -2,24 +2,51 @@ package DTO
 
 type RoutesParentId interface {
 	GetParentId() int
-	SetParentId(id int)
+}
+type CreateRouteData struct {
+	Name   string `json:"name"`
+	Routes []CreateRoute
 }
 type CreateRoute struct {
-	Path                 string            `json:"path" example:"/users"`
-	Method               string            `json:"method" example:"GET"`
-	RequestAuthorization string            `json:"requestAuthorization" example:"Bearer:fb43fg3487f34g78f3gu"`
-	RequestQuery         map[string]string `json:"requestQuery" example:"id=1"`
-	RequestParams        map[string]string `json:"requestParams" example:"id=1"`
-	RequestBody          map[string]any    `json:"requestBody" example:"id=1"`
-	NextRouteBody        []string          `json:"nextRouteBody"`
-	NextRouteQuery       []string          `json:"nextRouteQuery"`
-	NextRouteParams      []string          `json:"nextRouteParams"`
-	ResponseStatusCode   int               `json:"responseStatusCode" example:"200"`
-	ResponseBody         map[string]any    `json:"responseBody" example:"id=1"`
-	ParentId             int
+	Path                    string            `json:"path" example:"/users"`
+	Method                  string            `json:"method" example:"GET"`
+	RequestAuthorization    string            `json:"requestAuthorization" example:"Bearer:fb43fg3487f34g78f3gu"`
+	RequestQuery            map[string]string `json:"requestQuery" example:"id=1"`
+	RequestParams           map[string]string `json:"requestParams" example:"id=1"`
+	RequestBody             map[string]any    `json:"requestBody" example:"id=1"`
+	NextRouteBody           []string          `json:"nextRouteBody"`
+	NextRouteQuery          []string          `json:"nextRouteQuery"`
+	NextRouteParams         []string          `json:"nextRouteParams"`
+	NextAuthorizationHeader string            `json:"next_authorization_header"`
+	ResponseStatusCode      int               `json:"responseStatusCode" example:"200"`
+	ResponseBody            map[string]any    `json:"responseBody" example:"id=1"`
+	ParentId                int
+}
+
+type RouteToTest struct {
+	Id                      int
+	IpAddress               string
+	Port                    string
+	Name                    string            `json:"name"`
+	Path                    string            `json:"path" example:"/users"`
+	Method                  string            `json:"method" example:"GET"`
+	RequestAuthorization    string            `json:"requestAuthorization" example:"Bearer:fb43fg3487f34g78f3gu"`
+	RequestQuery            map[string]string `json:"requestQuery" example:"id=1"`
+	RequestParams           map[string]string `json:"requestParams" example:"id=1"`
+	RequestBody             map[string]any    `json:"requestBody" example:"id=1"`
+	NextRouteBody           []string          `json:"nextRouteBody"`
+	NextRouteQuery          []string          `json:"nextRouteQuery"`
+	NextRouteParams         []string          `json:"nextRouteParams"`
+	NextAuthorizationHeader string            `json:"next_authorization_header"`
+	ResponseStatusCode      int               `json:"responseStatusCode" example:"200"`
+	ResponseBody            map[string]any    `json:"responseBody" example:"id=1"`
+	ParentId                int
+	Status                  string
+	AppId                   string
 }
 
 type WorkingRoute struct {
+	Name            string
 	ParentId        int
 	AppId           string
 	RouteId         int
@@ -47,19 +74,15 @@ func (ri *RouteInfo) GetParentId() int {
 	return ri.ParentId
 }
 
-func (ri *RouteInfo) SetParentId(id int) {
-	ri.ParentId = id
-}
-
 type RouteRequest struct {
 	RequestAuthorization string `json:"requestAuthorization" example:"Bearer:fb43fg3487f34g78f3gu"`
-	RequestQuery         string `json:"requestQuery" example:"id=1"`
-	RequestParams        string `json:"requestParams" example:"id=1"`
-	RequestBody          string `json:"requestBody" example:"id=1"`
+	RequestQuery         []byte `json:"requestQuery" example:"id=1"`
+	RequestParams        []byte `json:"requestParams" example:"id=1"`
+	RequestBody          []byte `json:"requestBody" example:"id=1"`
 	ParentId             int    `json:"parentId"`
 }
 
-func NewRouteRequest(requestAuthorization, requestQuery, requestParams, requestBody string, parentId int) *RouteRequest {
+func NewRouteRequest(requestAuthorization string, requestQuery, requestParams, requestBody []byte, parentId int) *RouteRequest {
 	return &RouteRequest{
 		RequestAuthorization: requestAuthorization,
 		RequestQuery:         requestQuery,
@@ -73,32 +96,25 @@ func (rr *RouteRequest) GetParentId() int {
 	return rr.ParentId
 }
 
-func (rr *RouteRequest) SetParentId(id int) {
-	rr.ParentId = id
-}
-
 type NextRouteData struct {
-	NextRouteBody   string `json:"nextRouteBody"`
-	NextRouteQuery  string `json:"nextRouteQuery"`
-	NextRouteParams string `json:"nextRouteParams"`
-	ParentId        int    `json:"parentId"`
+	NextRouteBody           string `json:"nextRouteBody"`
+	NextRouteQuery          string `json:"nextRouteQuery"`
+	NextRouteParams         string `json:"nextRouteParams"`
+	NextAuthorizationHeader string `json:"next_authorization_header"`
+	ParentId                int    `json:"parentId"`
 }
 
-func NewNextRouteData(nextRouteBody, nextRouteQuery, nextRouteParams string, parentId int) *NextRouteData {
+func NewNextRouteData(nextRouteBody, nextRouteQuery, nextRouteParams, nextAuthorizationHeader string) *NextRouteData {
 	return &NextRouteData{
-		NextRouteBody:   nextRouteBody,
-		NextRouteQuery:  nextRouteQuery,
-		NextRouteParams: nextRouteParams,
-		ParentId:        parentId,
+		NextRouteBody:           nextRouteBody,
+		NextRouteQuery:          nextRouteQuery,
+		NextRouteParams:         nextRouteParams,
+		NextAuthorizationHeader: nextAuthorizationHeader,
 	}
 }
 
 func (nrd *NextRouteData) GetParentId() int {
 	return nrd.ParentId
-}
-
-func (nrd *NextRouteData) SetParentId(id int) {
-	nrd.ParentId = id
 }
 
 type RouteResponse struct {
@@ -117,8 +133,4 @@ func NewRouteResponse(responseStatusCode, parentId int, responseBody string) *Ro
 
 func (rr *RouteResponse) GetParentId() int {
 	return rr.ParentId
-}
-
-func (rr *RouteResponse) SetParentId(id int) {
-	rr.ParentId = id
 }
