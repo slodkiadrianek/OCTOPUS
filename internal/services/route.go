@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"runtime"
 	"sync"
 
@@ -57,7 +58,7 @@ func (rs *RouteService) AddWorkingRoutes(ctx context.Context, routes *[]DTO.Crea
 					errorChan <- err
 					return
 				}
-				requestRoutesDataChan <- *DTO.NewRouteRequest(job.RequestAuthorization, requestQueryBytes, requestParamsBytes, requestBodyBytes, job.ParentId)
+				requestRoutesDataChan <- *DTO.NewRouteRequest(job.RequestAuthorization, string(requestQueryBytes), string(requestParamsBytes), string(requestBodyBytes), job.ParentId)
 				nextRouteBodyBytes, err := utils.MarshalData(job.NextRouteBody)
 				if err != nil {
 					errorChan <- err
@@ -151,6 +152,7 @@ func (rs *RouteService) AddWorkingRoutes(ctx context.Context, routes *[]DTO.Crea
 		return nextRoutesDataErr
 	}
 	parentId := 0
+	fmt.Println(nextRoutesDataIds)
 	for i := 0; i < len(workingRoutes); i++ {
 		workingRoutes[i].NextRouteDataId = nextRoutesDataIds[i]
 		workingRoutes[i].RequestId = routesRequestsIds[i]

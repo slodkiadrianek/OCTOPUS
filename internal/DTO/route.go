@@ -1,5 +1,10 @@
 package DTO
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
 type RoutesParentId interface {
 	GetParentId() int
 }
@@ -23,23 +28,65 @@ type CreateRoute struct {
 	ParentId                int
 }
 
+type JsonMapStringString map[string]string
+
+func (jm *JsonMapStringString) Scan(value interface{}) error {
+	if value == nil {
+		*jm = nil
+		return nil
+	}
+	b, ok := value.([]byte)
+	if !ok {
+		return fmt.Errorf("type assertion failed: %T", value)
+	}
+	return json.Unmarshal(b, jm)
+}
+
+type JsonMapStringAny map[string]any
+
+func (ja *JsonMapStringAny) Scan(value interface{}) error {
+	if value == nil {
+		*ja = nil
+		return nil
+	}
+	b, ok := value.([]byte)
+	if !ok {
+		return fmt.Errorf("type assertion failed: %T", value)
+	}
+	return json.Unmarshal(b, ja)
+}
+
+type JsonStringSlice []string
+
+func (js *JsonStringSlice) Scan(value interface{}) error {
+	if value == nil {
+		*js = nil
+		return nil
+	}
+	b, ok := value.([]byte)
+	if !ok {
+		return fmt.Errorf("type assertion failed: %T", value)
+	}
+	return json.Unmarshal(b, js)
+}
+
 type RouteToTest struct {
 	Id                      int
 	IpAddress               string
 	Port                    string
-	Name                    string            `json:"name"`
-	Path                    string            `json:"path" example:"/users"`
-	Method                  string            `json:"method" example:"GET"`
-	RequestAuthorization    string            `json:"requestAuthorization" example:"Bearer:fb43fg3487f34g78f3gu"`
-	RequestQuery            map[string]string `json:"requestQuery" example:"id=1"`
-	RequestParams           map[string]string `json:"requestParams" example:"id=1"`
-	RequestBody             map[string]any    `json:"requestBody" example:"id=1"`
-	NextRouteBody           []string          `json:"nextRouteBody"`
-	NextRouteQuery          []string          `json:"nextRouteQuery"`
-	NextRouteParams         []string          `json:"nextRouteParams"`
-	NextAuthorizationHeader string            `json:"next_authorization_header"`
-	ResponseStatusCode      int               `json:"responseStatusCode" example:"200"`
-	ResponseBody            map[string]any    `json:"responseBody" example:"id=1"`
+	Name                    string              `json:"name"`
+	Path                    string              `json:"path" example:"/users"`
+	Method                  string              `json:"method" example:"GET"`
+	RequestAuthorization    string              `json:"requestAuthorization" example:"Bearer:fb43fg3487f34g78f3gu"`
+	RequestQuery            JsonMapStringString `json:"requestQuery" example:"id=1"`
+	RequestParams           JsonMapStringString `json:"requestParams" example:"id=1"`
+	RequestBody             JsonMapStringAny    `json:"requestBody" example:"id=1"`
+	NextRouteBody           JsonStringSlice     `json:"nextRouteBody"`
+	NextRouteQuery          JsonStringSlice     `json:"nextRouteQuery"`
+	NextRouteParams         JsonStringSlice     `json:"nextRouteParams"`
+	NextAuthorizationHeader string              `json:"next_authorization_header"`
+	ResponseStatusCode      int                 `json:"responseStatusCode" example:"200"`
+	ResponseBody            JsonMapStringAny    `json:"responseBody" example:"id=1"`
 	ParentId                int
 	Status                  string
 	AppId                   string
@@ -76,13 +123,13 @@ func (ri *RouteInfo) GetParentId() int {
 
 type RouteRequest struct {
 	RequestAuthorization string `json:"requestAuthorization" example:"Bearer:fb43fg3487f34g78f3gu"`
-	RequestQuery         []byte `json:"requestQuery" example:"id=1"`
-	RequestParams        []byte `json:"requestParams" example:"id=1"`
-	RequestBody          []byte `json:"requestBody" example:"id=1"`
+	RequestQuery         string `json:"requestQuery" example:"id=1"`
+	RequestParams        string `json:"requestParams" example:"id=1"`
+	RequestBody          string `json:"requestBody" example:"id=1"`
 	ParentId             int    `json:"parentId"`
 }
 
-func NewRouteRequest(requestAuthorization string, requestQuery, requestParams, requestBody []byte, parentId int) *RouteRequest {
+func NewRouteRequest(requestAuthorization, requestQuery, requestParams, requestBody string, parentId int) *RouteRequest {
 	return &RouteRequest{
 		RequestAuthorization: requestAuthorization,
 		RequestQuery:         requestQuery,

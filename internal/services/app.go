@@ -216,22 +216,22 @@ func (a *AppService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatus, erro
 }
 
 func (a *AppService) CheckRoutesStatus(ctx context.Context) error {
+	a.Logger.Info("Started checking statuses of the routes")
 	routesToTest, err := a.RouteRepository.GetWorkingRoutesToTest(ctx)
 	if err != nil {
 		return err
 	}
-	var sortedRoutesToTests map[string][]DTO.RouteToTest
+	sortedRoutesToTests := make(map[string][]DTO.RouteToTest)
 	for _, routeToTest := range routesToTest {
 		key := routeToTest.Name + routeToTest.AppId
 		if routeToTest.ParentId == 0 {
 			sortedRoutesToTests[key] = append([]DTO.RouteToTest{routeToTest},
 				sortedRoutesToTests[key]...)
 		} else {
-			sortedRoutesToTests[key] = append([]DTO.RouteToTest{routeToTest},
-				sortedRoutesToTests[key]...)
+			sortedRoutesToTests[key] = append(sortedRoutesToTests[key], routeToTest)
 		}
 	}
-	var routesStatuses map[int]string
+	routesStatuses := make(map[int]string)
 	client := &http.Client{}
 	for _, routesToTest := range sortedRoutesToTests {
 		var nextRouteBody map[string]any
@@ -254,12 +254,14 @@ func (a *AppService) CheckRoutesStatus(ctx context.Context) error {
 			}
 			authorizationHeader := "Bearer " + route.RequestAuthorization
 			splittedPath := strings.Split(route.Path, "/")
-			for _, val := range splittedPath {
+			for i := 0; i < len(splittedPath); i++ {
+				val := splittedPath[i]
 				leftBrace := strings.Contains(val, "{")
 				rightBrace := strings.Contains(val, "}")
 				if leftBrace && rightBrace {
 					param := val[1 : len(val)-1]
-					val = route.RequestParams[param]
+					splittedPath[i] = route.RequestParams[param]
+
 				}
 			}
 			var query []string
@@ -268,7 +270,7 @@ func (a *AppService) CheckRoutesStatus(ctx context.Context) error {
 			}
 
 			path := strings.Join(splittedPath, "/")
-			url := route.IpAddress + ":" + route.Port + path + "?" + strings.Join(query, "&")
+			url := "http://" + route.IpAddress + ":" + route.Port + path + "?" + strings.Join(query, "&")
 			jsonData, err := utils.MarshalData(route.RequestBody)
 			if err != nil {
 				a.Logger.Error("Failed to marshal webhook payload", err)
@@ -328,14 +330,13 @@ func (a *AppService) CheckRoutesStatus(ctx context.Context) error {
 					}
 					nextRouteQuery[key] = valS
 				}
-				if strings.Contains(route.NextAuthorizationHeader, key) {
-
-					valS, ok := val.(string)
-					if !ok {
-						routeStatus = "Failed;Wrong type of the property for authorization header"
-						routesStatuses[route.Id] = routeStatus
-						break
-					}
+				valS, ok := val.(string)
+				if !ok {
+					routeStatus = "Failed;Wrong type of the property for authorization header"
+					routesStatuses[route.Id] = routeStatus
+					break
+				}
+				if strings.Contains(valS, "eyJlbWFpbCI6IlRFU1QiLCJleHAiOjE3N") {
 					nextRouteAuthorizationHeader = valS
 				}
 			}
@@ -344,7 +345,12 @@ func (a *AppService) CheckRoutesStatus(ctx context.Context) error {
 		}
 
 	}
-	fmt.Println(routesStatuses)
+	a.Logger.Info("The routes statuses have started inserting into database", routesStatuses)
+	err = a.RouteRepository.UpdateWorkingRoutesStatuses(ctx, routesStatuses)
+	if err != nil {
+		return err
+	}
+	a.Logger.Info("The route statuses have finished inserting into the database.", routesStatuses)
 	return nil
 }
 

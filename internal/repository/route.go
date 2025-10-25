@@ -23,12 +23,43 @@ func NewRouteRepository(db *sql.DB, logger *utils.Logger) *RouteRepository {
 	}
 }
 
+func (r *RouteRepository) UpdateWorkingRoutesStatuses(ctx context.Context, routesStatuses map[int]string) error {
+	placeholders := []string{}
+	pos := 1
+	args := make([]any, 0)
+	for i, val := range routesStatuses {
+		values := fmt.Sprintf("($%d,$%d)", pos, pos+1)
+		args = append(args, int(i), val)
+		placeholders = append(placeholders, values)
+		pos += 2
+	}
+	query := fmt.Sprintf(`
+	UPDATE working_routes AS t
+	SET 
+    status = v.status
+	FROM (VALUES
+	%s
+	) AS v(id, status)
+		WHERE t.id = v.id::integer;
+	`, strings.Join(placeholders, ","))
+	_, err := r.Db.ExecContext(ctx, query, args...)
+	if err != nil {
+		r.LoggerService.Error("Failed to to update routes statuses", map[string]any{
+			"query": query,
+			"err":   err.Error(),
+		})
+		return models.NewError(500, "Database", "Failed to update routes statuses")
+	}
+	return nil
+}
+
 func (r *RouteRepository) GetWorkingRoutesToTest(ctx context.Context) ([]DTO.RouteToTest, error) {
 	query := `
 SELECT
 		wr.id,
     a.ip_address,
     a.port,
+		wr.name,
     wr.app_id,
     wr.parent_id,
     wr.status,
@@ -41,7 +72,7 @@ SELECT
     nrd.next_route_body,
     nrd.next_route_params,
     nrd.next_route_query,
-		nrd.next_authorization_header,
+		nrd.next_route_authorization_header,
     re.status_code,
     re.body_data
 FROM working_routes wr
@@ -75,7 +106,7 @@ WHERE aps.status = 'running'
 		err := rows.Scan(&routeToTest.Id, &routeToTest.IpAddress, &routeToTest.Port, &routeToTest.Name, &routeToTest.AppId,
 			&routeToTest.ParentId, &routeToTest.Status,
 			&routeToTest.Path,
-			&routeToTest.Method, &routeToTest.RequestQuery, &routeToTest.RequestParams, &routeToTest.RequestBody, &routeToTest.NextRouteBody, &routeToTest.NextRouteParams, &routeToTest.NextRouteQuery, &routeToTest.NextAuthorizationHeader, &routeToTest.ResponseStatusCode, &routeToTest.ResponseBody)
+			&routeToTest.Method, &routeToTest.RequestAuthorization, &routeToTest.RequestQuery, &routeToTest.RequestParams, &routeToTest.RequestBody, &routeToTest.NextRouteBody, &routeToTest.NextRouteParams, &routeToTest.NextRouteQuery, &routeToTest.NextAuthorizationHeader, &routeToTest.ResponseStatusCode, &routeToTest.ResponseBody)
 		if err != nil {
 			r.LoggerService.Error("Failed to scan row", map[string]any{
 				"query": query,
@@ -256,22 +287,27 @@ func (r *RouteRepository) InsertNextRoutesData(ctx context.Context, nextRoutesDa
 		placeholders = append(placeholders, values)
 		args = append(args, nextRoutesData[i].NextRouteBody, nextRoutesData[i].NextRouteParams, nextRoutesData[i].NextRouteQuery, nextRoutesData[i].NextAuthorizationHeader)
 	}
-	insertQuery := fmt.Sprintf(`INSERT INTO next_route_data (
-	next_route_body,
-	next_route_params,
-	next_route_query,
-	next_route_authorization_header
-	) VALUES
-	%s
-	ON CONFLICT(	
-	next_route_body,
-	next_route_params,
-	next_route_query,
-	next_route_authorization_header
-	)
-	DO UPDATE
-		SET next_route_query = EXCLUDED.next_route_query
-	Returning id`, strings.Join(placeholders, ","))
+	insertQuery := fmt.Sprintf(`
+	WITH input_data AS (
+    SELECT * FROM (VALUES 
+		%s
+ ) AS v(next_route_body, next_route_params, next_route_query, next_route_authorization_header)
+),
+upserted AS (
+    INSERT INTO next_route_data (
+        next_route_body, next_route_params, next_route_query, next_route_authorization_header
+    )
+    SELECT DISTINCT ON (next_route_body, next_route_params, next_route_query, next_route_authorization_header)
+        next_route_body, next_route_params, next_route_query, next_route_authorization_header
+    FROM input_data
+    ON CONFLICT(next_route_body, next_route_params, next_route_query, next_route_authorization_header) 
+    DO UPDATE SET next_route_body = EXCLUDED.next_route_body
+    RETURNING *
+)
+SELECT u.id
+FROM input_data i
+JOIN upserted u USING (next_route_body, next_route_params, next_route_query, next_route_authorization_header);
+	`, strings.Join(placeholders, ","))
 	stmt, err := r.Db.PrepareContext(ctx, insertQuery)
 	if err != nil {
 		r.LoggerService.Error("Failed to prepare statement", map[string]any{
