@@ -25,13 +25,13 @@ func NewRouteRepository(db *sql.DB, logger *utils.Logger) *RouteRepository {
 
 func (r *RouteRepository) UpdateWorkingRoutesStatuses(ctx context.Context, routesStatuses map[int]string) error {
 	placeholders := []string{}
-	pos := 1
+	argPos := 1
 	args := make([]any, 0)
 	for i, val := range routesStatuses {
-		values := fmt.Sprintf("($%d,$%d)", pos, pos+1)
+		preparedValues := fmt.Sprintf("($%d,$%d)", argPos, argPos+1)
 		args = append(args, int(i), val)
-		placeholders = append(placeholders, values)
-		pos += 2
+		placeholders = append(placeholders, preparedValues)
+		argPos += 2
 	}
 	query := fmt.Sprintf(`
 	UPDATE working_routes AS t
@@ -103,8 +103,9 @@ WHERE aps.status = 'running'
 	var routesToTest []DTO.RouteToTest
 	for rows.Next() {
 		var routeToTest DTO.RouteToTest
-		err := rows.Scan(&routeToTest.Id, &routeToTest.IpAddress, &routeToTest.Port, &routeToTest.Name, &routeToTest.AppId,
-			&routeToTest.ParentId, &routeToTest.Status,
+		err := rows.Scan(&routeToTest.ID, &routeToTest.IpAddress, &routeToTest.Port, &routeToTest.Name,
+			&routeToTest.AppId,
+			&routeToTest.ParentID, &routeToTest.Status,
 			&routeToTest.Path,
 			&routeToTest.Method, &routeToTest.RequestAuthorization, &routeToTest.RequestQuery, &routeToTest.RequestParams, &routeToTest.RequestBody, &routeToTest.NextRouteBody, &routeToTest.NextRouteParams, &routeToTest.NextRouteQuery, &routeToTest.NextAuthorizationHeader, &routeToTest.ResponseStatusCode, &routeToTest.ResponseBody)
 		if err != nil {
@@ -123,13 +124,13 @@ func (r *RouteRepository) InsertRoutesInfo(ctx context.Context, routesInfo []*DT
 	placeholders := []string{}
 	args := make([]any, 0)
 	for i := range routesInfo {
-		values := fmt.Sprintf("($%d,$%d)", i*2+1, i*2+2)
-		placeholders = append(placeholders, values)
+		preparedValues := fmt.Sprintf("($%d,$%d)", i*2+1, i*2+2)
+		placeholders = append(placeholders, preparedValues)
 		args = append(args, routesInfo[i].Path, routesInfo[i].Method)
 	}
 	insertQuery := fmt.Sprintf(`INSERT INTO routes (
-	path,
-	method
+		path,
+		method
 	) VALUES
 	%s
 	ON CONFLICT(path,method)
@@ -169,19 +170,21 @@ func (r *RouteRepository) InsertRoutesInfo(ctx context.Context, routesInfo []*DT
 	return routesInfoIds, nil
 }
 
-func (r *RouteRepository) InsertRoutesReuquests(ctx context.Context, routesRequests []*DTO.RouteRequest) ([]int, error) {
+func (r *RouteRepository) InsertRoutesRequests(ctx context.Context,
+	routesRequests []*DTO.RouteRequest) ([]int, error) {
 	placeholders := []string{}
 	args := make([]any, 0)
 	for i := range routesRequests {
-		values := fmt.Sprintf("($%d::jsonb,$%d::jsonb,$%d::jsonb,$%d)", i*4+1, i*4+2, i*4+3, i*4+4)
-		placeholders = append(placeholders, values)
-		args = append(args, routesRequests[i].RequestBody, routesRequests[i].RequestParams, routesRequests[i].RequestQuery, routesRequests[i].RequestAuthorization)
+		preparedValues := fmt.Sprintf("($%d::jsonb,$%d::jsonb,$%d::jsonb,$%d)", i*4+1, i*4+2, i*4+3, i*4+4)
+		placeholders = append(placeholders, preparedValues)
+		args = append(args, routesRequests[i].Body, routesRequests[i].Params, routesRequests[i].Query,
+			routesRequests[i].AuthorizationHeader)
 	}
 	insertQuery := fmt.Sprintf(`INSERT INTO routes_requests (
-	body_data,
-	param_data,
-	query_data,
-	authorization_header
+		body_data,
+		param_data,
+		query_data,
+		authorization_header
 	) VALUES
 	%s
 	ON CONFLICT(	
@@ -226,17 +229,19 @@ func (r *RouteRepository) InsertRoutesReuquests(ctx context.Context, routesReque
 	return routesRequestsIds, nil
 }
 
-func (r *RouteRepository) InsertRoutesResponses(ctx context.Context, routesResponses []*DTO.RouteResponse) ([]int, error) {
+func (r *RouteRepository) InsertRoutesResponses(ctx context.Context,
+	routesResponses []*DTO.RouteResponse) ([]int,
+	error) {
 	placeholders := []string{}
 	args := make([]any, 0)
 	for i := range routesResponses {
 		values := fmt.Sprintf("($%d,$%d::jsonb)", i*2+1, i*2+2)
 		placeholders = append(placeholders, values)
-		args = append(args, routesResponses[i].ResponseStatusCode, routesResponses[i].ResponseBody)
+		args = append(args, routesResponses[i].StatusCode, routesResponses[i].Body)
 	}
 	insertQuery := fmt.Sprintf(`INSERT INTO routes_responses (
-	status_code,
-	body_data
+		status_code,
+		body_data
 	) VALUES
 	%s
 	ON CONFLICT(	
@@ -279,13 +284,15 @@ func (r *RouteRepository) InsertRoutesResponses(ctx context.Context, routesRespo
 	return routesResponsesIds, nil
 }
 
-func (r *RouteRepository) InsertNextRoutesData(ctx context.Context, nextRoutesData []*DTO.NextRouteData) ([]int, error) {
+func (r *RouteRepository) InsertNextRoutesData(ctx context.Context,
+	nextRoutes []*DTO.NextRoute) ([]int,
+	error) {
 	placeholders := []string{}
 	args := make([]any, 0)
-	for i := range nextRoutesData {
+	for i := range nextRoutes {
 		values := fmt.Sprintf("($%d::jsonb,$%d::jsonb,$%d::jsonb, $%d)", i*4+1, i*4+2, i*4+3, i*4+4)
 		placeholders = append(placeholders, values)
-		args = append(args, nextRoutesData[i].NextRouteBody, nextRoutesData[i].NextRouteParams, nextRoutesData[i].NextRouteQuery, nextRoutesData[i].NextAuthorizationHeader)
+		args = append(args, nextRoutes[i].Body, nextRoutes[i].Params, nextRoutes[i].Query, nextRoutes[i].AuthorizationHeader)
 	}
 	insertQuery := fmt.Sprintf(`
 	WITH input_data AS (
@@ -341,7 +348,8 @@ JOIN upserted u USING (next_route_body, next_route_params, next_route_query, nex
 	return NextRoutesDataIds, nil
 }
 
-func (r *RouteRepository) InsertWorkingRoute(ctx context.Context, workingRoute DTO.WorkingRoute) (int, error) {
+func (r *RouteRepository) InsertWorkingRoute(ctx context.Context, workingRoute DTO.WorkingRoute) (int,
+	error) {
 	insertQuery := `INSERT INTO working_routes (
 	name,
     app_id,
@@ -373,8 +381,8 @@ RETURNING id`
 	}
 	defer stmt.Close()
 	var id int
-	err = stmt.QueryRowContext(ctx, workingRoute.Name, workingRoute.AppId, workingRoute.ParentId, workingRoute.RouteId,
-		workingRoute.RequestId, workingRoute.ResponseId, workingRoute.NextRouteDataId, workingRoute.Status).Scan(&id)
+	err = stmt.QueryRowContext(ctx, workingRoute.Name, workingRoute.AppId, workingRoute.ParentID, workingRoute.RouteID,
+		workingRoute.RequestID, workingRoute.ResponseID, workingRoute.NextRouteDataId, workingRoute.Status).Scan(&id)
 	if err != nil {
 		r.LoggerService.Error("Failed to prepare statement", map[string]any{
 			"query": insertQuery,

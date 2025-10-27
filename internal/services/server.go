@@ -91,20 +91,20 @@ func (s *ServerService) InsertServerMetrics(ctx context.Context) error {
 		return err
 	}
 	actualDate := time.Now()
-	metricsData := models.NewServerMetrics(int(cpuData[0]), int(memPercent), int(diskUsage.UsedPercent), actualDate)
+	serverMetricsData := models.NewServerMetrics(int(cpuData[0]), int(memPercent), int(diskUsage.UsedPercent), actualDate)
 	s.Logger.Info("Server metrics data", map[string]any{
 		"CPU":  int(cpuData[0]),
 		"RAM":  int(memPercent),
 		"Disk": int(diskUsage.UsedPercent),
 		"Date": actualDate,
 	})
-	doesExist, err := s.CacheService.ExistsData(ctx, "server_metrics")
+	doesServerMetricsExists, err := s.CacheService.ExistsData(ctx, "server_metrics")
 	var existingMetrics *[]models.ServerMetrics
 	if err != nil {
 		s.Logger.Warn("Failed to check if server metrics exist in cache", err)
 		return err
 	}
-	if doesExist == 1 {
+	if doesServerMetricsExists == 1 {
 		serverMetricsData, err := s.CacheService.GetData(ctx, "server_metrics")
 		if err != nil {
 			s.Logger.Warn("Failed to get server metrics from cache", err)
@@ -116,9 +116,9 @@ func (s *ServerService) InsertServerMetrics(ctx context.Context) error {
 		if len(*existingMetrics) >= 40 {
 			*existingMetrics = (*existingMetrics)[1:]
 		}
-		*existingMetrics = append(*existingMetrics, *metricsData)
+		*existingMetrics = append(*existingMetrics, *serverMetricsData)
 	} else {
-		existingMetrics = &[]models.ServerMetrics{*metricsData}
+		existingMetrics = &[]models.ServerMetrics{*serverMetricsData}
 	}
 	bodyBytes, err := utils.MarshalData(existingMetrics)
 	err = s.CacheService.SetData(ctx, "server_metrics", string(bodyBytes), 0)

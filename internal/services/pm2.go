@@ -6,13 +6,13 @@ import (
 
 type Pm2Service struct {
 	AppRepository appRepository
-	Logger        *utils.Logger
+	LoggerService *utils.Logger
 }
 
-func NewPm2Service(appRepository appRepository, logger *utils.Logger) *DockerService {
-	return &DockerService{
+func NewPm2Service(appRepository appRepository, loggerService *utils.Logger) *Pm2Service {
+	return &Pm2Service{
 		AppRepository: appRepository,
-		Logger:        logger,
+		LoggerService: loggerService,
 	}
 }
 

@@ -42,11 +42,11 @@ func UnmarshalData[T any](dataBytes []byte) (*T, error) {
 	return data, nil
 }
 
-func InsertionSortForRoutes[T DTO.RoutesParentId](data []T) []T {
+func InsertionSortForRoutes[T DTO.RoutesParentID](data []T) []T {
 	for i := 1; i < len(data); i++ {
 		key := data[i]
 		j := i - 1
-		for j >= 0 && data[j].GetParentId() > key.GetParentId() {
+		for j >= 0 && data[j].GetParentID() > key.GetParentID() {
 			data[j+1] = data[j]
 			j--
 		}

@@ -31,14 +31,17 @@ func (u *UserRepository) FindUserByEmail(ctx context.Context, email string) (mod
 	}
 	defer stmt.Close()
 	var user models.User
-	err = stmt.QueryRowContext(ctx, email).Scan(&user.Id, &user.Email, &user.Name, &user.Surname, &user.Password, &user.DiscordNotifications, &user.EmailNotifications, &user.SlackNotifications, &user.CreatedAt, &user.UpdatedAt)
+	err = stmt.QueryRowContext(ctx, email).Scan(&user.ID, &user.Email, &user.Name, &user.Surname, &user.Password,
+		&user.DiscordNotificationsSettings, &user.EmailNotificationsSettings, &user.SlackNotificationsSettings,
+		&user.CreatedAt,
+		&user.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			u.LoggerService.Info("user not found", map[string]any{
 				"email": email,
 			})
 			return models.User{
-				Id: 0,
+				ID: 0,
 			}, nil
 		}
 		u.LoggerService.Error("failed to execute query for execution", map[string]any{
@@ -91,7 +94,7 @@ func (u *UserRepository) UpdateUser(ctx context.Context, user DTO.CreateUser, us
 	return nil
 }
 
-func (u *UserRepository) UpdateUserNotifications(ctx context.Context, userId int, userNotifications DTO.UpdateUserNotifications,
+func (u *UserRepository) UpdateUserNotifications(ctx context.Context, userId int, userNotifications DTO.UpdateUserNotificationsSettings,
 ) error {
 	query := `UPDATE users SET discord_notifications=$1, slack_notifications=$2, email_notifications=$3 WHERE id=$4`
 	stmt, err := u.Db.PrepareContext(ctx, query)
@@ -100,7 +103,7 @@ func (u *UserRepository) UpdateUserNotifications(ctx context.Context, userId int
 		return models.NewError(500, "Database", "Failed to update data in database")
 	}
 
-	_, err = stmt.ExecContext(ctx, userNotifications.DiscordNotifications, userNotifications.SlackNotifications, userNotifications.EmailNotifications, userId)
+	_, err = stmt.ExecContext(ctx, userNotifications.DiscordNotificationsSettings, userNotifications.SlackNotificationsSettings, userNotifications.EmailNotificationsSettings, userId)
 	if err != nil {
 		u.LoggerService.Info("failed to execute query for execution", map[string]any{
 			"query": query,
@@ -149,15 +152,17 @@ func (u *UserRepository) FindUserById(ctx context.Context, userId int) (models.U
 	}
 	defer stmt.Close()
 	var user models.User
-	err = stmt.QueryRowContext(ctx, userId).Scan(&user.Id, &user.Email, &user.Name, &user.Surname, &user.Password,
-		&user.DiscordNotifications, &user.EmailNotifications, &user.SlackNotifications, &user.CreatedAt, &user.UpdatedAt)
+	err = stmt.QueryRowContext(ctx, userId).Scan(&user.ID, &user.Email, &user.Name, &user.Surname, &user.Password,
+		&user.DiscordNotificationsSettings, &user.EmailNotificationsSettings, &user.SlackNotificationsSettings,
+		&user.CreatedAt,
+		&user.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			u.LoggerService.Info("user not found", map[string]any{
 				"userId": userId,
 			})
 			return models.User{
-				Id: 0,
+				ID: 0,
 			}, nil
 		}
 		u.LoggerService.Error("failed to execute query for execution", map[string]any{

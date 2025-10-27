@@ -7,8 +7,8 @@ var CreateAppSchema = z.Struct(z.Shape{
 	"description":    z.String().Optional(),
 	"ipAddress":      z.String().Required(),
 	"port":           z.String().Required(),
-	"discordWebhook": z.String().Optional(),
-	"slackWebhook":   z.String().Optional(),
+	"discordWebhookUrl": z.String().Optional(),
+	"slackWebhookUrl":   z.String().Optional(),
 })
 
 var AppIdSchema = z.Struct(z.Shape{
@@ -19,6 +19,6 @@ var UpdateAppSchema = z.Struct(z.Shape{
 	"description":    z.String().Optional(),
 	"ipAddress":      z.String().Required(),
 	"port":           z.String().Required(),
-	"discordWebhook": z.String().Optional(),
-	"slackWebhook":   z.String().Optional(),
+	"discordWebhookUrl": z.String().Optional(),
+	"slackWebhookUrl":   z.String().Optional(),
 })

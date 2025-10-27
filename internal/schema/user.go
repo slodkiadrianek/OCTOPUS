@@ -51,7 +51,7 @@ var DeleteUserSchema = z.Struct(z.Shape{
 })
 
 var UpdateUserNotificationsSchema = z.Struct(z.Shape{
-	"discordNotifications": z.Bool().Optional(),
-	"slackNotifications":   z.Bool().Optional(),
-	"emailNotifications":   z.Bool().Optional(),
+	"discordNotificationsSettings": z.Bool().Optional(),
+	"slackNotificationsSettings":   z.Bool().Optional(),
+	"emailNotificationsSettings":   z.Bool().Optional(),
 })

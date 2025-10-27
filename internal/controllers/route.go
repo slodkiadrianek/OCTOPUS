@@ -1,20 +1,23 @@
 package controllers
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
-	"github.com/slodkiadrianek/octopus/internal/services"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
+type routeService interface {
+	AddWorkingRoutes(ctx context.Context, routes *[]DTO.CreateRoute, appId string, name string) error
+}
 type RouteController struct {
-	RouteService *services.RouteService
+	RouteService routeService
 	Logger       *utils.Logger
 }
 
-func NewRouteController(routeService *services.RouteService, logger *utils.Logger) *RouteController {
+func NewRouteController(routeService routeService, logger *utils.Logger) *RouteController {
 	return &RouteController{
 		RouteService: routeService,
 		Logger:       logger,

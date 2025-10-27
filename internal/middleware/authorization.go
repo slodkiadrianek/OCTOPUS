@@ -39,7 +39,7 @@ func NewJWT(token string, logger *utils.Logger, cacheService *config.CacheServic
 func (j JWT) GenerateToken(user DTO.LoggedUser) (string, error) {
 	j.Logger.Info("started signing a new token")
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":      user.Id,
+		"id":      user.ID,
 		"email":   user.Email,
 		"name":    user.Name,
 		"surname": user.Surname,

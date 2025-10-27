@@ -62,7 +62,7 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 				m := new(mocks.MockUserRepository)
 				m.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
 					models.User{
-						Id: 1,
+						ID: 1,
 					}, nil)
 				return m
 			},
@@ -75,7 +75,7 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 				m := new(mocks.MockUserRepository)
 				m.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
 					models.User{
-						Id: 0,
+						ID: 0,
 					}, nil)
 				return m
 			},
@@ -88,7 +88,7 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 				m := new(mocks.MockUserRepository)
 				m.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
 					models.User{
-						Id: 0,
+						ID: 0,
 					}, nil)
 
 				m.On("InsertUserToDb", mock.Anything, mock.Anything,
@@ -196,10 +196,10 @@ func TestUserService_UpdateUserNotifications(t *testing.T) {
 			loggerService := createLogger()
 			userRepository := test.setupMock()
 			userService := NewUserService(loggerService, userRepository)
-			user := DTO.UpdateUserNotifications{
-				DiscordNotifications: false,
-				SlackNotifications:   false,
-				EmailNotifications:   false,
+			user := DTO.UpdateUserNotificationsSettings{
+				DiscordNotificationsSettings: false,
+				SlackNotificationsSettings:   false,
+				EmailNotificationsSettings:   false,
 			}
 			err := userService.UpdateUserNotifications(ctx, 3, user)
 			if test.expectedError == nil {
@@ -227,7 +227,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 			setupMock: func() userRepository {
 				m := new(mocks.MockUserRepository)
 				m.On("FindUserById", mock.Anything, mock.Anything).Return(
-					models.User{Id: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
+					models.User{ID: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
 				m.On("DeleteUser", mock.Anything, mock.Anything, mock.Anything).Return(
 					nil)
 				return m
@@ -240,7 +240,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 			setupMock: func() userRepository {
 				m := new(mocks.MockUserRepository)
 				m.On("FindUserById", mock.Anything, mock.Anything).Return(
-					models.User{Id: 0}, nil)
+					models.User{ID: 0}, nil)
 				return m
 			},
 		},
@@ -251,7 +251,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 			setupMock: func() userRepository {
 				m := new(mocks.MockUserRepository)
 				m.On("FindUserById", mock.Anything, mock.Anything).Return(
-					models.User{Id: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
+					models.User{ID: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
 				return m
 			},
 		},
@@ -273,7 +273,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 			setupMock: func() userRepository {
 				m := new(mocks.MockUserRepository)
 				m.On("FindUserById", mock.Anything, mock.Anything).Return(
-					models.User{Id: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
+					models.User{ID: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
 				m.On("DeleteUser", mock.Anything, mock.Anything, mock.Anything).Return(
 					errors.New("Failed to delete a user"))
 				return m
@@ -314,7 +314,7 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 			setupMock: func() userRepository {
 				m := new(mocks.MockUserRepository)
 				m.On("FindUserById", mock.Anything, mock.Anything).Return(
-					models.User{Id: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
+					models.User{ID: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
 				m.On("ChangeUserPassword", mock.Anything, mock.Anything, mock.Anything).Return(
 					nil)
 				return m
@@ -328,7 +328,7 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 			setupMock: func() userRepository {
 				m := new(mocks.MockUserRepository)
 				m.On("FindUserById", mock.Anything, mock.Anything).Return(
-					models.User{Id: 0}, nil)
+					models.User{ID: 0}, nil)
 				return m
 			},
 		},
@@ -340,7 +340,7 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 			setupMock: func() userRepository {
 				m := new(mocks.MockUserRepository)
 				m.On("FindUserById", mock.Anything, mock.Anything).Return(
-					models.User{Id: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
+					models.User{ID: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
 				return m
 			},
 		},
@@ -352,7 +352,7 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 			setupMock: func() userRepository {
 				m := new(mocks.MockUserRepository)
 				m.On("FindUserById", mock.Anything, mock.Anything).Return(
-					models.User{Id: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
+					models.User{ID: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
 				return m
 			},
 		},
@@ -376,7 +376,7 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 			setupMock: func() userRepository {
 				m := new(mocks.MockUserRepository)
 				m.On("FindUserById", mock.Anything, mock.Anything).Return(
-					models.User{Id: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
+					models.User{ID: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
 				m.On("ChangeUserPassword", mock.Anything, mock.Anything, mock.Anything).Return(
 					errors.New("Failed to change password"))
 				return m

@@ -17,7 +17,7 @@ type userService interface {
 	GetUser(ctx context.Context, userId int) (models.User, error)
 	InsertUserToDb(ctx context.Context, user DTO.CreateUser, password string) error
 	UpdateUser(ctx context.Context, user DTO.CreateUser, userId int) error
-	UpdateUserNotifications(ctx context.Context, userId int, userNotifications DTO.UpdateUserNotifications) error
+	UpdateUserNotifications(ctx context.Context, userId int, userNotifications DTO.UpdateUserNotificationsSettings) error
 	DeleteUser(ctx context.Context, userId int, password string) error
 	ChangeUserPassword(ctx context.Context, userId int, currentPassword string, newPassword string) error
 }
@@ -98,7 +98,7 @@ func (u *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	utils.SendResponse(w, 204, map[string]string{})
 }
 func (u *UserController) UpdateUserNotifications(w http.ResponseWriter, r *http.Request) {
-	userBody, err := utils.ReadBody[DTO.UpdateUserNotifications](r)
+	userBody, err := utils.ReadBody[DTO.UpdateUserNotificationsSettings](r)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return

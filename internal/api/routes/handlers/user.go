@@ -31,17 +31,17 @@ func NewUserHandler(userController userController, jwt *middleware.JWT) *UserHan
 
 func (u *UserHandlers) SetupUserHandlers(router routes.Router) {
 	groupRouter := router.Group("/api/v1/users")
-	groupRouter.GET("/:userId", u.JWT.VerifyToken, middleware.ValidateMiddleware[DTO.UserId]("params",
+	groupRouter.GET("/:userId", u.JWT.VerifyToken, middleware.ValidateMiddleware[DTO.UserID]("params",
 		schema.UserIdSchema), u.UserController.GetUserInfo)
 	groupRouter.PUT("/:userId", u.JWT.VerifyToken, middleware.ValidateMiddleware[DTO.UpdateUser]("body",
 		schema.UpdateUserSchema), u.UserController.UpdateUser)
-	groupRouter.PUT("/:userId/notifications", u.JWT.VerifyToken, middleware.ValidateMiddleware[DTO.UserId]("params",
-		schema.UserIdSchema), middleware.ValidateMiddleware[DTO.UpdateUserNotifications]("body",
+	groupRouter.PUT("/:userId/notifications", u.JWT.VerifyToken, middleware.ValidateMiddleware[DTO.UserID]("params",
+		schema.UserIdSchema), middleware.ValidateMiddleware[DTO.UpdateUserNotificationsSettings]("body",
 		schema.UpdateUserNotificationsSchema), u.UserController.UpdateUserNotifications)
-	groupRouter.PATCH("/:userId", u.JWT.VerifyToken, middleware.ValidateMiddleware[DTO.UserId]("params",
+	groupRouter.PATCH("/:userId", u.JWT.VerifyToken, middleware.ValidateMiddleware[DTO.UserID]("params",
 		schema.UserIdSchema), middleware.ValidateMiddleware[DTO.ChangeUserPassword]("body",
 		schema.ChangeUserPasswordSchema), u.UserController.ChangeUserPassword)
-	groupRouter.DELETE("/:userId", u.JWT.VerifyToken, middleware.ValidateMiddleware[DTO.UserId]("params",
+	groupRouter.DELETE("/:userId", u.JWT.VerifyToken, middleware.ValidateMiddleware[DTO.UserID]("params",
 		schema.UserIdSchema), middleware.ValidateMiddleware[DTO.DeleteUser]("body", schema.DeleteUserSchema),
 		u.UserController.DeleteUser)
 }

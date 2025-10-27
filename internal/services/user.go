@@ -13,7 +13,7 @@ type userRepository interface {
 	FindUserByEmail(ctx context.Context, email string) (models.User, error)
 	InsertUserToDb(ctx context.Context, user DTO.CreateUser, password string) error
 	UpdateUser(ctx context.Context, user DTO.CreateUser, userId int) error
-	UpdateUserNotifications(ctx context.Context, userId int, userNotifications DTO.UpdateUserNotifications) error
+	UpdateUserNotifications(ctx context.Context, userId int, userNotifications DTO.UpdateUserNotificationsSettings) error
 	DeleteUser(ctx context.Context, password string, userId int) error
 	FindUserById(ctx context.Context, userId int) (models.User, error)
 	ChangeUserPassword(ctx context.Context, userId int, newPassword string) error
@@ -29,6 +29,7 @@ func NewUserService(loggerService *utils.Logger, userRepository userRepository) 
 		UserRepository: userRepository,
 	}
 }
+
 func (u *UserService) GetUser(ctx context.Context, userId int) (models.User, error) {
 	user, err := u.UserRepository.FindUserById(ctx, userId)
 	if err != nil {
@@ -36,6 +37,7 @@ func (u *UserService) GetUser(ctx context.Context, userId int) (models.User, err
 	}
 	return user, nil
 }
+
 func (u *UserService) InsertUserToDb(ctx context.Context, user DTO.CreateUser, password string) error {
 	doesUserExists, err := u.UserRepository.FindUserByEmail(ctx, user.Email)
 	if err != nil {
@@ -45,7 +47,7 @@ func (u *UserService) InsertUserToDb(ctx context.Context, user DTO.CreateUser, p
 		}
 		return models.NewError(500, "InternalError", err.Error())
 	}
-	if doesUserExists.Id > 0 {
+	if doesUserExists.ID > 0 {
 		u.LoggerService.Info("User with this email already exists", user.Email)
 		return models.NewError(400, "Verification", "User with this email already exists")
 	}
@@ -71,7 +73,8 @@ func (u *UserService) UpdateUser(ctx context.Context, user DTO.CreateUser, userI
 }
 
 func (u *UserService) UpdateUserNotifications(ctx context.Context, userId int,
-	userNotifications DTO.UpdateUserNotifications) error {
+	userNotifications DTO.UpdateUserNotificationsSettings,
+) error {
 	err := u.UserRepository.UpdateUserNotifications(ctx, userId, userNotifications)
 	if err != nil {
 		return err
@@ -84,7 +87,7 @@ func (u *UserService) DeleteUser(ctx context.Context, userId int, password strin
 	if err != nil {
 		return err
 	}
-	if user.Id == 0 {
+	if user.ID == 0 {
 		u.LoggerService.Info("User with this id does not exist", userId)
 		return models.NewError(400, "Verification", "User with this id does not exist")
 	}
@@ -105,7 +108,7 @@ func (u *UserService) ChangeUserPassword(ctx context.Context, userId int, curren
 	if err != nil {
 		return err
 	}
-	if user.Id == 0 {
+	if user.ID == 0 {
 		u.LoggerService.Info("User with this id does not exist", userId)
 		return models.NewError(400, "Verification", "User with this id does not exist")
 	}

@@ -162,7 +162,7 @@ func TestDockerService_PauseContainer(t *testing.T) {
 			dockerHost:    "",
 		},
 		{
-			name:          "Invalid app Id",
+			name:          "Invalid app ID",
 			expectedError: ptr("No such container"),
 			appId:         "e9530eae6aa752adf79b79a2d9c1398fe59eee4a3d786734d9e2076e62415772",
 			dockerHost:    "tcp://100.100.188.29:2375",
@@ -221,7 +221,7 @@ func TestDockerService_RestartContainer(t *testing.T) {
 			dockerHost:    "",
 		},
 		{
-			name:          "Invalid app Id",
+			name:          "Invalid app ID",
 			expectedError: ptr("No such container"),
 			appId:         "e9530eae6aa752adf79b79a2d9c1398fe59eee4a3d786734d9e2076e62415772",
 			dockerHost:    "tcp://100.100.188.29:2375",
@@ -280,7 +280,7 @@ func TestDockerService_UnpauseContainer(t *testing.T) {
 			dockerHost:    "",
 		},
 		{
-			name:          "Invalid app Id",
+			name:          "Invalid app ID",
 			expectedError: ptr("No such container"),
 			appId:         "e9530eae6aa752adf79b79a2d9c1398fe59eee4a3d786734d9e2076e62415772",
 			dockerHost:    "tcp://100.100.188.29:2375",
@@ -340,7 +340,7 @@ func TestDockerService_StartContainer(t *testing.T) {
 			dockerHost:    "",
 		},
 		{
-			name:          "Invalid app Id",
+			name:          "Invalid app ID",
 			expectedError: ptr("No such container"),
 			appId:         "e9530eae6aa752adf79b79a2d9c1398fe59eee4a3d786734d9e2076e62415772",
 			dockerHost:    "tcp://100.100.188.29:2375",
