@@ -1,7 +1,7 @@
 package services
 
 import (
-	"fmt"
+	"context"
 	"runtime"
 	"sync"
 
@@ -9,21 +9,39 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
-type RouteService struct {
-	Logger *utils.Logger
+type routeRepository interface {
+	UpdateWorkingRoutesStatuses(ctx context.Context, routesStatuses map[int]string) error
+	GetWorkingRoutesToTest(ctx context.Context) ([]DTO.RouteToTest, error)
+	InsertRoutesInfo(ctx context.Context, routesInfo []*DTO.RouteInfo) ([]int, error)
+	InsertRoutesRequests(ctx context.Context,
+		routesRequests []*DTO.RouteRequest) ([]int, error)
+	InsertRoutesResponses(ctx context.Context,
+		routesResponses []*DTO.RouteResponse) ([]int,
+		error)
+	InsertNextRoutesData(ctx context.Context,
+		nextRoutesData []*DTO.NextRoute) ([]int,
+		error)
+	InsertWorkingRoute(ctx context.Context, workingRoute DTO.WorkingRoute) (int,
+		error)
 }
 
-func NewRouteService(logger *utils.Logger) *RouteService {
+type RouteService struct {
+	Logger          *utils.Logger
+	RouteRepository routeRepository
+}
+
+func NewRouteService(logger *utils.Logger, routeRepository routeRepository) *RouteService {
 	return &RouteService{
-		Logger: logger,
+		Logger:          logger,
+		RouteRepository: routeRepository,
 	}
 }
 
-func (rs *RouteService) AddWorkingRoutes(routes *[]DTO.CreateRoute, appId int) error {
-	nextRoutesDataChan := make(chan DTO.NextRouteData, len(*routes))
-	requestRoutesDataChan := make(chan DTO.RouteRequest, len(*routes))
-	responseRoutesDataChan := make(chan DTO.RouteResponse, len(*routes))
-	routesDataChan := make(chan DTO.RouteInfo, len(*routes))
+func (rs *RouteService) AddWorkingRoutes(ctx context.Context, routes *[]DTO.CreateRoute, appId string, name string) error {
+	nextRoutesChan := make(chan DTO.NextRoute, len(*routes))
+	requestRoutesChan := make(chan DTO.RouteRequest, len(*routes))
+	responseRoutesChan := make(chan DTO.RouteResponse, len(*routes))
+	routesInfoChan := make(chan DTO.RouteInfo, len(*routes))
 	errorChan := make(chan error)
 	jobs := make(chan DTO.CreateRoute, len(*routes))
 	workerCount := runtime.NumCPU()
@@ -38,7 +56,7 @@ func (rs *RouteService) AddWorkingRoutes(routes *[]DTO.CreateRoute, appId int) e
 					errorChan <- err
 					return
 				}
-				responseRoutesDataChan <- *DTO.NewRouteResponse(job.ResponseStatusCode, job.ParentId, string(responseBodyBytes))
+				responseRoutesChan <- *DTO.NewRouteResponse(job.ResponseStatusCode, job.ParentId, string(responseBodyBytes))
 				requestParamsBytes, err := utils.MarshalData(job.RequestParams)
 				if err != nil {
 					errorChan <- err
@@ -54,7 +72,7 @@ func (rs *RouteService) AddWorkingRoutes(routes *[]DTO.CreateRoute, appId int) e
 					errorChan <- err
 					return
 				}
-				requestRoutesDataChan <- *DTO.NewRouteRequest(job.RequestAuthorization, string(requestQueryBytes), string(requestParamsBytes), string(requestBodyBytes), job.ParentId)
+				requestRoutesChan <- *DTO.NewRouteRequest(job.RequestAuthorization, string(requestQueryBytes), string(requestParamsBytes), string(requestBodyBytes), job.ParentId)
 				nextRouteBodyBytes, err := utils.MarshalData(job.NextRouteBody)
 				if err != nil {
 					errorChan <- err
@@ -65,14 +83,14 @@ func (rs *RouteService) AddWorkingRoutes(routes *[]DTO.CreateRoute, appId int) e
 					errorChan <- err
 					return
 				}
-
 				nextRouteParamsBytes, err := utils.MarshalData(job.NextRouteParams)
 				if err != nil {
 					errorChan <- err
 					return
 				}
-				nextRoutesDataChan <- *DTO.NewNextRouteData(string(nextRouteBodyBytes), string(nextRouteQueryBytes), string(nextRouteParamsBytes), job.ParentId)
-				routesDataChan <- *DTO.NewRouteInfo(job.Path, job.Method, job.ParentId)
+				nextRoutesChan <- *DTO.NewNextRouteData(string(nextRouteBodyBytes), string(nextRouteQueryBytes),
+					string(nextRouteParamsBytes), job.NextAuthorizationHeader, job.ParentId)
+				routesInfoChan <- *DTO.NewRouteInfo(job.Path, job.Method, job.ParentId)
 			}
 		}()
 	}
@@ -81,47 +99,85 @@ func (rs *RouteService) AddWorkingRoutes(routes *[]DTO.CreateRoute, appId int) e
 	}
 	close(jobs)
 	wg.Wait()
-	close(nextRoutesDataChan)
-	close(requestRoutesDataChan)
-	close(responseRoutesDataChan)
-	close(routesDataChan)
+	close(nextRoutesChan)
+	close(requestRoutesChan)
+	close(responseRoutesChan)
+	close(routesInfoChan)
 	select {
 	case err := <-errorChan:
 		return err
 	default:
 	}
-	var nextRoutesData []*DTO.NextRouteData
-	var requestRoutesData []*DTO.RouteRequest
-	var responseRoutesData []*DTO.RouteResponse
-	var routesInfoData []*DTO.RouteInfo
-	for data := range nextRoutesDataChan {
-		nextRoutesData = append(nextRoutesData, &data)
-	}
-	for data := range requestRoutesDataChan {
-		requestRoutesData = append(requestRoutesData, &data)
-	}
-	for data := range responseRoutesDataChan {
-		responseRoutesData = append(responseRoutesData, &data)
-	}
-	for data := range routesDataChan {
-		routesInfoData = append(routesInfoData, &data)
-	}
-	nextRoutesData = utils.InsertionSortForRoutes(nextRoutesData)
-	requestRoutesData = utils.InsertionSortForRoutes(requestRoutesData)
-	responseRoutesData = utils.InsertionSortForRoutes(responseRoutesData)
-	routesInfoData = utils.InsertionSortForRoutes(routesInfoData)
+	var nextRoutes []*DTO.NextRoute
+	var requestRoutes []*DTO.RouteRequest
+	var responseRoutes []*DTO.RouteResponse
+	var routesInfo []*DTO.RouteInfo
 
-	for _, val := range nextRoutesData {
-		fmt.Println(val)
+	for nextRoute := range nextRoutesChan {
+		nextRoutes = append(nextRoutes, &nextRoute)
 	}
-	for _, val := range requestRoutesData {
-		fmt.Println(val)
+	for requestRoute := range requestRoutesChan {
+		requestRoutes = append(requestRoutes, &requestRoute)
 	}
-	for _, val := range responseRoutesData {
-		fmt.Println(val)
+	for responseRoute := range responseRoutesChan {
+		responseRoutes = append(responseRoutes, &responseRoute)
 	}
-	for _, val := range routesInfoData {
-		fmt.Println(val)
+	for routeInfo := range routesInfoChan {
+		routesInfo = append(routesInfo, &routeInfo)
+	}
+	nextRoutes = utils.InsertionSortForRoutes(nextRoutes)
+	requestRoutes = utils.InsertionSortForRoutes(requestRoutes)
+	responseRoutes = utils.InsertionSortForRoutes(responseRoutes)
+	routesInfo = utils.InsertionSortForRoutes(routesInfo)
+	var routesInfoErr, routesRequestsErr, routesResponsesErr, nextRoutesDataErr error
+	var routesInfoIds, routesRequestsIds, routesResponsesIds, nextRoutesDataIds []int
+	wg.Add(4)
+	go func() {
+		defer wg.Done()
+		routesInfoIds, routesInfoErr = rs.RouteRepository.InsertRoutesInfo(ctx, routesInfo)
+	}()
+	go func() {
+		defer wg.Done()
+		nextRoutesDataIds, nextRoutesDataErr = rs.RouteRepository.InsertNextRoutesData(ctx, nextRoutes)
+	}()
+	go func() {
+		defer wg.Done()
+		routesResponsesIds, routesResponsesErr = rs.RouteRepository.InsertRoutesResponses(ctx, responseRoutes)
+	}()
+	go func() {
+		defer wg.Done()
+		routesRequestsIds, routesRequestsErr = rs.RouteRepository.InsertRoutesRequests(ctx, requestRoutes)
+	}()
+	wg.Wait()
+	var workingRoutes []DTO.WorkingRoute
+	for _, val := range *routes {
+		workingRoutes = append(workingRoutes, DTO.WorkingRoute{ParentID: val.ParentId, AppId: appId, Name: name})
+	}
+	if routesInfoErr != nil {
+		return routesInfoErr
+	}
+	if routesRequestsErr != nil {
+		return routesRequestsErr
+	}
+	if routesResponsesErr != nil {
+		return routesResponsesErr
+	}
+	if nextRoutesDataErr != nil {
+		return nextRoutesDataErr
+	}
+	parentId := 0
+	for i := 0; i < len(workingRoutes); i++ {
+		workingRoutes[i].NextRouteDataId = nextRoutesDataIds[i]
+		workingRoutes[i].RequestID = routesRequestsIds[i]
+		workingRoutes[i].ResponseID = routesResponsesIds[i]
+		workingRoutes[i].RouteID = routesInfoIds[i]
+		workingRoutes[i].ParentID = parentId
+		workingRoutes[i].Status = "unknown"
+		res, err := rs.RouteRepository.InsertWorkingRoute(ctx, workingRoutes[i])
+		if err != nil {
+			return err
+		}
+		parentId = res
 	}
 	return nil
 }

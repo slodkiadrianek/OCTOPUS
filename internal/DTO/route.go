@@ -1,30 +1,104 @@
 package DTO
 
-type RoutesParentId interface {
-	GetParentId() int
-	SetParentId(id int)
+import (
+	"encoding/json"
+	"fmt"
+)
+
+type RoutesParentID interface {
+	GetParentID() int
+}
+type CreateRouteData struct {
+	Name   string `json:"name"`
+	Routes []CreateRoute
 }
 type CreateRoute struct {
-	Path                 string            `json:"path" example:"/users"`
-	Method               string            `json:"method" example:"GET"`
-	RequestAuthorization string            `json:"requestAuthorization" example:"Bearer:fb43fg3487f34g78f3gu"`
-	RequestQuery         map[string]string `json:"requestQuery" example:"id=1"`
-	RequestParams        map[string]string `json:"requestParams" example:"id=1"`
-	RequestBody          map[string]any    `json:"requestBody" example:"id=1"`
-	NextRouteBody        []string          `json:"nextRouteBody"`
-	NextRouteQuery       []string          `json:"nextRouteQuery"`
-	NextRouteParams      []string          `json:"nextRouteParams"`
-	ResponseStatusCode   int               `json:"responseStatusCode" example:"200"`
-	ResponseBody         map[string]any    `json:"responseBody" example:"id=1"`
-	ParentId             int
+	Path                    string            `json:"path" example:"/users"`
+	Method                  string            `json:"method" example:"GET"`
+	RequestAuthorization    string            `json:"requestAuthorization" example:"Bearer:fb43fg3487f34g78f3gu"`
+	RequestQuery            map[string]string `json:"requestQuery" example:"id=1"`
+	RequestParams           map[string]string `json:"requestParams" example:"id=1"`
+	RequestBody             map[string]any    `json:"requestBody" example:"id=1"`
+	NextRouteBody           []string          `json:"nextRouteBody"`
+	NextRouteQuery          []string          `json:"nextRouteQuery"`
+	NextRouteParams         []string          `json:"nextRouteParams"`
+	NextAuthorizationHeader string            `json:"next_authorization_header"`
+	ResponseStatusCode      int               `json:"responseStatusCode" example:"200"`
+	ResponseBody            map[string]any    `json:"responseBody" example:"id=1"`
+	ParentId                int
+}
+
+type JsonMapStringString map[string]string
+
+func (jm *JsonMapStringString) Scan(value interface{}) error {
+	if value == nil {
+		*jm = nil
+		return nil
+	}
+	b, ok := value.([]byte)
+	if !ok {
+		return fmt.Errorf("type assertion failed: %T", value)
+	}
+	return json.Unmarshal(b, jm)
+}
+
+type JsonMapStringAny map[string]any
+
+func (ja *JsonMapStringAny) Scan(value interface{}) error {
+	if value == nil {
+		*ja = nil
+		return nil
+	}
+	b, ok := value.([]byte)
+	if !ok {
+		return fmt.Errorf("type assertion failed: %T", value)
+	}
+	return json.Unmarshal(b, ja)
+}
+
+type JsonStringSlice []string
+
+func (js *JsonStringSlice) Scan(value interface{}) error {
+	if value == nil {
+		*js = nil
+		return nil
+	}
+	b, ok := value.([]byte)
+	if !ok {
+		return fmt.Errorf("type assertion failed: %T", value)
+	}
+	return json.Unmarshal(b, js)
+}
+
+type RouteToTest struct {
+	ID                      int
+	IpAddress               string
+	Port                    string
+	Name                    string              `json:"name"`
+	Path                    string              `json:"path" example:"/users"`
+	Method                  string              `json:"method" example:"GET"`
+	RequestAuthorization    string              `json:"requestAuthorization" example:"Bearer:fb43fg3487f34g78f3gu"`
+	RequestQuery            JsonMapStringString `json:"requestQuery" example:"id=1"`
+	RequestParams           JsonMapStringString `json:"requestParams" example:"id=1"`
+	RequestBody             JsonMapStringAny    `json:"requestBody" example:"id=1"`
+	NextRouteBody           JsonStringSlice     `json:"nextRouteBody"`
+	NextRouteQuery          JsonStringSlice     `json:"nextRouteQuery"`
+	NextRouteParams         JsonStringSlice     `json:"nextRouteParams"`
+	NextAuthorizationHeader string              `json:"next_authorization_header"`
+	ResponseStatusCode      int                 `json:"responseStatusCode" example:"200"`
+	ResponseBody            JsonMapStringAny    `json:"responseBody" example:"id=1"`
+	ParentID                int
+	Status                  string
+	AppId                   string
 }
 
 type WorkingRoute struct {
-	ParentId        int
+	Name            string
+	ParentID        int
 	AppId           string
-	RouteId         int
-	RequestId       int
-	ResponseId      int
+	RouteID         int
+	RequestID       int
+	ResponseID      int
 	NextRouteDataId int
 	Status          string
 }
@@ -32,93 +106,79 @@ type WorkingRoute struct {
 type RouteInfo struct {
 	Path     string `json:"path" example:"/users"`
 	Method   string `json:"method" example:"GET"`
-	ParentId int    `json:"parentId"`
+	ParentID int    `json:"parentID"`
 }
 
 func NewRouteInfo(path, method string, parentId int) *RouteInfo {
 	return &RouteInfo{
 		Path:     path,
 		Method:   method,
-		ParentId: parentId,
+		ParentID: parentId,
 	}
 }
 
-func (ri *RouteInfo) GetParentId() int {
-	return ri.ParentId
-}
-
-func (ri *RouteInfo) SetParentId(id int) {
-	ri.ParentId = id
+func (ri *RouteInfo) GetParentID() int {
+	return ri.ParentID
 }
 
 type RouteRequest struct {
-	RequestAuthorization string `json:"requestAuthorization" example:"Bearer:fb43fg3487f34g78f3gu"`
-	RequestQuery         string `json:"requestQuery" example:"id=1"`
-	RequestParams        string `json:"requestParams" example:"id=1"`
-	RequestBody          string `json:"requestBody" example:"id=1"`
-	ParentId             int    `json:"parentId"`
+	AuthorizationHeader string `json:"authorizationHeader" example:"Bearer:fb43fg3487f34g78f3gu"`
+	Query               string `json:"query" example:"id=1"`
+	Params              string `json:"params" example:"id=1"`
+	Body                string `json:"body" example:"id=1"`
+	ParentID            int    `json:"parentID"`
 }
 
-func NewRouteRequest(requestAuthorization, requestQuery, requestParams, requestBody string, parentId int) *RouteRequest {
+func NewRouteRequest(authorizationHeader, query, params, body string, parentId int) *RouteRequest {
 	return &RouteRequest{
-		RequestAuthorization: requestAuthorization,
-		RequestQuery:         requestQuery,
-		RequestParams:        requestParams,
-		RequestBody:          requestBody,
-		ParentId:             parentId,
+		AuthorizationHeader: authorizationHeader,
+		Query:               query,
+		Params:              params,
+		Body:                body,
+		ParentID:            parentId,
 	}
 }
 
-func (rr *RouteRequest) GetParentId() int {
-	return rr.ParentId
+func (rr *RouteRequest) GetParentID() int {
+	return rr.ParentID
 }
 
-func (rr *RouteRequest) SetParentId(id int) {
-	rr.ParentId = id
+type NextRoute struct {
+	Body                string `json:"body"`
+	Query               string `json:"query"`
+	Params              string `json:"params"`
+	AuthorizationHeader string `json:"authorizationHeader"`
+	ParentID            int    `json:"parentID"`
 }
 
-type NextRouteData struct {
-	NextRouteBody   string `json:"nextRouteBody"`
-	NextRouteQuery  string `json:"nextRouteQuery"`
-	NextRouteParams string `json:"nextRouteParams"`
-	ParentId        int    `json:"parentId"`
-}
-
-func NewNextRouteData(nextRouteBody, nextRouteQuery, nextRouteParams string, parentId int) *NextRouteData {
-	return &NextRouteData{
-		NextRouteBody:   nextRouteBody,
-		NextRouteQuery:  nextRouteQuery,
-		NextRouteParams: nextRouteParams,
-		ParentId:        parentId,
+func NewNextRouteData(body, query, params, authorizationHeader string, parentId int) *NextRoute {
+	return &NextRoute{
+		Body:                body,
+		Query:               query,
+		Params:              params,
+		AuthorizationHeader: authorizationHeader,
+		ParentID:            parentId,
 	}
 }
 
-func (nrd *NextRouteData) GetParentId() int {
-	return nrd.ParentId
-}
-
-func (nrd *NextRouteData) SetParentId(id int) {
-	nrd.ParentId = id
+func (nrd *NextRoute) GetParentID() int {
+	return nrd.ParentID
 }
 
 type RouteResponse struct {
-	ResponseStatusCode int    `json:"responseStatusCode" example:"200"`
-	ResponseBody       string `json:"responseBody" example:"id=1"`
-	ParentId           int    `json:"parentId"`
+	StatusCode int    `json:"statusCode" example:"200"`
+	Body       string `json:"body" example:"id=1"`
+	ParentID   int    `json:"parentID"`
 }
 
-func NewRouteResponse(responseStatusCode, parentId int, responseBody string) *RouteResponse {
+func NewRouteResponse(statusCode, parentId int, body string) *RouteResponse {
 	return &RouteResponse{
-		ResponseStatusCode: responseStatusCode,
-		ResponseBody:       responseBody,
-		ParentId:           parentId,
+		StatusCode: statusCode,
+		Body:       body,
+		ParentID:   parentId,
 	}
 }
 
-func (rr *RouteResponse) GetParentId() int {
-	return rr.ParentId
-}
-
-func (rr *RouteResponse) SetParentId(id int) {
-	rr.ParentId = id
+func (rr *RouteResponse) GetParentID() int {
+	return rr.ParentID
 }

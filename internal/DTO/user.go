@@ -15,8 +15,8 @@ type UpdateUser struct {
 	Surname string `json:"surname" example:"Doe"`
 	Email   string `json:"email" example:"joedoe@email.com"`
 }
-type UserId struct {
-	UserId string `json:"userId" example:"2"`
+type UserID struct {
+	UserID string `json:"userID" example:"2"`
 }
 type ChangeUserPassword struct {
 	CurrentPassword string `json:"currentPassword" example:"zaqw@Dekflas;h#&"`
@@ -26,13 +26,13 @@ type ChangeUserPassword struct {
 type DeleteUser struct {
 	Password string `json:"password" example:"zaqw@Dekflas;h#&"`
 }
-type UpdateUserNotifications struct {
-	DiscordNotifications bool `json:"discordNotifications" example:"true"`
-	SlackNotifications   bool `json:"slackNotifications" example:"true"`
-	EmailNotifications   bool `json:"emailNotifications" example:"true"`
+type UpdateUserNotificationsSettings struct {
+	DiscordNotificationsSettings bool `json:"discordNotificationsSettings" example:"true"`
+	SlackNotificationsSettings   bool `json:"slackNotificationsSettings" example:"true"`
+	EmailNotificationsSettings   bool `json:"emailNotificationsSettings" example:"true"`
 }
 type LoggedUser struct {
-	Id      int    `json:"id" example:"11"`
+	ID      int    `json:"id" example:"11"`
 	Email   string `json:"email" example:"joedoe@email.com"`
 	Name    string `json:"name" example:"Joe"`
 	Surname string `json:"surname" example:"Doe"`
@@ -40,7 +40,7 @@ type LoggedUser struct {
 
 func NewLoggedUser(id int, email string, name string, surname string) *LoggedUser {
 	return &LoggedUser{
-		Id:      id,
+		ID:      id,
 		Email:   email,
 		Name:    name,
 		Surname: surname,

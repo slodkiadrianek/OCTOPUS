@@ -100,7 +100,7 @@ func TestValidateSchema(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			err := ValidateInput(&test.schema, &test.val)
+			err := ValidateInputStruct(&test.schema, &test.val)
 			assert.Equal(t, test.expectedError, err)
 		})
 	}

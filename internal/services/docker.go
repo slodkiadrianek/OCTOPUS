@@ -18,7 +18,8 @@ type DockerService struct {
 }
 
 func NewDockerService(appRepository appRepository, logger *utils.Logger,
-	dockerHost string) *DockerService {
+	dockerHost string,
+) *DockerService {
 	return &DockerService{
 		AppRepository: appRepository,
 		DockerHost:    dockerHost,
@@ -66,6 +67,7 @@ func (dc *DockerService) UnpauseContainer(ctx context.Context, appId string) err
 	err = cli.ContainerUnpause(ctx, appId)
 	return err
 }
+
 func (dc *DockerService) StopContainer(ctx context.Context, appId string) error {
 	cli, err := client.NewClientWithOpts(client.WithHost(dc.DockerHost), client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -89,7 +91,7 @@ func (dc *DockerService) ImportContainers(ctx context.Context, ownerId int) erro
 	}
 	workerCount := runtime.NumCPU()
 	jobs := make(chan containertypes.Summary, len(containers))
-	appsDataChan := make(chan DTO.App, len(containers))
+	appsChan := make(chan DTO.App, len(containers))
 	var wg sync.WaitGroup
 
 	for i := 0; i < workerCount; i++ {
@@ -97,8 +99,8 @@ func (dc *DockerService) ImportContainers(ctx context.Context, ownerId int) erro
 		go func() {
 			defer wg.Done()
 			for job := range jobs {
-				preparedName := job.Names[0][1:]
-				appsDataChan <- *DTO.NewApp(job.ID, preparedName, "", true, ownerId, "", "")
+				preparedAppName := job.Names[0][1:]
+				appsChan <- *DTO.NewApp(job.ID, preparedAppName, "", true, ownerId, "", "")
 			}
 		}()
 	}
@@ -107,10 +109,10 @@ func (dc *DockerService) ImportContainers(ctx context.Context, ownerId int) erro
 	}
 	wg.Wait()
 	close(jobs)
-	var appsData []DTO.App
-	for app := range appsDataChan {
-		appsData = append(appsData, app)
+	var apps []DTO.App
+	for app := range appsChan {
+		apps = append(apps, app)
 	}
-	err = dc.AppRepository.InsertApp(ctx, appsData)
+	err = dc.AppRepository.InsertApp(ctx, apps)
 	return err
 }

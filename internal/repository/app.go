@@ -11,25 +11,25 @@ import (
 )
 
 type AppRepository struct {
-	Db     *sql.DB
-	Logger *utils.Logger
+	Db            *sql.DB
+	LoggerService *utils.Logger
 }
 
-func NewAppRepository(db *sql.DB, logger *utils.Logger) *AppRepository {
+func NewAppRepository(db *sql.DB, loggerService *utils.Logger) *AppRepository {
 	return &AppRepository{
-		Db:     db,
-		Logger: logger,
+		Db:            db,
+		LoggerService: loggerService,
 	}
 }
 
 func (a *AppRepository) InsertApp(ctx context.Context, app []DTO.App) error {
-	values := ""
+	preparedValues := ""
 	args := make([]any, 0)
 	for i := range app {
-		values += fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d),", i*6+1, i*6+2, i*6+3, i*6+4, i*6+5, i*6+6)
-		args = append(args, app[i].Id, app[i].Name, app[i].IsDocker, app[i].OwnerID, app[i].IpAddress, app[i].Port)
+		preparedValues += fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d),", i*6+1, i*6+2, i*6+3, i*6+4, i*6+5, i*6+6)
+		args = append(args, app[i].ID, app[i].Name, app[i].IsDocker, app[i].OwnerID, app[i].IpAddress, app[i].Port)
 	}
-	values = values[:len(values)-1]
+	preparedValues = preparedValues[:len(preparedValues)-1]
 	query := fmt.Sprintf(`INSERT INTO apps (
 		id,
 		name,
@@ -37,10 +37,10 @@ func (a *AppRepository) InsertApp(ctx context.Context, app []DTO.App) error {
 		owner_id,
 		ip_address,
 		port
-	)  VALUES %s`, values)
+	)  VALUES %s`, preparedValues)
 	stmt, err := a.Db.PrepareContext(ctx, query)
 	if err != nil {
-		a.Logger.Error("Failed to prepared statement for execution", map[string]any{
+		a.LoggerService.Error("Failed to prepared statement for execution", map[string]any{
 			"query": query,
 			"args":  app,
 			"err":   err.Error(),
@@ -49,7 +49,7 @@ func (a *AppRepository) InsertApp(ctx context.Context, app []DTO.App) error {
 	}
 	_, err = stmt.ExecContext(ctx, args...)
 	if err != nil {
-		a.Logger.Error("Failed to execute an insert query", map[string]any{
+		a.LoggerService.Error("Failed to execute an insert query", map[string]any{
 			"query": query,
 			"args":  app,
 			"err":   err.Error(),
@@ -60,13 +60,24 @@ func (a *AppRepository) InsertApp(ctx context.Context, app []DTO.App) error {
 }
 
 func (a *AppRepository) GetApp(ctx context.Context, id string, ownerId int) (*models.App, error) {
-	query := `SELECT  id, name, COALESCE(description, ''), is_docker,owner_id,COALESCE(slack_webhook, ''),COALESCE(discord_webhook, ''),
-ip_address,port  FROM apps WHERE id = $1 AND owner_id = $2`
+	query := `SELECT  
+		id,
+		name,
+		COALESCE(description, ''),
+		is_docker,
+		owner_id,
+		COALESCE(slack_webhook, ''),
+		COALESCE(discord_webhook, ''),
+		ip_address,
+		port
+	FROM apps 
+	WHERE id = $1 AND owner_id = $2`
 	row := a.Db.QueryRowContext(ctx, query, id, ownerId)
 	var app models.App
-	err := row.Scan(&app.Id, &app.Name, &app.Description, &app.IsDocker, &app.OwnerID, &app.SlackWebhook, &app.DiscordWebhook, &app.IpAddress, &app.Port)
+	err := row.Scan(&app.ID, &app.Name, &app.Description, &app.IsDocker, &app.OwnerID, &app.SlackWebhookUrl,
+		&app.DiscordWebhookUrl, &app.IpAddress, &app.Port)
 	if err != nil {
-		a.Logger.Error("Failed to execute a select query", map[string]any{
+		a.LoggerService.Error("Failed to execute a select query", map[string]any{
 			"query": query,
 			"args":  id,
 			"err":   err.Error(),
@@ -75,12 +86,23 @@ ip_address,port  FROM apps WHERE id = $1 AND owner_id = $2`
 	}
 	return &app, nil
 }
+
 func (a *AppRepository) GetApps(ctx context.Context, ownerId int) ([]models.App, error) {
-	query := `SELECT id, name, COALESCE(description, ''), is_docker,owner_id,COALESCE(slack_webhook, ''),COALESCE(discord_webhook, ''),
-ip_address,port FROM apps WHERE owner_id = $1`
+	query := `SELECT 
+		id, 
+		name, 
+		COALESCE(description, ''), 
+		is_docker,
+		owner_id,
+		COALESCE(slack_webhook, ''),
+		COALESCE(discord_webhook, ''),
+		ip_address,
+		port 
+	FROM apps 
+	WHERE owner_id = $1`
 	rows, err := a.Db.QueryContext(ctx, query, ownerId)
 	if err != nil {
-		a.Logger.Error("Failed to execute select query", map[string]any{
+		a.LoggerService.Error("Failed to execute select query", map[string]any{
 			"query": query,
 			"err":   err.Error(),
 		})
@@ -91,13 +113,13 @@ ip_address,port FROM apps WHERE owner_id = $1`
 	for rows.Next() {
 		var app models.App
 		err := rows.Scan(
-			&app.Id,
+			&app.ID,
 			&app.Name,
 			&app.Description,
 			&app.IsDocker,
 			&app.OwnerID,
-			&app.SlackWebhook,
-			&app.DiscordWebhook,
+			&app.SlackWebhookUrl,
+			&app.DiscordWebhookUrl,
 			&app.IpAddress,
 			&app.Port,
 		)
@@ -114,7 +136,7 @@ func (a *AppRepository) DeleteApp(ctx context.Context, id string, ownerId int) e
 	query := `DELETE FROM apps WHERE id = $1 AND owner_id = $2 `
 	stmt, err := a.Db.PrepareContext(ctx, query)
 	if err != nil {
-		a.Logger.Error("Failed to prepared statement for execution", map[string]any{
+		a.LoggerService.Error("Failed to prepared statement for execution", map[string]any{
 			"query": query,
 			"err":   err.Error(),
 		})
@@ -122,7 +144,7 @@ func (a *AppRepository) DeleteApp(ctx context.Context, id string, ownerId int) e
 	}
 	_, err = stmt.ExecContext(ctx, id, ownerId)
 	if err != nil {
-		a.Logger.Error("Failed to execute a delete query", map[string]any{
+		a.LoggerService.Error("Failed to execute a delete query", map[string]any{
 			"query": query,
 			"args":  id,
 			"err":   err.Error(),
@@ -136,7 +158,7 @@ func (a *AppRepository) GetAppStatus(ctx context.Context, id string, ownerId int
 	query := "SELECT * FROM apps_statuses WHERE apps_statuses.app_id = $1 AND owner_id = $2	"
 	stmt, err := a.Db.PrepareContext(ctx, query)
 	if err != nil {
-		a.Logger.Error("Failed to prepare statement", map[string]any{
+		a.LoggerService.Error("Failed to prepare statement", map[string]any{
 			"query": query,
 			"err":   err.Error(),
 		})
@@ -144,10 +166,10 @@ func (a *AppRepository) GetAppStatus(ctx context.Context, id string, ownerId int
 	}
 	defer stmt.Close()
 	var appStatus DTO.AppStatus
-	err = stmt.QueryRowContext(ctx, id, ownerId).Scan(&appStatus.AppId, &appStatus.Status, &appStatus.ChangedAt,
+	err = stmt.QueryRowContext(ctx, id, ownerId).Scan(&appStatus.AppID, &appStatus.Status, &appStatus.ChangedAt,
 		&appStatus.Duration)
 	if err != nil {
-		a.Logger.Error("Failed to execute a select query", map[string]any{
+		a.LoggerService.Error("Failed to execute a select query", map[string]any{
 			"query": query,
 			"args":  id,
 			"err":   err.Error(),
@@ -171,7 +193,7 @@ func (a *AppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppToChec
 		LEFT JOIN apps_statuses aps ON a.id = aps.app_id`
 	stmt, err := a.Db.PrepareContext(ctx, query)
 	if err != nil {
-		a.Logger.Error("Failed to prepare statement", map[string]any{
+		a.LoggerService.Error("Failed to prepare statement", map[string]any{
 			"query": query,
 			"err":   err.Error(),
 		})
@@ -180,7 +202,7 @@ func (a *AppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppToChec
 	defer stmt.Close()
 	rows, err := stmt.QueryContext(ctx)
 	if err != nil {
-		a.Logger.Error("Failed to execute a select query", map[string]any{
+		a.LoggerService.Error("Failed to execute a select query", map[string]any{
 			"query": query,
 			"err":   err.Error(),
 		})
@@ -190,9 +212,9 @@ func (a *AppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppToChec
 	apps := make([]*models.AppToCheck, 0)
 	for rows.Next() {
 		app := &models.AppToCheck{}
-		err := rows.Scan(&app.Id, &app.Name, &app.OwnerID, &app.IsDocker, &app.IpAddress, &app.Port, &app.Status)
+		err := rows.Scan(&app.ID, &app.Name, &app.OwnerID, &app.IsDocker, &app.IpAddress, &app.Port, &app.Status)
 		if err != nil {
-			a.Logger.Error("Failed to scan row", map[string]any{
+			a.LoggerService.Error("Failed to scan row", map[string]any{
 				"query": query,
 				"err":   err.Error(),
 			})
@@ -201,7 +223,7 @@ func (a *AppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppToChec
 		apps = append(apps, app)
 	}
 	if err := rows.Err(); err != nil {
-		a.Logger.Error("Failed to iterate over rows", map[string]any{
+		a.LoggerService.Error("Failed to iterate over rows", map[string]any{
 			"query": query,
 			"err":   err.Error(),
 		})
@@ -224,16 +246,16 @@ func (a *AppRepository) UpdateApp(ctx context.Context, appId string, app DTO.Upd
 	  	AND owner_id = $8 `
 	stmt, err := a.Db.PrepareContext(ctx, query)
 	if err != nil {
-		a.Logger.Error("Failed to prepare statement", map[string]any{
+		a.LoggerService.Error("Failed to prepare statement", map[string]any{
 			"query": query,
 			"err":   err.Error(),
 		})
 		return models.NewError(500, "Database", "Failed to update data in the database")
 	}
-	_, err = stmt.ExecContext(ctx, app.Name, app.Description, app.IpAddress, app.Port, app.DiscordWebhook,
-		app.SlackWebhook, appId, ownerId)
+	_, err = stmt.ExecContext(ctx, app.Name, app.Description, app.IpAddress, app.Port, app.DiscordWebhookUrl,
+		app.SlackWebhookUrl, appId, ownerId)
 	if err != nil {
-		a.Logger.Error("Failed to execute a update query", map[string]any{
+		a.LoggerService.Error("Failed to execute a update query", map[string]any{
 			"query": query,
 			"args": map[string]any{
 				"appId":   appId,
@@ -247,13 +269,14 @@ func (a *AppRepository) UpdateApp(ctx context.Context, appId string, app DTO.Upd
 }
 
 func (a *AppRepository) InsertAppStatuses(ctx context.Context, appsStatuses []DTO.AppStatus) error {
-	values := ""
+	preparedValues := ""
 	args := make([]any, 0)
 	for i := range appsStatuses {
-		values += fmt.Sprintf("($%d,$%d,$%d,$%d),", i*4+1, i*4+2, i*4+3, i*4+4)
-		args = append(args, appsStatuses[i].AppId, appsStatuses[i].Status, appsStatuses[i].ChangedAt, appsStatuses[i].Duration)
+		preparedValues += fmt.Sprintf("($%d,$%d,$%d,$%d),", i*4+1, i*4+2, i*4+3, i*4+4)
+		args = append(args, appsStatuses[i].AppID, appsStatuses[i].Status, appsStatuses[i].ChangedAt,
+			appsStatuses[i].Duration)
 	}
-	values = values[:len(values)-1]
+	preparedValues = preparedValues[:len(preparedValues)-1]
 
 	query := fmt.Sprintf(`
     INSERT INTO apps_statuses(
@@ -267,11 +290,11 @@ func (a *AppRepository) InsertAppStatuses(ctx context.Context, appsStatuses []DT
         status = EXCLUDED.status,
         changed_at = EXCLUDED.changed_at,
         duration = EXCLUDED.duration
-`, values)
+`, preparedValues)
 
 	stmt, err := a.Db.PrepareContext(ctx, query)
 	if err != nil {
-		a.Logger.Error("Failed to prepared statement for execution", map[string]any{
+		a.LoggerService.Error("Failed to prepared statement for execution", map[string]any{
 			"query": query,
 			"args":  appsStatuses,
 			"err":   err.Error(),
@@ -280,7 +303,7 @@ func (a *AppRepository) InsertAppStatuses(ctx context.Context, appsStatuses []DT
 	}
 	_, err = stmt.ExecContext(ctx, args...)
 	if err != nil {
-		a.Logger.Error("Failed to execute an insert query", map[string]any{
+		a.LoggerService.Error("Failed to execute an insert query", map[string]any{
 			"query": query,
 			"args":  appsStatuses,
 			"err":   err.Error(),
@@ -290,15 +313,15 @@ func (a *AppRepository) InsertAppStatuses(ctx context.Context, appsStatuses []DT
 	return nil
 }
 
-func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsStatuses []DTO.AppStatus) ([]models.SendNotificationTo, error) {
-	values := ""
+func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsStatuses []DTO.AppStatus) ([]models.NotificationInfo, error) {
+	preparedValues := ""
 	args := make([]any, 0)
 	for i := range appsStatuses {
-		values += fmt.Sprintf("$%d,", i+1)
-		args = append(args, appsStatuses[i].AppId)
+		preparedValues += fmt.Sprintf("$%d,", i+1)
+		args = append(args, appsStatuses[i].AppID)
 	}
-	if len(values) > 0 {
-		values = values[:len(values)-1]
+	if len(preparedValues) > 0 {
+		preparedValues = preparedValues[:len(preparedValues)-1]
 	}
 	query := fmt.Sprintf(`
 	SELECT
@@ -314,44 +337,46 @@ func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsSta
 	FROM apps a
 		INNER JOIN apps_statuses aps ON aps.app_id = a.id
 		INNER JOIN users u ON u.id = a.owner_id
-	WHERE a.id IN (%s)`, values)
+	WHERE a.id IN (%s)`, preparedValues)
 	stmt, err := a.Db.PrepareContext(ctx, query)
 	if err != nil {
-		a.Logger.Error("Failed to prepared statement for execution", map[string]any{
+		a.LoggerService.Error("Failed to prepared statement for execution", map[string]any{
 			"query": query,
 			"args":  appsStatuses,
 			"err":   err.Error(),
 		})
-		return []models.SendNotificationTo{}, models.NewError(500, "Database", "Failed to get app from the database")
+		return []models.NotificationInfo{}, models.NewError(500, "Database", "Failed to get app from the database")
 	}
 	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
-		a.Logger.Error("Failed to execute a select query", map[string]any{
+		a.LoggerService.Error("Failed to execute a select query", map[string]any{
 			"query": query,
 			"err":   err.Error(),
 		})
 		return nil, err
 	}
 	defer rows.Close()
-	var dataToSendNotifications []models.SendNotificationTo
+	var notifications []models.NotificationInfo
 	for rows.Next() {
-		var objectToSendNotification models.SendNotificationTo
-		err := rows.Scan(&objectToSendNotification.Id, &objectToSendNotification.Name, &objectToSendNotification.Status, &objectToSendNotification.DiscordWebhook, &objectToSendNotification.SlackWebhook, &objectToSendNotification.Email, &objectToSendNotification.EmailNotifications, &objectToSendNotification.DiscordNotifications, &objectToSendNotification.SlackNotifications)
+		var notification models.NotificationInfo
+		err := rows.Scan(&notification.ID, &notification.Name, &notification.Status, &notification.DiscordWebhookUrl,
+			&notification.SlackWebhookUrl, &notification.Email, &notification.EmailNotificationsSettings,
+			&notification.DiscordNotificationsSettings, &notification.SlackNotificationsSettings)
 		if err != nil {
-			a.Logger.Error("Failed to scan row", map[string]any{
+			a.LoggerService.Error("Failed to scan row", map[string]any{
 				"query": query,
 				"err":   err.Error(),
 			})
 			return nil, models.NewError(500, "Database", "Failed to get app from the database")
 		}
-		dataToSendNotifications = append(dataToSendNotifications, objectToSendNotification)
+		notifications = append(notifications, notification)
 	}
 	if err := rows.Err(); err != nil {
-		a.Logger.Error("Failed to iterate over rows", map[string]any{
+		a.LoggerService.Error("Failed to iterate over rows", map[string]any{
 			"query": query,
 			"err":   err.Error(),
 		})
 		return nil, models.NewError(500, "Database", "Failed to get app from the database")
 	}
-	return dataToSendNotifications, nil
+	return notifications, nil
 }

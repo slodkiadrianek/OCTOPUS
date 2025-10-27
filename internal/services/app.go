@@ -3,16 +3,20 @@ package services
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
 	"runtime"
+	"slices"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/docker/docker/client"
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
+	"github.com/slodkiadrianek/octopus/internal/repository"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
@@ -25,31 +29,34 @@ type appRepository interface {
 	GetAppsToCheck(ctx context.Context) ([]*models.AppToCheck, error)
 	UpdateApp(ctx context.Context, appId string, app DTO.UpdateApp, ownerId int) error
 	InsertAppStatuses(ctx context.Context, appsStatuses []DTO.AppStatus) error
-	GetUsersToSendNotifications(ctx context.Context, appsStatuses []DTO.AppStatus) ([]models.SendNotificationTo, error)
+	GetUsersToSendNotifications(ctx context.Context, appsStatuses []DTO.AppStatus) ([]models.NotificationInfo, error)
 }
 type AppService struct {
-	AppRepository appRepository
-	Logger        *utils.Logger
-	CacheService  CacheService
-	DockerHost    string
+	AppRepository   appRepository
+	LoggerService   *utils.Logger
+	CacheService    CacheService
+	DockerHost      string
+	RouteRepository *repository.RouteRepository
 }
 
-func NewAppService(appRepository appRepository, logger *utils.Logger, cacheService CacheService,
-	dockerHost string) *AppService {
+func NewAppService(appRepository appRepository, loggerService *utils.Logger, cacheService CacheService,
+	dockerHost string, routeRepository *repository.RouteRepository,
+) *AppService {
 	return &AppService{
-		AppRepository: appRepository,
-		Logger:        logger,
-		CacheService:  cacheService,
-		DockerHost:    dockerHost,
+		AppRepository:   appRepository,
+		LoggerService:   loggerService,
+		CacheService:    cacheService,
+		DockerHost:      dockerHost,
+		RouteRepository: routeRepository,
 	}
 }
 
 func (a *AppService) CreateApp(ctx context.Context, app DTO.CreateApp, ownerId int) error {
-	id, err := utils.GenerateID()
+	GeneratedId, err := utils.GenerateID()
 	if err != nil {
 		return err
 	}
-	appDto := DTO.NewApp(id, app.Name, app.Description, false, ownerId, app.IpAddress, app.Port)
+	appDto := DTO.NewApp(GeneratedId, app.Name, app.Description, false, ownerId, app.IpAddress, app.Port)
 	err = a.AppRepository.InsertApp(ctx, []DTO.App{*appDto})
 	if err != nil {
 		return err
@@ -75,19 +82,19 @@ func (a *AppService) GetApps(ctx context.Context, ownerId int) ([]models.App, er
 
 func (a *AppService) GetAppStatus(ctx context.Context, id string, ownerId int) (DTO.AppStatus, error) {
 	cacheKey := fmt.Sprintf("status-%s", id)
-	doesExist, err := a.CacheService.ExistsData(ctx, cacheKey)
+	doesAppStatusExists, err := a.CacheService.ExistsData(ctx, cacheKey)
 	if err != nil {
-		a.Logger.Warn("Failed to get info about data in cache", err)
+		a.LoggerService.Warn("Failed to get info about data in cache", err)
 	}
-	if doesExist > 0 {
-		data, err := a.CacheService.GetData(ctx, cacheKey)
+	if doesAppStatusExists > 0 {
+		appStatusAsJson, err := a.CacheService.GetData(ctx, cacheKey)
 		if err != nil {
-			a.Logger.Warn("Failed to get data from cache", err)
+			a.LoggerService.Warn("Failed to get data from cache", err)
 			return DTO.AppStatus{}, models.NewError(500, "Server", "Internal server error")
 		}
-		appStatus, err := utils.UnmarshalData[DTO.AppStatus]([]byte(data))
+		appStatus, err := utils.UnmarshalData[DTO.AppStatus]([]byte(appStatusAsJson))
 		if err != nil {
-			a.Logger.Warn("Failed to unmarshal  data", err)
+			a.LoggerService.Warn("Failed to unmarshal  data", err)
 			return DTO.AppStatus{}, models.NewError(500, "Server", "Internal server error")
 		}
 		return *appStatus, nil
@@ -108,7 +115,7 @@ func (a *AppService) DeleteApp(ctx context.Context, id string, ownerId int) erro
 }
 
 func (a *AppService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatus, error) {
-	apps, err := a.AppRepository.GetAppsToCheck(ctx)
+	appsToCheck, err := a.AppRepository.GetAppsToCheck(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -120,10 +127,9 @@ func (a *AppService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatus, erro
 	}
 	defer cli.Close()
 
-	appsStatusesChan := make(chan DTO.AppStatus, len(apps))
-	appsToSendChan := make(chan DTO.AppStatus, len(apps))
-
-	jobs := make(chan *models.AppToCheck, len(apps))
+	appsStatusesChan := make(chan DTO.AppStatus, len(appsToCheck))
+	appsToSendNotificationChan := make(chan DTO.AppStatus, len(appsToCheck))
+	jobs := make(chan *models.AppToCheck, len(appsToCheck))
 	var wg sync.WaitGroup
 
 	for i := 0; i < workerCount; i++ {
@@ -134,21 +140,19 @@ func (a *AppService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatus, erro
 				var appStatus DTO.AppStatus
 
 				if job.IsDocker {
-					container, err := cli.ContainerInspect(ctx, job.Id)
+					container, err := cli.ContainerInspect(ctx, job.ID)
 					if err != nil {
-						a.Logger.Error("Failed to inspect container", err)
+						a.LoggerService.Error("Failed to inspect container", err)
 						continue
 					}
-
 					status := container.State.Status
 					startedTime, err := time.Parse(time.RFC3339, container.State.StartedAt)
 					if err != nil {
-						a.Logger.Error("Failed to parse container start time", err)
+						a.LoggerService.Error("Failed to parse container start time", err)
 						continue
 					}
-
 					duration := time.Since(startedTime)
-					appStatus = *DTO.NewAppStatus(job.Id, status, startedTime, duration)
+					appStatus = *DTO.NewAppStatus(job.ID, status, startedTime, duration)
 				} else {
 					address := fmt.Sprintf("%s:%s", job.IpAddress, job.Port)
 					conn, err := net.DialTimeout("tcp", address, 3*time.Second)
@@ -157,7 +161,7 @@ func (a *AppService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatus, erro
 					if err != nil {
 						status = "stopped"
 					}
-					appStatus = *DTO.NewAppStatus(job.Id, status, startedTime, 0)
+					appStatus = *DTO.NewAppStatus(job.ID, status, startedTime, 0)
 					if conn != nil {
 						conn.Close()
 					}
@@ -165,28 +169,29 @@ func (a *AppService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatus, erro
 
 				appsStatusesChan <- appStatus
 				if appStatus.Status != job.Status {
-					appsToSendChan <- appStatus
+					appsToSendNotificationChan <- appStatus
 				}
-				bodyBytes, err := utils.MarshalData(appStatus)
+				appStatusBytes, err := utils.MarshalData(appStatus)
 				if err != nil {
-					a.Logger.Error("Failed to marshal app status", map[string]any{"data": appStatus, "error": err.Error()})
+					a.LoggerService.Error("Failed to marshal app status", map[string]any{"data": appStatus, "error": err.Error()})
 					continue
 				}
-				if err := a.CacheService.SetData(ctx, "status-"+job.Id, string(bodyBytes), 2*time.Minute); err != nil {
-					a.Logger.Error("Failed to set cache", map[string]any{"data": appStatus, "error": err.Error()})
+				if err := a.CacheService.SetData(ctx, "status-"+job.ID, string(appStatusBytes),
+					2*time.Minute); err != nil {
+					a.LoggerService.Error("Failed to set cache", map[string]any{"data": appStatus, "error": err.Error()})
 				}
 			}
 		}()
 	}
 
-	for _, app := range apps {
+	for _, app := range appsToCheck {
 		jobs <- app
 	}
 	close(jobs)
 
 	wg.Wait()
 	close(appsStatusesChan)
-	close(appsToSendChan)
+	close(appsToSendNotificationChan)
 
 	var appsStatuses []DTO.AppStatus
 	for status := range appsStatusesChan {
@@ -194,57 +199,195 @@ func (a *AppService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatus, erro
 	}
 
 	var appsToSendNotification []DTO.AppStatus
-	for notify := range appsToSendChan {
-		appsToSendNotification = append(appsToSendNotification, notify)
+	for appToSendNotification := range appsToSendNotificationChan {
+		appsToSendNotification = append(appsToSendNotification, appToSendNotification)
 	}
 
 	if len(appsStatuses) > 0 {
 		if err := a.AppRepository.InsertAppStatuses(ctx, appsStatuses); err != nil {
-			a.Logger.Error("Failed to insert app statuses", err)
+			a.LoggerService.Error("Failed to insert app statuses", err)
 			return appsToSendNotification, err
 		}
 	}
-
 	return appsToSendNotification, nil
+}
+
+func (a *AppService) CheckRoutesStatus(ctx context.Context) error {
+	a.LoggerService.Info("Started checking statuses of the routes")
+	routesToTest, err := a.RouteRepository.GetWorkingRoutesToTest(ctx)
+	if err != nil {
+		return err
+	}
+	sortedRoutesToTests := make(map[string][]DTO.RouteToTest)
+	for _, routeToTest := range routesToTest {
+		key := routeToTest.Name + routeToTest.AppId
+		if routeToTest.ParentID == 0 {
+			sortedRoutesToTests[key] = append([]DTO.RouteToTest{routeToTest},
+				sortedRoutesToTests[key]...)
+		} else {
+			sortedRoutesToTests[key] = append(sortedRoutesToTests[key], routeToTest)
+		}
+	}
+	routesStatuses := make(map[int]string)
+	client := &http.Client{}
+	for _, routesToTest := range sortedRoutesToTests {
+		nextRouteBody := make(map[string]any, 0)
+		nextRouteParams := make(map[string]string, 0)
+		nextRouteQuery := make(map[string]string, 0)
+		nextRouteAuthorizationHeader := ""
+		for _, route := range routesToTest {
+			routeStatus := "unknown"
+			if len(nextRouteBody) > 0 {
+				route.RequestBody = nextRouteBody
+			}
+			if len(nextRouteParams) > 0 {
+				route.RequestParams = nextRouteParams
+			}
+			if len(nextRouteQuery) > 0 {
+				route.RequestQuery = nextRouteQuery
+			}
+			if len(nextRouteAuthorizationHeader) > 0 {
+				route.RequestAuthorization = nextRouteAuthorizationHeader
+			}
+			authorizationHeader := "Bearer " + route.RequestAuthorization
+			splittedPath := strings.Split(route.Path, "/")
+			for i := 0; i < len(splittedPath); i++ {
+				partOfPath := splittedPath[i]
+				leftBrace := strings.Contains(partOfPath, "{")
+				rightBrace := strings.Contains(partOfPath, "}")
+				if leftBrace && rightBrace {
+					param := partOfPath[1 : len(partOfPath)-1]
+					splittedPath[i] = route.RequestParams[param]
+				}
+			}
+			var query []string
+			for key, val := range route.RequestQuery {
+				query = append(query, key+"="+val)
+			}
+
+			path := strings.Join(splittedPath, "/")
+			url := "http://" + route.IpAddress + ":" + route.Port + path + "?" + strings.Join(query, "&")
+			jsonData, err := utils.MarshalData(route.RequestBody)
+			if err != nil {
+				a.LoggerService.Error("Failed to marshal webhook payload", err)
+				return err
+			}
+
+			req, err := http.NewRequestWithContext(ctx, route.Method, url, bytes.NewBuffer(jsonData))
+			req.Header.Add("Authorization", authorizationHeader)
+			if err != nil {
+				a.LoggerService.Error("Failed to create webhook request", err)
+				return err
+			}
+
+			req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+
+			response, err := client.Do(req)
+			if err != nil {
+				a.LoggerService.Error("Failed to send webhook request", err)
+				return err
+			}
+			defer response.Body.Close()
+			var body map[string]any
+			err = json.NewDecoder(response.Body).Decode(&body)
+			if err != nil {
+				a.LoggerService.Error("Failed to read body from the request", err)
+				return err
+			}
+			if len(body) != len(route.ResponseBody) {
+				routeStatus = "Failed;Different body"
+				routesStatuses[route.ID] = routeStatus
+				break
+			}
+			if response.StatusCode != route.ResponseStatusCode {
+				routeStatus = "Failed;Status Code"
+				routesStatuses[route.ID] = routeStatus
+				break
+			}
+			for key, val := range body {
+				if slices.Contains(route.NextRouteBody, key) {
+					nextRouteBody[key] = val
+				}
+				if slices.Contains(route.NextRouteParams, key) {
+					valueConvertedToString, ok := val.(string)
+					if !ok {
+						routeStatus = "Failed;Wrong type of the property for param"
+						routesStatuses[route.ID] = routeStatus
+						break
+					}
+					nextRouteParams[key] = valueConvertedToString
+				}
+				if slices.Contains(route.NextRouteQuery, key) {
+					valueConvertedToString, ok := val.(string)
+					if !ok {
+						routeStatus = "Failed;Wrong type of the property for query"
+						routesStatuses[route.ID] = routeStatus
+						break
+					}
+					nextRouteQuery[key] = valueConvertedToString
+				}
+				valueConvertedToString, ok := val.(string)
+				if !ok {
+					routeStatus = "Failed;Wrong type of the property for authorization header"
+					routesStatuses[route.ID] = routeStatus
+					break
+				}
+				if strings.Contains(valueConvertedToString, "eyJlbWFpbCI6IlRFU1QiLCJleHAiOjE3N") {
+					nextRouteAuthorizationHeader = valueConvertedToString
+				}
+			}
+			routeStatus = "success"
+			routesStatuses[route.ID] = routeStatus
+		}
+
+	}
+	a.LoggerService.Info("The routes statuses have started inserting into database", routesStatuses)
+	err = a.RouteRepository.UpdateWorkingRoutesStatuses(ctx, routesStatuses)
+	if err != nil {
+		return err
+	}
+	a.LoggerService.Info("The route statuses have finished inserting into the database.", routesStatuses)
+	return nil
 }
 
 func (a *AppService) SendNotifications(ctx context.Context, appsStatuses []DTO.AppStatus) error {
 	if len(appsStatuses) == 0 {
 		return nil
 	}
-	a.Logger.Info("Started sending Notifications to users")
-	usersToSendNotifications, err := a.AppRepository.GetUsersToSendNotifications(ctx, appsStatuses)
+	a.LoggerService.Info("Started sending Notifications to users")
+	notificationsInfo, err := a.AppRepository.GetUsersToSendNotifications(ctx, appsStatuses)
 	if err != nil {
 		return err
 	}
-
-	sortedData := map[string][]models.SendNotificationTo{
+	sortedNotificationsToSend := map[string][]models.NotificationInfo{
 		"Discord": {},
 		"Slack":   {},
 		"Email":   {},
 	}
 
-	for _, app := range usersToSendNotifications {
-		if app.DiscordNotifications {
-			sortedData["Discord"] = append(sortedData["Discord"], app)
+	for _, notificationInfo := range notificationsInfo {
+		if notificationInfo.DiscordNotificationsSettings {
+			sortedNotificationsToSend["Discord"] = append(sortedNotificationsToSend["Discord"], notificationInfo)
 		}
-		if app.SlackNotifications {
-			sortedData["Slack"] = append(sortedData["Slack"], app)
+		if notificationInfo.SlackNotificationsSettings {
+			sortedNotificationsToSend["Slack"] = append(sortedNotificationsToSend["Slack"], notificationInfo)
 		}
-		if app.EmailNotifications {
-			sortedData["Email"] = append(sortedData["Email"], app)
+		if notificationInfo.EmailNotificationsSettings {
+			sortedNotificationsToSend["Email"] = append(sortedNotificationsToSend["Email"], notificationInfo)
 		}
 	}
 
-	discordMessages := map[string]string{}
-	slackMessages := map[string]string{}
+	discordNotifications := map[string]string{}
+	slackNotifications := map[string]string{}
 
-	for _, val := range sortedData["Discord"] {
-		discordMessages[val.DiscordWebhook] += fmt.Sprintf("%s - %s - %s\n", val.Id, val.Name, val.Status)
+	for _, discordNotificationInfo := range sortedNotificationsToSend["Discord"] {
+		discordNotifications[discordNotificationInfo.DiscordWebhookUrl] += fmt.Sprintf("%s - %s - %s\n",
+			&discordNotificationInfo.ID, &discordNotificationInfo.Name, &discordNotificationInfo.Status)
 	}
 
-	for _, val := range sortedData["Slack"] {
-		slackMessages[val.SlackWebhook] += fmt.Sprintf("%s - %s - %s\n", val.Id, val.Name, val.Status)
+	for _, slackNotificationInfo := range sortedNotificationsToSend["Slack"] {
+		slackNotifications[slackNotificationInfo.SlackWebhookUrl] += fmt.Sprintf("%s - %s - %s\n",
+			slackNotificationInfo.ID, slackNotificationInfo.Name, slackNotificationInfo.Status)
 	}
 
 	client := &http.Client{}
@@ -252,31 +395,31 @@ func (a *AppService) SendNotifications(ctx context.Context, appsStatuses []DTO.A
 	sendWebhook := func(ctx context.Context, url string, payload map[string]interface{}) {
 		jsonData, err := utils.MarshalData(payload)
 		if err != nil {
-			a.Logger.Error("Failed to marshal webhook payload", err)
+			a.LoggerService.Error("Failed to marshal webhook payload", err)
 			return
 		}
 
 		req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
 		if err != nil {
-			a.Logger.Error("Failed to create webhook request", err)
+			a.LoggerService.Error("Failed to create webhook request", err)
 			return
 		}
 
 		req.Header.Set("Content-Type", "application/json; charset=UTF-8")
 
-		resp, err := client.Do(req)
+		response, err := client.Do(req)
 		if err != nil {
-			a.Logger.Error("Failed to send webhook request", err)
+			a.LoggerService.Error("Failed to send webhook request", err)
 			return
 		}
-		defer resp.Body.Close()
+		defer response.Body.Close()
 
-		if resp.StatusCode >= 300 {
-			a.Logger.Warn("Webhook returned non-success status", "status", resp.Status)
+		if response.StatusCode >= 300 {
+			a.LoggerService.Warn("Webhook returned non-success status", "status", response.Status)
 		}
 	}
 
-	for webhookURL, message := range discordMessages {
+	for webhookURL, message := range discordNotifications {
 		payload := map[string]interface{}{
 			"content":  message,
 			"username": "OctopusBot",
@@ -284,7 +427,7 @@ func (a *AppService) SendNotifications(ctx context.Context, appsStatuses []DTO.A
 		sendWebhook(ctx, webhookURL, payload)
 	}
 
-	for webhookURL, message := range slackMessages {
+	for webhookURL, message := range slackNotifications {
 		payload := map[string]interface{}{
 			"text": message,
 		}

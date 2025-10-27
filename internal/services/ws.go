@@ -70,14 +70,14 @@ func (ws *WsService) Logs(ctx context.Context, appId string, conn *websocket.Con
 		default:
 			if scanner.Scan() {
 				line := scanner.Text()
-				clean := make([]rune, 0, len(line))
-				for _, r := range line {
-					if r == utf8.RuneError {
+				cleandedLine := make([]rune, 0, len(line))
+				for _, character := range line {
+					if character == utf8.RuneError {
 						continue
 					}
-					clean = append(clean, r)
+					cleandedLine = append(cleandedLine, character)
 				}
-				utf8Bytes := []byte(string(clean))
+				utf8Bytes := []byte(string(cleandedLine))
 				if err := conn.WriteMessage(websocket.TextMessage, utf8Bytes); err != nil {
 					if !websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 						ws.Logger.Info("Client disconnected")
@@ -93,39 +93,3 @@ func (ws *WsService) Logs(ctx context.Context, appId string, conn *websocket.Con
 		}
 	}
 }
-
-//ctx := context.Background()
-//cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-//if err != nil {
-//panic(err)
-//}
-//defer cli.Close()
-//
-//// Replace "mycontainer" with your container's name or ID
-//execConfig := types.ExecConfig{
-//Cmd:          []string{"sh"},
-//AttachStdin:  true,
-//AttachStdout: true,
-//AttachStderr: true,
-//Tty:          true,
-//}
-//
-//execIDResp, err := cli.ContainerExecCreate(ctx, "mycontainer", execConfig)
-//if err != nil {
-//panic(err)
-//}
-//
-//resp, err := cli.ContainerExecAttach(ctx, execIDResp.ID, types.ExecStartCheck{Tty: true})
-//if err != nil {
-//panic(err)
-//}
-//defer resp.Close()
-//
-//// Copy input/output between your terminal and the container
-//go func() {
-//	_, _ = os.Stdin.Read(make([]byte, 1)) // Keep stdin open
-//}()
-//_, _ = os.Stdout.ReadFrom(resp.Reader)
-//
-//fmt.Println("Shell session ended")
-//}

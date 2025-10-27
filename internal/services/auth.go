@@ -29,7 +29,7 @@ func (a AuthService) LoginUser(ctx context.Context, loginData DTO.LoginUser) (st
 	if err != nil && err.Error() != "User not found" {
 		return "", err
 	}
-	if user.Id == 0 {
+	if user.ID == 0 {
 		a.LoggerService.Info("User with this email does not exist", loginData.Email)
 		return "", models.NewError(400, "Verification", "User with this email does not exist")
 	}
@@ -38,7 +38,7 @@ func (a AuthService) LoginUser(ctx context.Context, loginData DTO.LoginUser) (st
 		a.LoggerService.Info("Wrong password provided", loginData)
 		return "", models.NewError(401, "Authorization", "Wron guser provided")
 	}
-	loggedUser := DTO.NewLoggedUser(user.Id, user.Email, user.Name, user.Surname)
-	tokenString, err := a.JWT.GenerateToken(*loggedUser)
-	return tokenString, nil
+	loggedUser := DTO.NewLoggedUser(user.ID, user.Email, user.Name, user.Surname)
+	authorizationToken, err := a.JWT.GenerateToken(*loggedUser)
+	return authorizationToken, nil
 }

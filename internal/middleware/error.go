@@ -36,7 +36,7 @@ func ErrorHandler(next http.Handler) http.Handler {
 			}
 			utils.SendResponse(w, customErr.StatusCode, map[string]string{
 				"errorCategory":    customErr.Category,
-				"errorDescription": customErr.Descritpion,
+				"errorDescription": customErr.Description,
 			})
 			return
 		}
