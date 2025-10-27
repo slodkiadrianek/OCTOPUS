@@ -106,10 +106,10 @@ func (rs *RouteService) AddWorkingRoutes(routes *[]DTO.CreateRoute, appId int) e
 	for data := range routesDataChan {
 		routesInfoData = append(routesInfoData, &data)
 	}
-	nextRoutesData = utils.InsertionSortForRoutes[*DTO.NextRouteData](nextRoutesData)
-	requestRoutesData = utils.InsertionSortForRoutes[*DTO.RouteRequest](requestRoutesData)
-	responseRoutesData = utils.InsertionSortForRoutes[*DTO.RouteResponse](responseRoutesData)
-	routesInfoData = utils.InsertionSortForRoutes[*DTO.RouteInfo](routesInfoData)
+	nextRoutesData = utils.InsertionSortForRoutes(nextRoutesData)
+	requestRoutesData = utils.InsertionSortForRoutes(requestRoutesData)
+	responseRoutesData = utils.InsertionSortForRoutes(responseRoutesData)
+	routesInfoData = utils.InsertionSortForRoutes(routesInfoData)
 
 	for _, val := range nextRoutesData {
 		fmt.Println(val)
