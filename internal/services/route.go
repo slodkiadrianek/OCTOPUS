@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"github.com/slodkiadrianek/octopus/internal/models"
 	"runtime"
 	"sync"
 
@@ -11,7 +12,7 @@ import (
 
 type routeRepository interface {
 	UpdateWorkingRoutesStatuses(ctx context.Context, routesStatuses map[int]string) error
-	GetWorkingRoutesToTest(ctx context.Context) ([]DTO.RouteToTest, error)
+	GetWorkingRoutesToTest(ctx context.Context) ([]models.RouteToTest, error)
 	InsertRoutesInfo(ctx context.Context, routesInfo []*DTO.RouteInfo) ([]int, error)
 	InsertRoutesRequests(ctx context.Context,
 		routesRequests []*DTO.RouteRequest) ([]int, error)

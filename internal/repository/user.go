@@ -96,7 +96,7 @@ func (u *UserRepository) UpdateUser(ctx context.Context, user DTO.CreateUser, us
 
 func (u *UserRepository) UpdateUserNotifications(ctx context.Context, userId int, userNotifications DTO.UpdateUserNotificationsSettings,
 ) error {
-	query := `UPDATE users SET discord_notifications=$1, slack_notifications=$2, email_notifications=$3 WHERE id=$4`
+	query := `UPDATE users SET discord_notifications_settings=$1, slack_notifications_settings=$2, email_notifications_settings=$3 WHERE id=$4`
 	stmt, err := u.Db.PrepareContext(ctx, query)
 	if err != nil {
 		u.LoggerService.Info("failed to prepare query for execution", query)

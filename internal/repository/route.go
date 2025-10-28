@@ -53,28 +53,28 @@ func (r *RouteRepository) UpdateWorkingRoutesStatuses(ctx context.Context, route
 	return nil
 }
 
-func (r *RouteRepository) GetWorkingRoutesToTest(ctx context.Context) ([]DTO.RouteToTest, error) {
+func (r *RouteRepository) GetWorkingRoutesToTest(ctx context.Context) ([]models.RouteToTest, error) {
 	query := `
 SELECT
-		wr.id,
+	wr.id,
     a.ip_address,
     a.port,
-		wr.name,
+	wr.name,
     wr.app_id,
     wr.parent_id,
     wr.status,
     r.path,
     r.method,
     rr.authorization_header,
-    rr.query_data,
-    rr.param_data,
-    rr.body_data,
-    nrd.next_route_body,
-    nrd.next_route_params,
-    nrd.next_route_query,
-		nrd.next_route_authorization_header,
+    rr.query,
+    rr.params,
+    rr.body,
+    nrd.body,
+    nrd.params,
+    nrd.query,
+	nrd.authorization_header,
     re.status_code,
-    re.body_data
+    re.body
 FROM working_routes wr
     INNER JOIN public.routes r on wr.route_id = r.id
     INNER JOIN public.routes_requests rr on wr.request_id = rr.id
@@ -90,7 +90,7 @@ WHERE aps.status = 'running'
 			"query": query,
 			"err":   err.Error(),
 		})
-		return []DTO.RouteToTest{}, models.NewError(500, "Database", "Failed to get data from database")
+		return []models.RouteToTest{}, models.NewError(500, "Database", "Failed to get data from database")
 	}
 	rows, err := stmt.QueryContext(ctx)
 	if err != nil {
@@ -98,11 +98,11 @@ WHERE aps.status = 'running'
 			"query": query,
 			"err":   err.Error(),
 		})
-		return []DTO.RouteToTest{}, models.NewError(500, "Database", "Failed to get data from database")
+		return []models.RouteToTest{}, models.NewError(500, "Database", "Failed to get data from database")
 	}
-	var routesToTest []DTO.RouteToTest
+	var routesToTest []models.RouteToTest
 	for rows.Next() {
-		var routeToTest DTO.RouteToTest
+		var routeToTest models.RouteToTest
 		err := rows.Scan(&routeToTest.ID, &routeToTest.IpAddress, &routeToTest.Port, &routeToTest.Name,
 			&routeToTest.AppId,
 			&routeToTest.ParentID, &routeToTest.Status,
@@ -113,7 +113,7 @@ WHERE aps.status = 'running'
 				"query": query,
 				"err":   err.Error(),
 			})
-			return []DTO.RouteToTest{}, models.NewError(500, "Database", "Failed to get data from database")
+			return []models.RouteToTest{}, models.NewError(500, "Database", "Failed to get data from database")
 		}
 		routesToTest = append(routesToTest, routeToTest)
 	}
@@ -181,16 +181,16 @@ func (r *RouteRepository) InsertRoutesRequests(ctx context.Context,
 			routesRequests[i].AuthorizationHeader)
 	}
 	insertQuery := fmt.Sprintf(`INSERT INTO routes_requests (
-		body_data,
-		param_data,
-		query_data,
+		body,
+		params,
+		query,
 		authorization_header
 	) VALUES
 	%s
 	ON CONFLICT(	
-		body_data,
-		param_data,
-		query_data,
+		body,
+		params,
+		query,
 		authorization_header
 	)
 	DO UPDATE
@@ -241,12 +241,12 @@ func (r *RouteRepository) InsertRoutesResponses(ctx context.Context,
 	}
 	insertQuery := fmt.Sprintf(`INSERT INTO routes_responses (
 		status_code,
-		body_data
+		body
 	) VALUES
 	%s
 	ON CONFLICT(	
 		status_code,
-		body_data
+		body
 	)
 	DO UPDATE
 		SET status_code = EXCLUDED.status_code
@@ -298,22 +298,22 @@ func (r *RouteRepository) InsertNextRoutesData(ctx context.Context,
 	WITH input_data AS (
     SELECT * FROM (VALUES 
 		%s
- ) AS v(next_route_body, next_route_params, next_route_query, next_route_authorization_header)
+ ) AS v(body,params,query,authorization_header)
 ),
 upserted AS (
     INSERT INTO next_route_data (
-        next_route_body, next_route_params, next_route_query, next_route_authorization_header
+        body, params, query, authorization_header
     )
-    SELECT DISTINCT ON (next_route_body, next_route_params, next_route_query, next_route_authorization_header)
+    SELECT DISTINCT ON (body, params,query,authorization_header)
         next_route_body, next_route_params, next_route_query, next_route_authorization_header
     FROM input_data
-    ON CONFLICT(next_route_body, next_route_params, next_route_query, next_route_authorization_header) 
-    DO UPDATE SET next_route_body = EXCLUDED.next_route_body
+    ON CONFLICT(body,params, next_route_query,authorization_header) 
+    DO UPDATE SET body = EXCLUDED.body
     RETURNING *
 )
 SELECT u.id
 FROM input_data i
-JOIN upserted u USING (next_route_body, next_route_params, next_route_query, next_route_authorization_header);
+JOIN upserted u USING (body,params,query,authorization_header);
 	`, strings.Join(placeholders, ","))
 	stmt, err := r.Db.PrepareContext(ctx, insertQuery)
 	if err != nil {

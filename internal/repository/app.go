@@ -66,8 +66,8 @@ func (a *AppRepository) GetApp(ctx context.Context, id string, ownerId int) (*mo
 		COALESCE(description, ''),
 		is_docker,
 		owner_id,
-		COALESCE(slack_webhook, ''),
-		COALESCE(discord_webhook, ''),
+		COALESCE(slack_webhook_url, ''),
+		COALESCE(discord_webhook_url, ''),
 		ip_address,
 		port
 	FROM apps 
@@ -94,8 +94,8 @@ func (a *AppRepository) GetApps(ctx context.Context, ownerId int) ([]models.App,
 		COALESCE(description, ''), 
 		is_docker,
 		owner_id,
-		COALESCE(slack_webhook, ''),
-		COALESCE(discord_webhook, ''),
+		COALESCE(slack_webhook_url, ''),
+		COALESCE(discord_webhook_url, ''),
 		ip_address,
 		port 
 	FROM apps 
@@ -239,8 +239,8 @@ func (a *AppRepository) UpdateApp(ctx context.Context, appId string, app DTO.Upd
         description = $2,
         ip_address = $3,
         port = $4,
-        discord_webhook = $5,
-		slack_webhook = $6 
+        discord_webhook_url = $5,
+		slack_webhook_url = $6 
 	WHERE 
 	    id = $7 
 	  	AND owner_id = $8 `
@@ -328,12 +328,12 @@ func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsSta
 		a.id,
 		a.name,
 		aps.status,
-		a.discord_webhook,
-		a.slack_webhook,
+		a.discord_webhook_url,
+		a.slack_webhook_url,
 		u.email,
-		u.email_notifications,
-		u.discord_notifications,
-		u.slack_notifications
+		u.email_notifications_settings,
+		u.discord_notifications_settings,
+		u.slack_notifications_settings
 	FROM apps a
 		INNER JOIN apps_statuses aps ON aps.app_id = a.id
 		INNER JOIN users u ON u.id = a.owner_id

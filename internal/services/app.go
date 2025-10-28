@@ -218,11 +218,11 @@ func (a *AppService) CheckRoutesStatus(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	sortedRoutesToTests := make(map[string][]DTO.RouteToTest)
+	sortedRoutesToTests := make(map[string][]models.RouteToTest)
 	for _, routeToTest := range routesToTest {
 		key := routeToTest.Name + routeToTest.AppId
 		if routeToTest.ParentID == 0 {
-			sortedRoutesToTests[key] = append([]DTO.RouteToTest{routeToTest},
+			sortedRoutesToTests[key] = append([]models.RouteToTest{routeToTest},
 				sortedRoutesToTests[key]...)
 		} else {
 			sortedRoutesToTests[key] = append(sortedRoutesToTests[key], routeToTest)
