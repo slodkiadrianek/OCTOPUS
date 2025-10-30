@@ -56,15 +56,15 @@ func (r *RouteRepository) UpdateWorkingRoutesStatuses(ctx context.Context, route
 func (r *RouteRepository) GetWorkingRoutesToTest(ctx context.Context) ([]models.RouteToTest, error) {
 	query := `
 SELECT
-	wr.id,
+		wr.id,
     a.ip_address,
     a.port,
-	wr.name,
+		wr.name,
     wr.app_id,
     wr.parent_id,
     wr.status,
-    r.path,
-    r.method,
+    rf.path,
+    rf.method,
     rr.authorization_header,
     rr.query,
     rr.params,
@@ -72,11 +72,11 @@ SELECT
     nrd.body,
     nrd.params,
     nrd.query,
-	nrd.authorization_header,
+		nrd.authorization_header,
     re.status_code,
     re.body
 FROM working_routes wr
-    INNER JOIN public.routes r on wr.route_id = r.id
+    INNER JOIN public.routes_info rf on wr.route_id = rf.id
     INNER JOIN public.routes_requests rr on wr.request_id = rr.id
     INNER JOIN public.next_route_data nrd on wr.next_route_data_id = nrd.id
     INNER JOIN public.routes_responses re on re.id = wr.response_id
@@ -128,7 +128,7 @@ func (r *RouteRepository) InsertRoutesInfo(ctx context.Context, routesInfo []*DT
 		placeholders = append(placeholders, preparedValues)
 		args = append(args, routesInfo[i].Path, routesInfo[i].Method)
 	}
-	insertQuery := fmt.Sprintf(`INSERT INTO routes (
+	insertQuery := fmt.Sprintf(`INSERT INTO routes_info (
 		path,
 		method
 	) VALUES
@@ -171,7 +171,8 @@ func (r *RouteRepository) InsertRoutesInfo(ctx context.Context, routesInfo []*DT
 }
 
 func (r *RouteRepository) InsertRoutesRequests(ctx context.Context,
-	routesRequests []*DTO.RouteRequest) ([]int, error) {
+	routesRequests []*DTO.RouteRequest,
+) ([]int, error) {
 	placeholders := []string{}
 	args := make([]any, 0)
 	for i := range routesRequests {
@@ -231,7 +232,8 @@ func (r *RouteRepository) InsertRoutesRequests(ctx context.Context,
 
 func (r *RouteRepository) InsertRoutesResponses(ctx context.Context,
 	routesResponses []*DTO.RouteResponse) ([]int,
-	error) {
+	error,
+) {
 	placeholders := []string{}
 	args := make([]any, 0)
 	for i := range routesResponses {
@@ -286,7 +288,8 @@ func (r *RouteRepository) InsertRoutesResponses(ctx context.Context,
 
 func (r *RouteRepository) InsertNextRoutesData(ctx context.Context,
 	nextRoutes []*DTO.NextRoute) ([]int,
-	error) {
+	error,
+) {
 	placeholders := []string{}
 	args := make([]any, 0)
 	for i := range nextRoutes {
@@ -305,9 +308,9 @@ upserted AS (
         body, params, query, authorization_header
     )
     SELECT DISTINCT ON (body, params,query,authorization_header)
-        next_route_body, next_route_params, next_route_query, next_route_authorization_header
+        body,params,query,authorization_header
     FROM input_data
-    ON CONFLICT(body,params, next_route_query,authorization_header) 
+    ON CONFLICT(body,params,query,authorization_header) 
     DO UPDATE SET body = EXCLUDED.body
     RETURNING *
 )
@@ -349,7 +352,8 @@ JOIN upserted u USING (body,params,query,authorization_header);
 }
 
 func (r *RouteRepository) InsertWorkingRoute(ctx context.Context, workingRoute DTO.WorkingRoute) (int,
-	error) {
+	error,
+) {
 	insertQuery := `INSERT INTO working_routes (
 	name,
     app_id,

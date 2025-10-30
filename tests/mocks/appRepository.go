@@ -2,6 +2,7 @@ package mocks
 
 import (
 	"context"
+
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/stretchr/testify/mock"
@@ -51,7 +52,8 @@ func (m *MockAppRepository) InsertAppStatuses(ctx context.Context, appsStatuses 
 	return args.Error(0)
 }
 
-func (m *MockAppRepository) GetUsersToSendNotifications(ctx context.Context, appsStatuses []DTO.AppStatus) ([]models.SendNotificationTo, error) {
+func (m *MockAppRepository) GetUsersToSendNotifications(ctx context.Context,
+	appsStatuses []DTO.AppStatus) ([]models.NotificationInfo, error) {
 	args := m.Called(ctx, appsStatuses)
-	return args.Get(0).([]models.SendNotificationTo), args.Error(1)
+	return args.Get(0).([]models.NotificationInfo), args.Error(1)
 }

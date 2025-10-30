@@ -218,6 +218,9 @@ func (a *AppService) CheckRoutesStatus(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	if len(routesToTest) < 1 {
+		return nil
+	}
 	sortedRoutesToTests := make(map[string][]models.RouteToTest)
 	for _, routeToTest := range routesToTest {
 		key := routeToTest.Name + routeToTest.AppId
@@ -267,6 +270,7 @@ func (a *AppService) CheckRoutesStatus(ctx context.Context) error {
 
 			path := strings.Join(splittedPath, "/")
 			url := "http://" + route.IpAddress + ":" + route.Port + path + "?" + strings.Join(query, "&")
+			fmt.Println(url)
 			jsonData, err := utils.MarshalData(route.RequestBody)
 			if err != nil {
 				a.LoggerService.Error("Failed to marshal webhook payload", err)
@@ -289,6 +293,9 @@ func (a *AppService) CheckRoutesStatus(ctx context.Context) error {
 			}
 			defer response.Body.Close()
 			var body map[string]any
+			var bytes []byte
+			fmt.Println(response.Body.Read(bytes))
+			fmt.Println(bytes)
 			err = json.NewDecoder(response.Body).Decode(&body)
 			if err != nil {
 				a.LoggerService.Error("Failed to read body from the request", err)
@@ -382,7 +389,7 @@ func (a *AppService) SendNotifications(ctx context.Context, appsStatuses []DTO.A
 
 	for _, discordNotificationInfo := range sortedNotificationsToSend["Discord"] {
 		discordNotifications[discordNotificationInfo.DiscordWebhookUrl] += fmt.Sprintf("%s - %s - %s\n",
-			&discordNotificationInfo.ID, &discordNotificationInfo.Name, &discordNotificationInfo.Status)
+			discordNotificationInfo.ID, discordNotificationInfo.Name, discordNotificationInfo.Status)
 	}
 
 	for _, slackNotificationInfo := range sortedNotificationsToSend["Slack"] {

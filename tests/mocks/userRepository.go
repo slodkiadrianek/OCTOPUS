@@ -21,7 +21,7 @@ func (m *MockUserRepository) UpdateUser(ctx context.Context, user DTO.CreateUser
 	return args.Error(0)
 }
 
-func (m *MockUserRepository) UpdateUserNotifications(ctx context.Context, userId int, userNotifications DTO.UpdateUserNotifications) error {
+func (m *MockUserRepository) UpdateUserNotifications(ctx context.Context, userId int, userNotifications DTO.UpdateUserNotificationsSettings) error {
 	args := m.Called(ctx, userNotifications, userId)
 	return args.Error(0)
 }

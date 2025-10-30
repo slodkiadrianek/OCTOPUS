@@ -33,7 +33,6 @@ func createTestContainer(image string, cmd []string, loggerService *utils.Logger
 	}
 	defer out.Close()
 
-	// Drain and display pull progress to make sure it's done
 	dec := json.NewDecoder(out)
 	var status map[string]interface{}
 	for dec.More() {
@@ -43,7 +42,7 @@ func createTestContainer(image string, cmd []string, loggerService *utils.Logger
 			}
 		}
 	}
-	io.Copy(io.Discard, out) // ensure it's fully read
+	io.Copy(io.Discard, out)
 
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
 		Image: image,
