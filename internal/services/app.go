@@ -184,8 +184,8 @@ func (a *AppService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatus, erro
 		}()
 	}
 
-	for _, app := range appsToCheck {
-		jobs <- app
+	for _, appToCheck := range appsToCheck {
+		jobs <- appToCheck
 	}
 	close(jobs)
 
@@ -194,8 +194,8 @@ func (a *AppService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatus, erro
 	close(appsToSendNotificationChan)
 
 	var appsStatuses []DTO.AppStatus
-	for status := range appsStatusesChan {
-		appsStatuses = append(appsStatuses, status)
+	for appStatus := range appsStatusesChan {
+		appsStatuses = append(appsStatuses, appStatus)
 	}
 
 	var appsToSendNotification []DTO.AppStatus
@@ -292,16 +292,13 @@ func (a *AppService) CheckRoutesStatus(ctx context.Context) error {
 				return err
 			}
 			defer response.Body.Close()
-			var body map[string]any
-			var bytes []byte
-			fmt.Println(response.Body.Read(bytes))
-			fmt.Println(bytes)
-			err = json.NewDecoder(response.Body).Decode(&body)
+			var bodyFromResponse map[string]any
+			err = json.NewDecoder(response.Body).Decode(&bodyFromResponse)
 			if err != nil {
 				a.LoggerService.Error("Failed to read body from the request", err)
 				return err
 			}
-			if len(body) != len(route.ResponseBody) {
+			if len(bodyFromResponse) != len(route.ResponseBody) {
 				routeStatus = "Failed;Different body"
 				routesStatuses[route.ID] = routeStatus
 				break
@@ -311,7 +308,7 @@ func (a *AppService) CheckRoutesStatus(ctx context.Context) error {
 				routesStatuses[route.ID] = routeStatus
 				break
 			}
-			for key, val := range body {
+			for key, val := range bodyFromResponse {
 				if slices.Contains(route.NextRouteBody, key) {
 					nextRouteBody[key] = val
 				}
@@ -397,7 +394,7 @@ func (a *AppService) SendNotifications(ctx context.Context, appsStatuses []DTO.A
 			slackNotificationInfo.ID, slackNotificationInfo.Name, slackNotificationInfo.Status)
 	}
 
-	client := &http.Client{}
+	httpClient := &http.Client{}
 
 	sendWebhook := func(ctx context.Context, url string, payload map[string]interface{}) {
 		jsonData, err := utils.MarshalData(payload)
@@ -414,7 +411,7 @@ func (a *AppService) SendNotifications(ctx context.Context, appsStatuses []DTO.A
 
 		req.Header.Set("Content-Type", "application/json; charset=UTF-8")
 
-		response, err := client.Do(req)
+		response, err := httpClient.Do(req)
 		if err != nil {
 			a.LoggerService.Error("Failed to send webhook request", err)
 			return

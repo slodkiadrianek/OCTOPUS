@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"sync"
 
-	containertypes "github.com/docker/docker/api/types/container"
+	containerTypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/utils"
@@ -43,8 +43,8 @@ func (dc *DockerService) RestartContainer(ctx context.Context, appId string) err
 		return err
 	}
 	defer cli.Close()
-	err = cli.ContainerStop(ctx, appId, containertypes.StopOptions{})
-	err = cli.ContainerStart(ctx, appId, containertypes.StartOptions{})
+	err = cli.ContainerStop(ctx, appId, containerTypes.StopOptions{})
+	err = cli.ContainerStart(ctx, appId, containerTypes.StartOptions{})
 	return err
 }
 
@@ -54,7 +54,7 @@ func (dc *DockerService) StartContainer(ctx context.Context, appId string) error
 		return err
 	}
 	defer cli.Close()
-	err = cli.ContainerStart(ctx, appId, containertypes.StartOptions{})
+	err = cli.ContainerStart(ctx, appId, containerTypes.StartOptions{})
 	return err
 }
 
@@ -74,7 +74,7 @@ func (dc *DockerService) StopContainer(ctx context.Context, appId string) error 
 		return err
 	}
 	defer cli.Close()
-	err = cli.ContainerStop(ctx, appId, containertypes.StopOptions{})
+	err = cli.ContainerStop(ctx, appId, containerTypes.StopOptions{})
 	return err
 }
 
@@ -84,13 +84,19 @@ func (dc *DockerService) ImportContainers(ctx context.Context, ownerId int) erro
 		return err
 	}
 	defer cli.Close()
-	containers, err := cli.ContainerList(ctx, containertypes.ListOptions{})
+	containers, err := cli.ContainerList(ctx, containerTypes.ListOptions{})
 	if err != nil {
 		dc.Logger.Error("Failed to list containers", err)
 		return err
 	}
+	appsToInsert := dc.prepareContainersDataToInert(containers, ownerId)
+	err = dc.AppRepository.InsertApp(ctx, appsToInsert)
+	return err
+}
+
+func (dc *DockerService) prepareContainersDataToInert(containers []containerTypes.Summary, ownerId int) []DTO.App {
 	workerCount := runtime.NumCPU()
-	jobs := make(chan containertypes.Summary, len(containers))
+	jobs := make(chan containerTypes.Summary, len(containers))
 	appsChan := make(chan DTO.App, len(containers))
 	var wg sync.WaitGroup
 
@@ -109,10 +115,9 @@ func (dc *DockerService) ImportContainers(ctx context.Context, ownerId int) erro
 	}
 	wg.Wait()
 	close(jobs)
-	var apps []DTO.App
+	var appsToInsert []DTO.App
 	for app := range appsChan {
-		apps = append(apps, app)
+		appsToInsert = append(appsToInsert, app)
 	}
-	err = dc.AppRepository.InsertApp(ctx, apps)
-	return err
+	return appsToInsert
 }
