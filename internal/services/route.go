@@ -2,9 +2,10 @@ package services
 
 import (
 	"context"
-	"github.com/slodkiadrianek/octopus/internal/models"
 	"runtime"
 	"sync"
+
+	"github.com/slodkiadrianek/octopus/internal/models"
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/utils"
@@ -129,7 +130,8 @@ func (rs *RouteService) prepareDataAboutRouteToInsertToDb(routes *[]DTO.CreateRo
 	return nextRoutes, requestRoutes, responseRoutes, routesInfo, nil
 }
 
-func (rs *RouteService) insertDataAboutTheRouteToDb(ctx context.Context, nextRoutes []*DTO.NextRoute, requestRoutes []*DTO.RouteRequest, responseRoutes []*DTO.RouteResponse, routesInfo []*DTO.RouteInfo) ([]int, []int, []int, []int, error) {
+func (rs *RouteService) saveRouteComponents(ctx context.Context, nextRoutes []*DTO.NextRoute,
+	requestRoutes []*DTO.RouteRequest, responseRoutes []*DTO.RouteResponse, routesInfo []*DTO.RouteInfo) ([]int, []int, []int, []int, error) {
 	var wg sync.WaitGroup
 	nextRoutes = utils.InsertionSortForRoutes(nextRoutes)
 	requestRoutes = utils.InsertionSortForRoutes(requestRoutes)
@@ -170,19 +172,9 @@ func (rs *RouteService) insertDataAboutTheRouteToDb(ctx context.Context, nextRou
 	}
 	return routesInfoIds, routesRequestsIds, routesResponsesIds, nextRoutesDataIds, nil
 }
-func (rs *RouteService) AddWorkingRoutes(ctx context.Context, routes *[]DTO.CreateRoute, appId string, name string) error {
-	nextRoutes, requestRoutes, responseRoutes, routesInfo, err := rs.prepareDataAboutRouteToInsertToDb(routes)
-	if err != nil {
-		return err
-	}
-	nextRoutes = utils.InsertionSortForRoutes(nextRoutes)
-	requestRoutes = utils.InsertionSortForRoutes(requestRoutes)
-	responseRoutes = utils.InsertionSortForRoutes(responseRoutes)
-	routesInfo = utils.InsertionSortForRoutes(routesInfo)
-	routesInfoIds, routesRequestsIds, routesResponsesIds, nextRoutesDataIds, err := rs.insertDataAboutTheRouteToDb(ctx, nextRoutes, requestRoutes, responseRoutes, routesInfo)
-	if err != nil {
-		return err
-	}
+func (rs *RouteService) saveWorkingRoutes(ctx context.Context, routes *[]DTO.CreateRoute, appId, name string,
+	nextRoutesDataIds,
+	routesRequestsIds, routesResponsesIds, routesInfoIds []int) error {
 	var workingRoutes []DTO.WorkingRoute
 	for _, val := range *routes {
 		workingRoutes = append(workingRoutes, DTO.WorkingRoute{ParentID: val.ParentId, AppId: appId, Name: name})
@@ -201,5 +193,24 @@ func (rs *RouteService) AddWorkingRoutes(ctx context.Context, routes *[]DTO.Crea
 		}
 		parentId = res
 	}
+	return nil
+}
+func (rs *RouteService) AddWorkingRoutes(ctx context.Context, routes *[]DTO.CreateRoute, appId string,
+	name string) error {
+	nextRoutes, requestRoutes, responseRoutes, routesInfo, err := rs.prepareDataAboutRouteToInsertToDb(routes)
+	if err != nil {
+		return err
+	}
+	nextRoutes = utils.InsertionSortForRoutes(nextRoutes)
+	requestRoutes = utils.InsertionSortForRoutes(requestRoutes)
+	responseRoutes = utils.InsertionSortForRoutes(responseRoutes)
+	routesInfo = utils.InsertionSortForRoutes(routesInfo)
+	routesInfoIds, routesRequestsIds, routesResponsesIds, nextRoutesDataIds, err := rs.saveRouteComponents(ctx, nextRoutes,
+		requestRoutes, responseRoutes, routesInfo)
+	if err != nil {
+		return err
+	}
+	err = rs.saveWorkingRoutes(ctx, routes, appId, name, nextRoutesDataIds, routesRequestsIds,
+		routesResponsesIds, routesInfoIds)
 	return nil
 }

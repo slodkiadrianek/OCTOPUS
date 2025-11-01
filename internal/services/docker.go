@@ -77,23 +77,6 @@ func (dc *DockerService) StopContainer(ctx context.Context, appId string) error 
 	err = cli.ContainerStop(ctx, appId, containerTypes.StopOptions{})
 	return err
 }
-
-func (dc *DockerService) ImportContainers(ctx context.Context, ownerId int) error {
-	cli, err := client.NewClientWithOpts(client.WithHost(dc.DockerHost), client.WithAPIVersionNegotiation())
-	if err != nil {
-		return err
-	}
-	defer cli.Close()
-	containers, err := cli.ContainerList(ctx, containerTypes.ListOptions{})
-	if err != nil {
-		dc.Logger.Error("Failed to list containers", err)
-		return err
-	}
-	appsToInsert := dc.prepareContainersDataToInert(containers, ownerId)
-	err = dc.AppRepository.InsertApp(ctx, appsToInsert)
-	return err
-}
-
 func (dc *DockerService) prepareContainersDataToInert(containers []containerTypes.Summary, ownerId int) []DTO.App {
 	workerCount := runtime.NumCPU()
 	jobs := make(chan containerTypes.Summary, len(containers))
@@ -121,3 +104,20 @@ func (dc *DockerService) prepareContainersDataToInert(containers []containerType
 	}
 	return appsToInsert
 }
+
+func (dc *DockerService) ImportContainers(ctx context.Context, ownerId int) error {
+	cli, err := client.NewClientWithOpts(client.WithHost(dc.DockerHost), client.WithAPIVersionNegotiation())
+	if err != nil {
+		return err
+	}
+	defer cli.Close()
+	containers, err := cli.ContainerList(ctx, containerTypes.ListOptions{})
+	if err != nil {
+		dc.Logger.Error("Failed to list containers", err)
+		return err
+	}
+	appsToInsert := dc.prepareContainersDataToInert(containers, ownerId)
+	err = dc.AppRepository.InsertApp(ctx, appsToInsert)
+	return err
+}
+

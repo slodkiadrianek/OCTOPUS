@@ -2,6 +2,8 @@ package services
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
@@ -20,18 +22,64 @@ type userRepository interface {
 }
 type UserService struct {
 	LoggerService  *utils.Logger
+	CacheService   CacheService
 	UserRepository userRepository
 }
 
-func NewUserService(loggerService *utils.Logger, userRepository userRepository) *UserService {
+func NewUserService(loggerService *utils.Logger, userRepository userRepository, cacheService CacheService) *UserService {
 	return &UserService{
 		LoggerService:  loggerService,
 		UserRepository: userRepository,
+		CacheService:   cacheService,
 	}
 }
-
-func (u *UserService) GetUser(ctx context.Context, userId int) (models.User, error) {
+func (u *UserService) readUserFromCache(ctx context.Context, cacheKey string) (models.User, error) {
+	userJson, err := u.CacheService.GetData(ctx, cacheKey)
+	if err != nil {
+		return models.User{}, err
+	}
+	userPtr, err := utils.UnmarshalData[models.User]([]byte(userJson))
+	if err != nil {
+		return models.User{}, err
+	}
+	user := *userPtr
+	return user, nil
+}
+func (u *UserService) callFindUserByIdAndSaveToCache(ctx context.Context, userId int, cacheKey string) (models.User,
+	error) {
 	user, err := u.UserRepository.FindUserById(ctx, userId)
+	if err != nil {
+		return models.User{}, err
+	}
+	userJson, err := utils.MarshalData(user)
+	if err != nil {
+		return models.User{}, err
+	}
+	err = u.CacheService.SetData(ctx, cacheKey, string(userJson), time.Minute)
+	if err != nil {
+		return models.User{}, err
+	}
+	return user, nil
+}
+func (u *UserService) GetUser(ctx context.Context, userId int) (models.User, error) {
+	cacheKey := fmt.Sprintf("users-%d", userId)
+	doesUserExists, err := u.CacheService.ExistsData(ctx, cacheKey)
+	if err != nil {
+		return models.User{}, err
+	}
+	if doesUserExists > 0 {
+		user, err := u.readUserFromCache(ctx, cacheKey)
+		if err != nil {
+			return models.User{}, err
+		}
+		return user, nil
+	}
+	user, err := u.UserRepository.FindUserById(ctx, userId)
+	userJson, err := utils.MarshalData(user)
+	if err != nil {
+		return models.User{}, err
+	}
+	err = u.CacheService.SetData(ctx, cacheKey, string(userJson), time.Minute)
 	if err != nil {
 		return models.User{}, err
 	}
@@ -83,10 +131,24 @@ func (u *UserService) UpdateUserNotifications(ctx context.Context, userId int,
 }
 
 func (u *UserService) DeleteUser(ctx context.Context, userId int, password string) error {
-	user, err := u.UserRepository.FindUserById(ctx, userId)
+	cacheKey := fmt.Sprintf("users-%d", userId)
+	doesUserExists, err := u.CacheService.ExistsData(ctx, cacheKey)
+	var user models.User
 	if err != nil {
 		return err
 	}
+	if doesUserExists > 0 {
+		user, err = u.readUserFromCache(ctx, cacheKey)
+		if err != nil {
+			return err
+		}
+	} else {
+		user, err = u.callFindUserByIdAndSaveToCache(ctx, userId, cacheKey)
+		if err != nil {
+			return err
+		}
+	}
+
 	if user.ID == 0 {
 		u.LoggerService.Info("User with this id does not exist", userId)
 		return models.NewError(400, "Verification", "User with this id does not exist")
@@ -100,13 +162,30 @@ func (u *UserService) DeleteUser(ctx context.Context, userId int, password strin
 	if err != nil {
 		return err
 	}
+	err = u.CacheService.DeleteData(ctx, cacheKey)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (u *UserService) ChangeUserPassword(ctx context.Context, userId int, currentPassword string, newPassword string) error {
-	user, err := u.UserRepository.FindUserById(ctx, userId)
+	cacheKey := fmt.Sprintf("users-%d", userId)
+	doesUserExists, err := u.CacheService.ExistsData(ctx, cacheKey)
+	var user models.User
 	if err != nil {
 		return err
+	}
+	if doesUserExists > 0 {
+		user, err = u.readUserFromCache(ctx, cacheKey)
+		if err != nil {
+			return err
+		}
+	} else {
+		user, err = u.callFindUserByIdAndSaveToCache(ctx, userId, cacheKey)
+		if err != nil {
+			return err
+		}
 	}
 	if user.ID == 0 {
 		u.LoggerService.Info("User with this id does not exist", userId)
@@ -123,6 +202,10 @@ func (u *UserService) ChangeUserPassword(ctx context.Context, userId int, curren
 		return err
 	}
 	err = u.UserRepository.ChangeUserPassword(ctx, userId, string(hashedPassword))
+	if err != nil {
+		return err
+	}
+	err = u.CacheService.DeleteData(ctx, cacheKey)
 	if err != nil {
 		return err
 	}
