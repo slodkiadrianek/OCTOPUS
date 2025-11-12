@@ -27,19 +27,24 @@ func NewLogger(logDir string, dateFormat string) *Logger {
 	}
 }
 
-func (l *Logger) CreateLogger() {
+func (l *Logger) getActualDate() string {
+	actualDate := time.Now()
+	year := actualDate.Year()
+	month := int(actualDate.Month())
+	day := actualDate.Day()
+	actualDateFormat := fmt.Sprintf("%d.%d.%d", day, month, year)
+	return actualDateFormat
+}
+
+func (l *Logger) InitializeLogger() {
 	if _, err := os.Stat(l.LogDir); os.IsNotExist(err) {
 		if err := os.Mkdir(l.LogDir, os.ModePerm); err != nil {
 			panic(err)
 		}
 	}
-
 	actualDate := time.Now()
-	year := actualDate.Year()
-	month := int(actualDate.Month())
-	day := actualDate.Day()
-	l.StartTime = fmt.Sprintf("%d.%d.%d", day, month, year)
-	fileName := fmt.Sprintf("%d.%d.%d", day, month, year)
+	l.StartTime = l.getActualDate()
+	fileName := l.getActualDate()
 	logTime := actualDate.Format("2006-01-02 15:04:05")
 
 	file, err := os.OpenFile(l.LogDir+"/"+fileName+".log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o666)
@@ -51,7 +56,7 @@ func (l *Logger) CreateLogger() {
 	fmt.Println(GREEN + "[INFO: " + actualDate.Format(l.DateFormat) + "] Logger created successfully" + RESET)
 
 	fileRes := fmt.Sprintf("date:%s,type:success,message:Successfully created a logger,data:%v\n", logTime,
-		map[string]interface{}{})
+		map[string]any{})
 	_, err = l.File.Write([]byte(fileRes))
 	if err != nil {
 		fmt.Println("Something went wrong during writing to data to the file")
@@ -117,11 +122,7 @@ func (l *Logger) Error(msg string, data ...any) {
 }
 
 func (l *Logger) Validate() {
-	actualDate := time.Now()
-	year := actualDate.Year()
-	month := int(actualDate.Month())
-	day := actualDate.Day()
-	actualDateFormat := fmt.Sprintf("%d.%d.%d", day, month, year)
+	actualDateFormat := l.getActualDate()
 	if actualDateFormat != l.StartTime {
 		fmt.Println("Closing old file and creating the new one for new date")
 		err := l.File.Close()
@@ -138,6 +139,7 @@ func (l *Logger) Validate() {
 		l.File = file
 	}
 }
+
 func (l *Logger) Close() error {
 	if l.File != nil {
 		return l.File.Close()
