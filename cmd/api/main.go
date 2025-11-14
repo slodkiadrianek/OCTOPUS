@@ -20,7 +20,7 @@ import (
 
 func main() {
 	loggerService := utils.NewLogger("./logs", "2006-01-02 15:04:05")
-	loggerService.CreateLogger()
+	loggerService.InitializeLogger()
 	defer loggerService.Close()
 	cfg, err := config.SetConfig("./.env")
 	if err != nil {
@@ -43,29 +43,38 @@ func main() {
 		return
 	}
 	rateLimiter := middleware.NewRateLimiter(5, 1*time.Minute, 5*time.Minute, 10*time.Minute, loggerService)
+	jwt := middleware.NewJWT(cfg.JWTSecret, loggerService, cacheService)
+	// User
 	userRepository := repository.NewUserRepository(db.DbConnection, loggerService)
 	userService := services.NewUserService(loggerService, userRepository)
+	userController := controllers.NewUserController(userService, loggerService)
+	// Route
 	routeRepository := repository.NewRouteRepository(db.DbConnection, loggerService)
 	routeService := services.NewRouteService(loggerService, routeRepository)
+	routeController := controllers.NewRouteController(routeService, loggerService)
+	// App
 	appRepository := repository.NewAppRepository(db.DbConnection, loggerService)
 	appService := services.NewAppService(appRepository, loggerService, cacheService, cfg.DockerHost, routeRepository)
+	appController := controllers.NewAppController(appService, loggerService)
+	// webSocket
 	wsService := services.NewWsService(loggerService, cfg.DockerHost)
+	wsController := controllers.NewWsController(wsService, loggerService)
+	// Server
 	serverService := services.NewServerService(loggerService, cacheService)
+	serverController := controllers.NewServerController(loggerService, serverService)
+	// Docker
 	dockerService := services.NewDockerService(appRepository, loggerService, cfg.DockerHost)
-	jwt := middleware.NewJWT(cfg.JWTSecret, loggerService, cacheService)
+	dockerController := controllers.NewDockerController(dockerService, loggerService)
+	// Auth
 	authService := services.NewAuthService(loggerService, userRepository, jwt)
 	authController := controllers.NewAuthController(authService, loggerService)
-	routeController := controllers.NewRouteController(routeService, loggerService)
-	userController := controllers.NewUserController(userService, loggerService)
-	appController := controllers.NewAppController(appService, loggerService)
-	dockerController := controllers.NewDockerController(dockerService, loggerService)
-	serverController := controllers.NewServerController(loggerService, serverService)
-	WsController := controllers.NewWsController(wsService, loggerService)
 
 	dependenciesConfig := api.NewDependencyConfig(cfg.Port, userController, appController, dockerController,
-		authController, jwt, serverController, WsController, rateLimiter, routeController)
+		authController, jwt, serverController, wsController, rateLimiter, routeController)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	server := api.NewServer(dependenciesConfig)
+
 	go rateLimiter.CleanWorker(ctx)
 	go func() {
 		loggerService.Info("Starting API server on port: " + cfg.Port)
