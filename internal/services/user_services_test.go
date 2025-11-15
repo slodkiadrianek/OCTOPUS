@@ -39,7 +39,7 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 			setupMock: func() userRepository {
 				m := new(mocks.MockUserRepository)
 				m.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
-					models.User{}, errors.New("User not found"))
+					models.User{}, errors.New("user not found"))
 				return m
 			},
 		},
@@ -50,7 +50,7 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 			setupMock: func() userRepository {
 				m := new(mocks.MockUserRepository)
 				m.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
-					models.User{}, errors.New("Failed to execute query"))
+					models.User{}, errors.New("failed to execute query"))
 				return m
 			},
 		},
@@ -92,7 +92,7 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 					}, nil)
 
 				m.On("InsertUserToDb", mock.Anything, mock.Anything,
-					mock.Anything).Return(errors.New("Failed to insert user to db"))
+					mock.Anything).Return(errors.New("failed to insert user to db"))
 				return m
 			},
 		},
@@ -103,7 +103,8 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 			ctx := context.Background()
 			loggerService := createLogger()
 			userRepository := test.setupMock()
-			userService := NewUserService(loggerService, userRepository)
+			cacheService := createCacheService(loggerService)
+			userService := NewUserService(loggerService, userRepository, cacheService)
 			user := DTO.NewCreateUser("adikurek@cos.com", "Adrian", "Kurek")
 			err := userService.InsertUserToDb(ctx, *user, test.password)
 			if test.expectedError == nil {
@@ -139,7 +140,7 @@ func TestUserService_UpdateUser(t *testing.T) {
 			setupMock: func() userRepository {
 				m := new(mocks.MockUserRepository)
 				m.On("UpdateUser", mock.Anything, mock.Anything, mock.Anything).Return(
-					errors.New("Failed to update an user"))
+					errors.New("failed to update an user"))
 				return m
 			},
 		},
@@ -149,7 +150,8 @@ func TestUserService_UpdateUser(t *testing.T) {
 			ctx := context.Background()
 			loggerService := createLogger()
 			userRepository := test.setupMock()
-			userService := NewUserService(loggerService, userRepository)
+			cacheService := createCacheService(loggerService)
+			userService := NewUserService(loggerService, userRepository, cacheService)
 			user := DTO.NewCreateUser("adikurek@cos.com", "Adrina", "Kurek")
 			err := userService.UpdateUser(ctx, *user, 3)
 			if test.expectedError == nil {
@@ -185,7 +187,7 @@ func TestUserService_UpdateUserNotifications(t *testing.T) {
 			setupMock: func() userRepository {
 				m := new(mocks.MockUserRepository)
 				m.On("UpdateUserNotifications", mock.Anything, mock.Anything, mock.Anything).Return(
-					errors.New("Failed to update an user"))
+					errors.New("failed to update an user"))
 				return m
 			},
 		},
@@ -195,7 +197,9 @@ func TestUserService_UpdateUserNotifications(t *testing.T) {
 			ctx := context.Background()
 			loggerService := createLogger()
 			userRepository := test.setupMock()
-			userService := NewUserService(loggerService, userRepository)
+			cacheService := createCacheService(loggerService)
+
+			userService := NewUserService(loggerService, userRepository, cacheService)
 			user := DTO.UpdateUserNotificationsSettings{
 				DiscordNotificationsSettings: false,
 				SlackNotificationsSettings:   false,
@@ -262,7 +266,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 			setupMock: func() userRepository {
 				m := new(mocks.MockUserRepository)
 				m.On("FindUserById", mock.Anything, mock.Anything).Return(models.User{},
-					errors.New("Failed to find a user"))
+					errors.New("failed to find a user"))
 				return m
 			},
 		},
@@ -275,7 +279,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 				m.On("FindUserById", mock.Anything, mock.Anything).Return(
 					models.User{ID: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
 				m.On("DeleteUser", mock.Anything, mock.Anything, mock.Anything).Return(
-					errors.New("Failed to delete a user"))
+					errors.New("failed to delete a user"))
 				return m
 			},
 		},
@@ -285,7 +289,9 @@ func TestUserService_DeleteUser(t *testing.T) {
 			ctx := context.Background()
 			loggerService := createLogger()
 			userRepository := test.setupMock()
-			userService := NewUserService(loggerService, userRepository)
+			cacheService := createCacheService(loggerService)
+
+			userService := NewUserService(loggerService, userRepository, cacheService)
 			err := userService.DeleteUser(ctx, 3, test.password)
 			if test.expectedError == nil {
 				assert.NoError(t, err)
@@ -364,7 +370,7 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 			setupMock: func() userRepository {
 				m := new(mocks.MockUserRepository)
 				m.On("FindUserById", mock.Anything, mock.Anything).Return(models.User{},
-					errors.New("Failed to find a user"))
+					errors.New("failed to find a user"))
 				return m
 			},
 		},
@@ -378,7 +384,7 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 				m.On("FindUserById", mock.Anything, mock.Anything).Return(
 					models.User{ID: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
 				m.On("ChangeUserPassword", mock.Anything, mock.Anything, mock.Anything).Return(
-					errors.New("Failed to change password"))
+					errors.New("failed to change password"))
 				return m
 			},
 		},
@@ -388,7 +394,9 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 			ctx := context.Background()
 			loggerService := createLogger()
 			userRepository := test.setupMock()
-			userService := NewUserService(loggerService, userRepository)
+			cacheService := createCacheService(loggerService)
+
+			userService := NewUserService(loggerService, userRepository, cacheService)
 			err := userService.ChangeUserPassword(ctx, 3, test.password, test.newPassword)
 			if test.expectedError == nil {
 				assert.NoError(t, err)

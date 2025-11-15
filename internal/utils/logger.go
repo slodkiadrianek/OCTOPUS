@@ -51,12 +51,14 @@ func (l *Logger) InitializeLogger() {
 	if err != nil {
 		panic(err)
 	}
+
 	l.File = file
 
 	fmt.Println(GREEN + "[INFO: " + actualDate.Format(l.DateFormat) + "] Logger created successfully" + RESET)
 
 	fileRes := fmt.Sprintf("date:%s,type:success,message:Successfully created a logger,data:%v\n", logTime,
 		map[string]any{})
+
 	_, err = l.File.Write([]byte(fileRes))
 	if err != nil {
 		fmt.Println("Something went wrong during writing to data to the file")
@@ -65,18 +67,24 @@ func (l *Logger) InitializeLogger() {
 
 func (l *Logger) Info(msg string, data ...any) {
 	l.Validate()
+
 	actualDate := time.Now()
 	fileName := actualDate.Format(l.DateFormat)
 	logTime := actualDate.Format("2006-01-02 15:04:05")
+
 	fmt.Println(GREEN + "[INFO: " + logTime + "] " + msg)
+
 	if len(data) > 0 {
 		fmt.Print(" ")
 		for _, d := range data {
 			fmt.Print(d, " ")
 		}
 	}
+
 	fmt.Println(RESET)
+
 	fileRes := fmt.Sprintf("date:%s,type:info,message:%s,data:%v\n", fileName, msg, data)
+
 	_, err := l.File.WriteString(fileRes)
 	if err != nil {
 		fmt.Println("Something went wrong during writing to data to the file", err)
@@ -85,17 +93,23 @@ func (l *Logger) Info(msg string, data ...any) {
 
 func (l *Logger) Warn(msg string, data ...any) {
 	l.Validate()
+
 	actualDate := time.Now()
 	fileName := actualDate.Format(l.DateFormat)
+
 	fmt.Print(YELLOW + "[WARN: " + fileName + "] " + msg)
+
 	if len(data) > 0 {
 		fmt.Print(" ")
 		for _, d := range data {
 			fmt.Print(d, " ")
 		}
 	}
+
 	fmt.Println(RESET)
+
 	fileRes := fmt.Sprintf("date:%s,type:warn,message:%s,data:%v\n", fileName, msg, data)
+
 	_, err := l.File.Write([]byte(fileRes))
 	if err != nil {
 		fmt.Println("Something went wrong during writing to data to the file")
@@ -104,17 +118,23 @@ func (l *Logger) Warn(msg string, data ...any) {
 
 func (l *Logger) Error(msg string, data ...any) {
 	l.Validate()
+
 	actualDate := time.Now()
 	fileName := actualDate.Format(l.DateFormat)
+
 	fmt.Print(RED + "[ERROR: " + fileName + "] " + msg)
+
 	if len(data) > 0 {
 		fmt.Print(" ")
 		for _, d := range data {
 			fmt.Print(d, " ")
 		}
 	}
+
 	fmt.Println(RESET)
+
 	fileRes := fmt.Sprintf("date:%s,type:error,message:%s,data:%v\n", fileName, msg, data)
+
 	_, err := l.File.Write([]byte(fileRes))
 	if err != nil {
 		fmt.Println("Something went wrong during writing to data to the file")
@@ -124,11 +144,14 @@ func (l *Logger) Error(msg string, data ...any) {
 func (l *Logger) Validate() {
 	actualDateFormat := l.getActualDate()
 	if actualDateFormat != l.StartTime {
+
 		fmt.Println("Closing old file and creating the new one for new date")
+
 		err := l.File.Close()
 		if err != nil {
 			fmt.Println("Something went wrong during writing to data to the file")
 		}
+
 		l.StartTime = actualDateFormat
 		fileName := actualDateFormat
 
@@ -136,6 +159,7 @@ func (l *Logger) Validate() {
 		if err != nil {
 			panic(err)
 		}
+
 		l.File = file
 	}
 }

@@ -11,16 +11,23 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
-	"github.com/slodkiadrianek/octopus/internal/repository"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
 type AppStatusService struct {
-	AppRepository   appRepository
-	RouteRepository *repository.RouteRepository
-	CacheService    CacheService
-	LoggerService   *utils.Logger
-	DockerHost      string
+	AppRepository appRepository
+	CacheService  CacheService
+	LoggerService utils.Logger
+	DockerHost    string
+}
+
+func NewAppStatusService(appRepository appRepository, cacheService CacheService, loggerService utils.Logger, dockerHost string) *AppStatusService {
+	return &AppStatusService{
+		AppRepository: appRepository,
+		CacheService:  cacheService,
+		LoggerService: loggerService,
+		DockerHost:    dockerHost,
+	}
 }
 
 func (as *AppStatusService) readAppStatusFromCache(ctx context.Context, cacheKey string) (DTO.AppStatus, error) {
@@ -153,10 +160,12 @@ func (as *AppStatusService) checkAppsStatus(ctx context.Context) ([]DTO.AppStatu
 
 func (as *AppStatusService) getAppStatus(ctx context.Context, id string, ownerId int) (DTO.AppStatus, error) {
 	cacheKey := fmt.Sprintf("status-%s", id)
+
 	doesAppStatusExists, err := as.CacheService.ExistsData(ctx, cacheKey)
 	if err != nil {
 		as.LoggerService.Warn("Failed to get info about data in cache", err)
 	}
+
 	if doesAppStatusExists > 0 {
 		appStatus, err := as.readAppStatusFromCache(ctx, cacheKey)
 		if err != nil {

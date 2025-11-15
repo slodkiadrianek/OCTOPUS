@@ -13,7 +13,7 @@ import (
 
 func main() {
 	loggerService := utils.NewLogger("./logs", "2006-01-02 15:04:05")
-	loggerService.CreateLogger()
+	loggerService.InitializeLogger()
 	defer loggerService.Close()
 
 	cfg, err := config.SetConfig("./.env")
@@ -37,10 +37,17 @@ func main() {
 		loggerService.Error("Failed to connect to database", err)
 		return
 	}
-	appRepository := repository.NewAppRepository(db.DbConnection, loggerService)
+	// Route
 	routeRepository := repository.NewRouteRepository(db.DbConnection, loggerService)
-	appService := services.NewAppService(appRepository, loggerService, cacheService, cfg.DockerHost, routeRepository)
+	routeStatusService := services.NewRouteStatusService(routeRepository, loggerService)
+	// App
+	appRepository := repository.NewAppRepository(db.DbConnection, loggerService)
+	appStatusService := services.NewAppStatusService(appRepository, cacheService, *loggerService, cfg.DockerHost)
+	appNotificationsService := services.NewAppNotificationsService(appRepository, loggerService)
+	appService := services.NewAppService(appRepository, loggerService, appStatusService, appNotificationsService, routeStatusService)
+	// Server
 	serverService := services.NewServerService(loggerService, cacheService)
+
 	ctx := context.Background()
 	ticker(ctx, appService, serverService, loggerService)
 }

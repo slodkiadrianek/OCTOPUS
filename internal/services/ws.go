@@ -70,14 +70,14 @@ func (ws *WsService) Logs(ctx context.Context, appId string, conn *websocket.Con
 		default:
 			if scanner.Scan() {
 				line := scanner.Text()
-				cleandedLine := make([]rune, 0, len(line))
+				filteredRunes := make([]rune, 0, len(line))
 				for _, character := range line {
 					if character == utf8.RuneError {
 						continue
 					}
-					cleandedLine = append(cleandedLine, character)
+					filteredRunes = append(filteredRunes, character)
 				}
-				utf8Bytes := []byte(string(cleandedLine))
+				utf8Bytes := []byte(string(filteredRunes))
 				if err := conn.WriteMessage(websocket.TextMessage, utf8Bytes); err != nil {
 					if !websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 						ws.Logger.Info("Client disconnected")

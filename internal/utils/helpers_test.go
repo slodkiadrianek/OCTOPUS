@@ -40,11 +40,9 @@ func TestSetContext(t *testing.T) {
 			assert.Equal(t, test.value, res.Context().Value(test.key))
 		})
 	}
-
 }
 
 func TestValidateSchema(t *testing.T) {
-
 	type args struct {
 		name          string
 		schema        z.StructSchema

@@ -46,15 +46,18 @@ func main() {
 	jwt := middleware.NewJWT(cfg.JWTSecret, loggerService, cacheService)
 	// User
 	userRepository := repository.NewUserRepository(db.DbConnection, loggerService)
-	userService := services.NewUserService(loggerService, userRepository)
+	userService := services.NewUserService(loggerService, userRepository, cacheService)
 	userController := controllers.NewUserController(userService, loggerService)
 	// Route
 	routeRepository := repository.NewRouteRepository(db.DbConnection, loggerService)
+	routeStatusService := services.NewRouteStatusService(routeRepository, loggerService)
 	routeService := services.NewRouteService(loggerService, routeRepository)
 	routeController := controllers.NewRouteController(routeService, loggerService)
 	// App
 	appRepository := repository.NewAppRepository(db.DbConnection, loggerService)
-	appService := services.NewAppService(appRepository, loggerService, cacheService, cfg.DockerHost, routeRepository)
+	appStatusService := services.NewAppStatusService(appRepository, cacheService, *loggerService, cfg.DockerHost)
+	appNotificationsService := services.NewAppNotificationsService(appRepository, loggerService)
+	appService := services.NewAppService(appRepository, loggerService, appStatusService, appNotificationsService, routeStatusService)
 	appController := controllers.NewAppController(appService, loggerService)
 	// webSocket
 	wsService := services.NewWsService(loggerService, cfg.DockerHost)

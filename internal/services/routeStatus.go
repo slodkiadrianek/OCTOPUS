@@ -6,19 +6,22 @@ import (
 	"strings"
 
 	"github.com/slodkiadrianek/octopus/internal/models"
-	"github.com/slodkiadrianek/octopus/internal/repository"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
-type routeStatusService struct {
-	AppRepository   appRepository
-	RouteRepository *repository.RouteRepository
-	CacheService    CacheService
+type RouteStatusService struct {
+	RouteRepository routeRepository
 	LoggerService   *utils.Logger
-	DockerHost      string
 }
 
-func (rs *routeStatusService) sortRoutesToTest(routesToTest []models.RouteToTest) map[string][]models.RouteToTest {
+func NewRouteStatusService(routeRepository routeRepository, loggerService *utils.Logger) *RouteStatusService {
+	return &RouteStatusService{
+		RouteRepository: routeRepository,
+		LoggerService:   loggerService,
+	}
+}
+
+func (rs *RouteStatusService) sortRoutesToTest(routesToTest []models.RouteToTest) map[string][]models.RouteToTest {
 	sortedRoutesToTests := make(map[string][]models.RouteToTest)
 	for _, routeToTest := range routesToTest {
 		key := routeToTest.Name + routeToTest.AppId
@@ -33,26 +36,30 @@ func (rs *routeStatusService) sortRoutesToTest(routesToTest []models.RouteToTest
 	return sortedRoutesToTests
 }
 
-func (rs *routeStatusService) prepareRouteDataForTestRequest(route models.RouteToTest) (string, string, []byte, error) {
-	authorizationHeader := "Bearer " + route.RequestAuthorization
-
-	splittedPath := strings.Split(route.Path, "/")
+func (rs *RouteStatusService) addParamsToThePath(path string, params models.JsonMapStringString) string {
+	splittedPath := strings.Split(path, "/")
 	for i := 0; i < len(splittedPath); i++ {
 		partOfPath := splittedPath[i]
 		leftBrace := strings.Contains(partOfPath, "{")
 		rightBrace := strings.Contains(partOfPath, "}")
+
 		if leftBrace && rightBrace {
 			param := partOfPath[1 : len(partOfPath)-1]
-			splittedPath[i] = route.RequestParams[param]
+			splittedPath[i] = params[param]
 		}
 	}
+	pathWithParamsIncluded := strings.Join(splittedPath, "/")
+	return pathWithParamsIncluded
+}
 
+func (rs *RouteStatusService) prepareRouteDataForTestRequest(route models.RouteToTest) (string, string, []byte, error) {
+	authorizationHeader := "Bearer " + route.RequestAuthorization
 	var query []string
 	for key, val := range route.RequestQuery {
 		query = append(query, key+"="+val)
 	}
 
-	path := strings.Join(splittedPath, "/")
+	path := rs.addParamsToThePath(route.Path, route.RequestParams)
 	url := "http://" + route.IpAddress + ":" + route.Port + path + "?" + strings.Join(query, "&")
 
 	jsonData, err := utils.MarshalData(route.RequestBody)
@@ -64,7 +71,7 @@ func (rs *routeStatusService) prepareRouteDataForTestRequest(route models.RouteT
 	return authorizationHeader, url, jsonData, nil
 }
 
-func (rs *routeStatusService) prepareDataForTheNextRoute(route models.RouteToTest, key string,
+func (rs *RouteStatusService) prepareDataForTheNextRoute(route models.RouteToTest, key string,
 	val any,
 ) (map[string]any, map[string]string, map[string]string, string, string) {
 	routeStatus := "unknown"
@@ -107,13 +114,14 @@ func (rs *routeStatusService) prepareDataForTheNextRoute(route models.RouteToTes
 	return nextRouteBody, nextRouteParams, nextRouteQuery, nextRouteAuthorizationHeader, routeStatus
 }
 
-func (rs *routeStatusService) checkRoutesStatus(ctx context.Context) error {
+func (rs *RouteStatusService) checkRoutesStatus(ctx context.Context) error {
 	rs.LoggerService.Info("Started checking statuses of the routes")
 
 	routesToTest, err := rs.RouteRepository.GetWorkingRoutesToTest(ctx)
 	if err != nil {
 		return err
 	}
+
 	if len(routesToTest) < 1 {
 		return nil
 	}
@@ -126,18 +134,22 @@ func (rs *routeStatusService) checkRoutesStatus(ctx context.Context) error {
 		nextRouteParams := make(map[string]string)
 		nextRouteQuery := make(map[string]string)
 		nextRouteAuthorizationHeader := ""
+
 		for _, route := range routesToTest {
 			routeStatus := "unknown"
 
 			if len(nextRouteBody) > 0 {
 				route.RequestBody = nextRouteBody
 			}
+
 			if len(nextRouteParams) > 0 {
 				route.RequestParams = nextRouteParams
 			}
+
 			if len(nextRouteQuery) > 0 {
 				route.RequestQuery = nextRouteQuery
 			}
+
 			if len(nextRouteAuthorizationHeader) > 0 {
 				route.RequestAuthorization = nextRouteAuthorizationHeader
 			}
