@@ -1,4 +1,4 @@
-package services
+package servicesApp
 
 import (
 	"bufio"
@@ -15,10 +15,10 @@ import (
 
 type WsService struct {
 	DockerHost string
-	Logger     *utils.Logger
+	Logger     utils.Logger
 }
 
-func NewWsService(logger *utils.Logger, dockerHost string) *WsService {
+func NewWsService(logger utils.Logger, dockerHost string) *WsService {
 	return &WsService{
 		DockerHost: dockerHost,
 		Logger:     logger,

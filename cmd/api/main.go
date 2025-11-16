@@ -11,7 +11,10 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/controllers"
 	"github.com/slodkiadrianek/octopus/internal/middleware"
 	"github.com/slodkiadrianek/octopus/internal/repository"
-	"github.com/slodkiadrianek/octopus/internal/services"
+	servicesApp "github.com/slodkiadrianek/octopus/internal/services/app"
+	"github.com/slodkiadrianek/octopus/internal/services/server"
+	"github.com/slodkiadrianek/octopus/internal/services/thirdPartyServices"
+	"github.com/slodkiadrianek/octopus/internal/services/user"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 
 	"github.com/slodkiadrianek/octopus/internal/api"
@@ -46,42 +49,42 @@ func main() {
 	jwt := middleware.NewJWT(cfg.JWTSecret, loggerService, cacheService)
 	// User
 	userRepository := repository.NewUserRepository(db.DbConnection, loggerService)
-	userService := services.NewUserService(loggerService, userRepository, cacheService)
+	userService := user.NewUserService(loggerService, userRepository, cacheService)
 	userController := controllers.NewUserController(userService, loggerService)
 	// Route
 	routeRepository := repository.NewRouteRepository(db.DbConnection, loggerService)
-	routeStatusService := services.NewRouteStatusService(routeRepository, loggerService)
-	routeService := services.NewRouteService(loggerService, routeRepository)
+	routeStatusService := servicesApp.NewRouteStatusService(routeRepository, loggerService)
+	routeService := servicesApp.NewRouteService(loggerService, routeRepository)
 	routeController := controllers.NewRouteController(routeService, loggerService)
 	// App
 	appRepository := repository.NewAppRepository(db.DbConnection, loggerService)
-	appStatusService := services.NewAppStatusService(appRepository, cacheService, *loggerService, cfg.DockerHost)
-	appNotificationsService := services.NewAppNotificationsService(appRepository, loggerService)
-	appService := services.NewAppService(appRepository, loggerService, appStatusService, appNotificationsService, routeStatusService)
+	appStatusService := servicesApp.NewAppStatusService(appRepository, cacheService, *loggerService, cfg.DockerHost)
+	appNotificationsService := servicesApp.NewAppNotificationsService(appRepository, loggerService)
+	appService := servicesApp.NewAppService(appRepository, loggerService, appStatusService, appNotificationsService, routeStatusService)
 	appController := controllers.NewAppController(appService, loggerService)
 	// webSocket
-	wsService := services.NewWsService(loggerService, cfg.DockerHost)
+	wsService := servicesApp.NewWsService(loggerService, cfg.DockerHost)
 	wsController := controllers.NewWsController(wsService, loggerService)
 	// Server
-	serverService := services.NewServerService(loggerService, cacheService)
+	serverService := server.NewServerService(loggerService, cacheService)
 	serverController := controllers.NewServerController(loggerService, serverService)
 	// Docker
-	dockerService := services.NewDockerService(appRepository, loggerService, cfg.DockerHost)
+	dockerService := thirdPartyServices.NewDockerService(appRepository, loggerService, cfg.DockerHost)
 	dockerController := controllers.NewDockerController(dockerService, loggerService)
 	// Auth
-	authService := services.NewAuthService(loggerService, userRepository, jwt)
+	authService := user.NewAuthService(loggerService, userRepository, jwt)
 	authController := controllers.NewAuthController(authService, loggerService)
 
 	dependenciesConfig := api.NewDependencyConfig(cfg.Port, userController, appController, dockerController,
 		authController, jwt, serverController, wsController, rateLimiter, routeController)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	server := api.NewServer(dependenciesConfig)
+	httpServer := api.NewServer(dependenciesConfig)
 
 	go rateLimiter.CleanWorker(ctx)
 	go func() {
 		loggerService.Info("Starting API server on port: " + cfg.Port)
-		if err := server.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err := httpServer.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			loggerService.Error("Failed to start server", err)
 		}
 	}()
@@ -91,7 +94,7 @@ func main() {
 	<-quit
 	defer cancel()
 
-	if err := server.Shutdown(ctx); err != nil {
+	if err := httpServer.Shutdown(ctx); err != nil {
 		loggerService.Error("Server forced to shutdown:", err)
 	}
 

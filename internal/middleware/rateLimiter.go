@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -111,7 +110,6 @@ func (ra *RateLimiter) Cleanup() {
 func (ra *RateLimiter) Allow(ipAddress string) bool {
 	now := time.Now()
 	user := ra.Users[ipAddress]
-	fmt.Println(user.BlockUntil, now, now.Before(user.BlockUntil))
 	if now.Before(user.BlockUntil) {
 		return false
 	}

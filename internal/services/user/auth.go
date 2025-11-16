@@ -1,4 +1,4 @@
-package services
+package user
 
 import (
 	"context"
@@ -6,17 +6,19 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/middleware"
 	"github.com/slodkiadrianek/octopus/internal/models"
+	"github.com/slodkiadrianek/octopus/internal/services/interfaces"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService struct {
 	LoggerService  *utils.Logger
-	UserRepository userRepository
+	UserRepository interfaces.UserRepository
 	JWT            *middleware.JWT
 }
 
-func NewAuthService(loggerService *utils.Logger, userRepository userRepository, jwt *middleware.JWT) *AuthService {
+func NewAuthService(loggerService *utils.Logger, userRepository interfaces.UserRepository,
+	jwt *middleware.JWT) *AuthService {
 	return &AuthService{
 		LoggerService:  loggerService,
 		UserRepository: userRepository,
@@ -36,7 +38,7 @@ func (a AuthService) LoginUser(ctx context.Context, loginData DTO.LoginUser) (st
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginData.Password))
 	if err != nil {
 		a.LoggerService.Info("Wrong password provided", loginData)
-		return "", models.NewError(401, "Authorization", "Wron guser provided")
+		return "", models.NewError(401, "Authorization", "Wrong user provided")
 	}
 	loggedUser := DTO.NewLoggedUser(user.ID, user.Email, user.Name, user.Surname)
 	authorizationToken, err := a.JWT.GenerateToken(*loggedUser)

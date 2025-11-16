@@ -7,7 +7,8 @@ import (
 
 	"github.com/slodkiadrianek/octopus/internal/config"
 	"github.com/slodkiadrianek/octopus/internal/repository"
-	"github.com/slodkiadrianek/octopus/internal/services"
+	servicesApp "github.com/slodkiadrianek/octopus/internal/services/app"
+	"github.com/slodkiadrianek/octopus/internal/services/server"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
@@ -39,20 +40,20 @@ func main() {
 	}
 	// Route
 	routeRepository := repository.NewRouteRepository(db.DbConnection, loggerService)
-	routeStatusService := services.NewRouteStatusService(routeRepository, loggerService)
+	routeStatusService := servicesApp.NewRouteStatusService(routeRepository, loggerService)
 	// App
 	appRepository := repository.NewAppRepository(db.DbConnection, loggerService)
-	appStatusService := services.NewAppStatusService(appRepository, cacheService, *loggerService, cfg.DockerHost)
-	appNotificationsService := services.NewAppNotificationsService(appRepository, loggerService)
-	appService := services.NewAppService(appRepository, loggerService, appStatusService, appNotificationsService, routeStatusService)
+	appStatusService := servicesApp.NewAppStatusService(appRepository, cacheService, *loggerService, cfg.DockerHost)
+	appNotificationsService := servicesApp.NewAppNotificationsService(appRepository, loggerService)
+	appService := servicesApp.NewAppService(appRepository, loggerService, appStatusService, appNotificationsService, routeStatusService)
 	// Server
-	serverService := services.NewServerService(loggerService, cacheService)
+	serverService := server.NewServerService(loggerService, cacheService)
 
 	ctx := context.Background()
 	ticker(ctx, appService, serverService, loggerService)
 }
 
-func ticker(ctx context.Context, appService *services.AppService, serverService *services.ServerService, logger *utils.Logger) {
+func ticker(ctx context.Context, appService *servicesApp.AppService, serverService *server.ServerService, logger *utils.Logger) {
 	period := 65 * time.Second
 	ticker := time.NewTicker(period)
 	defer ticker.Stop()

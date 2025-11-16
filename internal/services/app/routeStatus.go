@@ -1,4 +1,4 @@
-package services
+package servicesApp
 
 import (
 	"context"
@@ -6,15 +6,17 @@ import (
 	"strings"
 
 	"github.com/slodkiadrianek/octopus/internal/models"
+	"github.com/slodkiadrianek/octopus/internal/services/interfaces"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
 type RouteStatusService struct {
-	RouteRepository routeRepository
-	LoggerService   *utils.Logger
+	RouteRepository interfaces.RouteRepository
+	LoggerService   utils.Logger
 }
 
-func NewRouteStatusService(routeRepository routeRepository, loggerService *utils.Logger) *RouteStatusService {
+func NewRouteStatusService(routeRepository interfaces.RouteRepository,
+	loggerService utils.Logger) *RouteStatusService {
 	return &RouteStatusService{
 		RouteRepository: routeRepository,
 		LoggerService:   loggerService,
@@ -114,7 +116,7 @@ func (rs *RouteStatusService) prepareDataForTheNextRoute(route models.RouteToTes
 	return nextRouteBody, nextRouteParams, nextRouteQuery, nextRouteAuthorizationHeader, routeStatus
 }
 
-func (rs *RouteStatusService) checkRoutesStatus(ctx context.Context) error {
+func (rs *RouteStatusService) CheckRoutesStatus(ctx context.Context) error {
 	rs.LoggerService.Info("Started checking statuses of the routes")
 
 	routesToTest, err := rs.RouteRepository.GetWorkingRoutesToTest(ctx)
@@ -159,7 +161,7 @@ func (rs *RouteStatusService) checkRoutesStatus(ctx context.Context) error {
 				return err
 			}
 
-			responseStatusCode, responseBody, err := utils.DoHttpRequest(ctx, url, authorizationHeader, route.Method, body, *rs.LoggerService)
+			responseStatusCode, responseBody, err := utils.DoHttpRequest(ctx, url, authorizationHeader, route.Method, body, rs.LoggerService)
 			if len(responseBody) != len(route.ResponseBody) {
 				routeStatus = "Failed;Different body"
 				routesStatuses[route.ID] = routeStatus

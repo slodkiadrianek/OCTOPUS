@@ -1,4 +1,4 @@
-package services
+package thirdPartyServices
 
 import (
 	"context"
@@ -8,16 +8,17 @@ import (
 	containerTypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/slodkiadrianek/octopus/internal/DTO"
+	"github.com/slodkiadrianek/octopus/internal/services/interfaces"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
 type DockerService struct {
-	AppRepository appRepository
+	AppRepository interfaces.AppRepository
 	DockerHost    string
 	Logger        *utils.Logger
 }
 
-func NewDockerService(appRepository appRepository, logger *utils.Logger,
+func NewDockerService(appRepository interfaces.AppRepository, logger *utils.Logger,
 	dockerHost string,
 ) *DockerService {
 	return &DockerService{
@@ -120,4 +121,3 @@ func (dc *DockerService) ImportContainers(ctx context.Context, ownerId int) erro
 	err = dc.AppRepository.InsertApp(ctx, appsToInsert)
 	return err
 }
-

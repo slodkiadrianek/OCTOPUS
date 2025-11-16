@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
@@ -40,7 +39,6 @@ func (a *AppController) GetInfoAboutApps(w http.ResponseWriter, r *http.Request)
 	}
 	apps, err := a.AppService.GetApps(r.Context(), ownerId)
 	if err != nil {
-		fmt.Println(err)
 		utils.SetError(w, r, err)
 		return
 	}

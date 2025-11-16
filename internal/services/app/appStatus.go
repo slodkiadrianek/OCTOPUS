@@ -1,4 +1,4 @@
-package services
+package servicesApp
 
 import (
 	"context"
@@ -11,17 +11,19 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
+	"github.com/slodkiadrianek/octopus/internal/services/interfaces"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
 type AppStatusService struct {
-	AppRepository appRepository
-	CacheService  CacheService
+	AppRepository interfaces.AppRepository
+	CacheService  interfaces.CacheService
 	LoggerService utils.Logger
 	DockerHost    string
 }
 
-func NewAppStatusService(appRepository appRepository, cacheService CacheService, loggerService utils.Logger, dockerHost string) *AppStatusService {
+func NewAppStatusService(appRepository interfaces.AppRepository, cacheService interfaces.CacheService,
+	loggerService utils.Logger, dockerHost string) *AppStatusService {
 	return &AppStatusService{
 		AppRepository: appRepository,
 		CacheService:  cacheService,
@@ -135,7 +137,7 @@ func (as *AppStatusService) checkAndCompareAppStatuses(ctx context.Context, cli 
 	return appsStatuses, appsToSendNotification
 }
 
-func (as *AppStatusService) checkAppsStatus(ctx context.Context) ([]DTO.AppStatus, error) {
+func (as *AppStatusService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatus, error) {
 	appsToCheck, err := as.AppRepository.GetAppsToCheck(ctx)
 	if err != nil {
 		return nil, err
@@ -158,7 +160,7 @@ func (as *AppStatusService) checkAppsStatus(ctx context.Context) ([]DTO.AppStatu
 	return appsToSendNotification, nil
 }
 
-func (as *AppStatusService) getAppStatus(ctx context.Context, id string, ownerId int) (DTO.AppStatus, error) {
+func (as *AppStatusService) GetAppStatus(ctx context.Context, id string, ownerId int) (DTO.AppStatus, error) {
 	cacheKey := fmt.Sprintf("status-%s", id)
 
 	doesAppStatusExists, err := as.CacheService.ExistsData(ctx, cacheKey)

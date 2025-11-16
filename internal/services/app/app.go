@@ -1,36 +1,25 @@
-package services
+package servicesApp
 
 import (
 	"context"
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
+	"github.com/slodkiadrianek/octopus/internal/services/interfaces"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
-type appRepository interface {
-	InsertApp(ctx context.Context, app []DTO.App) error
-	GetApp(ctx context.Context, id string, ownerId int) (*models.App, error)
-	GetApps(ctx context.Context, ownerId int) ([]models.App, error)
-	DeleteApp(ctx context.Context, id string, ownerId int) error
-	GetAppStatus(ctx context.Context, id string, ownerId int) (DTO.AppStatus, error)
-	GetAppsToCheck(ctx context.Context) ([]*models.AppToCheck, error)
-	UpdateApp(ctx context.Context, appId string, app DTO.UpdateApp, ownerId int) error
-	InsertAppStatuses(ctx context.Context, appsStatuses []DTO.AppStatus) error
-	GetUsersToSendNotifications(ctx context.Context, appsStatuses []DTO.AppStatus) ([]models.NotificationInfo, error)
-}
-
 type AppService struct {
-	AppRepository           appRepository
-	LoggerService           *utils.Logger
-	appStatusService        *AppStatusService
-	appNotificationsService *AppNotificationsService
-	routeStatusService      *RouteStatusService
+	AppRepository           interfaces.AppRepository
+	LoggerService           utils.Logger
+	appStatusService        interfaces.AppStatusService
+	appNotificationsService interfaces.AppNotificationsService
+	routeStatusService      interfaces.RouteStatusService
 }
 
-func NewAppService(appRepository appRepository, loggerService *utils.Logger,
-	appStatusService *AppStatusService, appNotificationsService *AppNotificationsService,
-	routeStatusService *RouteStatusService,
+func NewAppService(appRepository interfaces.AppRepository, loggerService utils.Logger,
+	appStatusService interfaces.AppStatusService, appNotificationsService interfaces.AppNotificationsService,
+	routeStatusService interfaces.RouteStatusService,
 ) *AppService {
 	return &AppService{
 		AppRepository:           appRepository,
@@ -87,17 +76,17 @@ func (a *AppService) UpdateApp(ctx context.Context, appId string, app DTO.Update
 }
 
 func (a *AppService) GetAppStatus(ctx context.Context, appId string, ownerId int) (DTO.AppStatus, error) {
-	return a.appStatusService.getAppStatus(ctx, appId, ownerId)
+	return a.appStatusService.GetAppStatus(ctx, appId, ownerId)
 }
 
 func (a *AppService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatus, error) {
-	return a.appStatusService.checkAppsStatus(ctx)
+	return a.appStatusService.CheckAppsStatus(ctx)
 }
 
 func (a *AppService) SendNotifications(ctx context.Context, appsStatuses []DTO.AppStatus) error {
-	return a.appNotificationsService.sendNotifications(ctx, appsStatuses)
+	return a.appNotificationsService.SendNotifications(ctx, appsStatuses)
 }
 
 func (a *AppService) CheckRoutesStatus(ctx context.Context) error {
-	return a.routeStatusService.checkRoutesStatus(ctx)
+	return a.routeStatusService.CheckRoutesStatus(ctx)
 }

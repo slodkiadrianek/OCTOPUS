@@ -1,4 +1,4 @@
-package services
+package server
 
 import (
 	"context"
@@ -9,15 +9,16 @@ import (
 	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/mem"
 	"github.com/slodkiadrianek/octopus/internal/models"
+	"github.com/slodkiadrianek/octopus/internal/services/interfaces"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
 type ServerService struct {
 	Logger       *utils.Logger
-	CacheService CacheService
+	CacheService interfaces.CacheService
 }
 
-func NewServerService(logger *utils.Logger, cacheService CacheService) *ServerService {
+func NewServerService(logger *utils.Logger, cacheService interfaces.CacheService) *ServerService {
 	return &ServerService{
 		Logger:       logger,
 		CacheService: cacheService,

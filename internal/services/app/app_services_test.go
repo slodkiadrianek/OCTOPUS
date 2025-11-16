@@ -1,4 +1,4 @@
-package services
+package servicesApp
 
 import (
 	"context"
@@ -11,26 +11,28 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/config"
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/repository"
+	"github.com/slodkiadrianek/octopus/internal/services/interfaces"
+	"github.com/slodkiadrianek/octopus/tests"
 	"github.com/slodkiadrianek/octopus/tests/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestAppService_CreateApp(t *testing.T) {
-	env, err := config.SetConfig("../../.env")
+	env, err := config.SetConfig("../../../.env")
 	if err != nil {
 		panic(err)
 	}
 	type args struct {
 		name          string
 		expectedError *string
-		setupMock     func() (appRepository, CacheService)
+		setupMock     func() (interfaces.AppRepository, interfaces.CacheService)
 	}
-	tests := []args{
+	testsScenarios := []args{
 		{
 			name:          "Proper data",
 			expectedError: nil,
-			setupMock: func() (appRepository, CacheService) {
+			setupMock: func() (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				mApp.On("InsertApp", mock.Anything, mock.Anything).Return(nil)
@@ -39,8 +41,8 @@ func TestAppService_CreateApp(t *testing.T) {
 		},
 		{
 			name:          "failed to insert an app",
-			expectedError: ptr("failed to insert an app"),
-			setupMock: func() (appRepository, CacheService) {
+			expectedError: tests.Ptr("failed to insert an app"),
+			setupMock: func() (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				mApp.On("InsertApp", mock.Anything, mock.Anything).Return(errors.New("failed to insert an app"))
@@ -48,13 +50,16 @@ func TestAppService_CreateApp(t *testing.T) {
 			},
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
 			ctx := context.Background()
-			loggerService := createLogger()
-			appRepository, cacheService := test.setupMock()
+			loggerService := tests.CreateLogger()
+			appRepository, cacheService := testScenario.setupMock()
 			routeRepository := repository.NewRouteRepository(&sql.DB{}, loggerService)
-			appService := NewAppService(appRepository, loggerService, cacheService, env.DockerHost, routeRepository)
+			appStatusService := NewAppStatusService(appRepository, cacheService, *loggerService, env.DockerHost)
+			appNotificationsService := NewAppNotificationsService(appRepository, loggerService)
+			routeStatusService := NewRouteStatusService(routeRepository, loggerService)
+			appService := NewAppService(appRepository, loggerService, appStatusService, appNotificationsService, routeStatusService)
 			app := DTO.CreateApp{
 				Name:        "test",
 				Description: "",
@@ -62,31 +67,31 @@ func TestAppService_CreateApp(t *testing.T) {
 				Port:        "3020",
 			}
 			err := appService.CreateApp(ctx, app, 345)
-			if test.expectedError == nil {
+			if testScenario.expectedError == nil {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), *test.expectedError)
+				assert.Contains(t, err.Error(), *testScenario.expectedError)
 			}
 		})
 	}
 }
 
 func TestAppService_GetApp(t *testing.T) {
-	env, err := config.SetConfig("../../.env")
+	env, err := config.SetConfig("../../../.env")
 	if err != nil {
 		panic(err)
 	}
 	type args struct {
 		name          string
 		expectedError *string
-		setupMock     func() (appRepository, CacheService)
+		setupMock     func() (interfaces.AppRepository, interfaces.CacheService)
 	}
-	tests := []args{
+	testsScenarios := []args{
 		{
 			name:          "Proper data",
 			expectedError: nil,
-			setupMock: func() (appRepository, CacheService) {
+			setupMock: func() (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				mApp.On("GetApp", mock.Anything, mock.Anything, mock.Anything).Return(&models.App{
@@ -97,8 +102,8 @@ func TestAppService_GetApp(t *testing.T) {
 		},
 		{
 			name:          "failed to get an app",
-			expectedError: ptr("failed to get an app"),
-			setupMock: func() (appRepository, CacheService) {
+			expectedError: tests.Ptr("failed to get an app"),
+			setupMock: func() (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				mApp.On("GetApp", mock.Anything, mock.Anything, mock.Anything).Return(&models.App{}, errors.New("failed to get an app"))
@@ -106,41 +111,44 @@ func TestAppService_GetApp(t *testing.T) {
 			},
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
 			ctx := context.Background()
-			loggerService := createLogger()
-			appRepository, cacheService := test.setupMock()
+			loggerService := tests.CreateLogger()
+			appRepository, cacheService := testScenario.setupMock()
 			routeRepository := repository.NewRouteRepository(&sql.DB{}, loggerService)
-			appService := NewAppService(appRepository, loggerService, cacheService, env.DockerHost, routeRepository)
+			appStatusService := NewAppStatusService(appRepository, cacheService, *loggerService, env.DockerHost)
+			appNotificationsService := NewAppNotificationsService(appRepository, loggerService)
+			routeStatusService := NewRouteStatusService(routeRepository, loggerService)
+			appService := NewAppService(appRepository, loggerService, appStatusService, appNotificationsService, routeStatusService)
 			app, err := appService.GetApp(ctx, "hf9hrepuihfefui", 32)
-			if test.expectedError == nil {
+			if testScenario.expectedError == nil {
 				assert.NoError(t, err)
 				assert.NotEmpty(t, app)
 			} else {
 				assert.Error(t, err)
 				assert.Empty(t, app)
-				assert.Contains(t, err.Error(), *test.expectedError)
+				assert.Contains(t, err.Error(), *testScenario.expectedError)
 			}
 		})
 	}
 }
 
 func TestAppService_GetApps(t *testing.T) {
-	env, err := config.SetConfig("../../.env")
+	env, err := config.SetConfig("../../../.env")
 	if err != nil {
 		panic(err)
 	}
 	type args struct {
 		name          string
 		expectedError *string
-		setupMock     func() (appRepository, CacheService)
+		setupMock     func() (interfaces.AppRepository, interfaces.CacheService)
 	}
-	tests := []args{
+	testsScenarios := []args{
 		{
 			name:          "Proper data",
 			expectedError: nil,
-			setupMock: func() (appRepository, CacheService) {
+			setupMock: func() (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				mApp.On("GetApps", mock.Anything, mock.Anything).Return([]models.App{{
@@ -151,8 +159,8 @@ func TestAppService_GetApps(t *testing.T) {
 		},
 		{
 			name:          "failed to get an apps",
-			expectedError: ptr("failed to get an apps"),
-			setupMock: func() (appRepository, CacheService) {
+			expectedError: tests.Ptr("failed to get an apps"),
+			setupMock: func() (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				mApp.On("GetApps", mock.Anything, mock.Anything).Return([]models.App{}, errors.New("failed to get an apps"))
@@ -160,41 +168,44 @@ func TestAppService_GetApps(t *testing.T) {
 			},
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
 			ctx := context.Background()
-			loggerService := createLogger()
-			appRepository, cacheService := test.setupMock()
+			loggerService := tests.CreateLogger()
+			appRepository, cacheService := testScenario.setupMock()
 			routeRepository := repository.NewRouteRepository(&sql.DB{}, loggerService)
-			appService := NewAppService(appRepository, loggerService, cacheService, env.DockerHost, routeRepository)
+			appStatusService := NewAppStatusService(appRepository, cacheService, *loggerService, env.DockerHost)
+			appNotificationsService := NewAppNotificationsService(appRepository, loggerService)
+			routeStatusService := NewRouteStatusService(routeRepository, loggerService)
+			appService := NewAppService(appRepository, loggerService, appStatusService, appNotificationsService, routeStatusService)
 			app, err := appService.GetApps(ctx,
 				32)
-			if test.expectedError == nil {
+			if testScenario.expectedError == nil {
 				assert.NoError(t, err)
 				assert.NotEmpty(t, app)
 			} else {
 				assert.Error(t, err)
 				assert.Empty(t, app)
-				assert.Contains(t, err.Error(), *test.expectedError)
+				assert.Contains(t, err.Error(), *testScenario.expectedError)
 			}
 		})
 	}
 }
 func TestAppService_GetAppStatus(t *testing.T) {
-	env, err := config.SetConfig("../../.env")
+	env, err := config.SetConfig("../../../.env")
 	if err != nil {
 		panic(err)
 	}
 	type args struct {
 		name          string
 		expectedError *string
-		setupMock     func() (appRepository, CacheService)
+		setupMock     func() (interfaces.AppRepository, interfaces.CacheService)
 	}
-	tests := []args{
+	testsScenarios := []args{
 		{
 			name:          "Proper data with data didn't save  in cache",
 			expectedError: nil,
-			setupMock: func() (appRepository, CacheService) {
+			setupMock: func() (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				mCache.On("ExistsData", mock.Anything, "status-123e23e23").Return(int64(0), nil)
@@ -206,7 +217,7 @@ func TestAppService_GetAppStatus(t *testing.T) {
 		{
 			name:          "Proper data with data saved in cache",
 			expectedError: nil,
-			setupMock: func() (appRepository, CacheService) {
+			setupMock: func() (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				mCache.On("ExistsData", mock.Anything, "status-123e23e23").Return(int64(1), nil)
@@ -220,21 +231,21 @@ func TestAppService_GetAppStatus(t *testing.T) {
 			},
 		},
 		{
-			name:          "Failed to get data from cache",
-			expectedError: ptr("Internal server error"),
-			setupMock: func() (appRepository, CacheService) {
+			name:          "failed to get data from cache",
+			expectedError: tests.Ptr("Internal server error"),
+			setupMock: func() (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				mCache.On("ExistsData", mock.Anything, "status-123e23e23").Return(int64(1), nil)
 				mCache.On("GetData", mock.Anything, "status-123e23e23").Return(`
-				`, errors.New("Failed to get data"))
+				`, errors.New("failed to get data"))
 				return mApp, mCache
 			},
 		},
 		{
 			name:          "Wrong data format provided from cache",
-			expectedError: ptr("Internal server error"),
-			setupMock: func() (appRepository, CacheService) {
+			expectedError: tests.Ptr("Internal server error"),
+			setupMock: func() (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				mCache.On("ExistsData", mock.Anything, "status-123e23e23").Return(int64(1), nil)
@@ -244,55 +255,58 @@ func TestAppService_GetAppStatus(t *testing.T) {
 			},
 		},
 		{
-			name:          "Failed to get data from database",
-			expectedError: ptr("Failed to get data from db"),
-			setupMock: func() (appRepository, CacheService) {
+			name:          "failed to get data from database",
+			expectedError: tests.Ptr("failed to get data from db"),
+			setupMock: func() (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				mCache.On("ExistsData", mock.Anything, "status-123e23e23").Return(int64(0), nil)
 				mApp.On("GetAppStatus", mock.Anything, mock.Anything, mock.Anything).Return(
-					DTO.AppStatus{}, errors.New("Failed to get data from db"))
+					DTO.AppStatus{}, errors.New("failed to get data from db"))
 				return mApp, mCache
 			},
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
 			ctx := context.Background()
-			loggerService := createLogger()
-			appRepository, cacheService := test.setupMock()
+			loggerService := tests.CreateLogger()
+			appRepository, cacheService := testScenario.setupMock()
 			routeRepository := repository.NewRouteRepository(&sql.DB{}, loggerService)
-			appService := NewAppService(appRepository, loggerService, cacheService, env.DockerHost, routeRepository)
+			appStatusService := NewAppStatusService(appRepository, cacheService, *loggerService, env.DockerHost)
+			appNotificationsService := NewAppNotificationsService(appRepository, loggerService)
+			routeStatusService := NewRouteStatusService(routeRepository, loggerService)
+			appService := NewAppService(appRepository, loggerService, appStatusService, appNotificationsService, routeStatusService)
 			app, err := appService.GetAppStatus(ctx,
 				"123e23e23", 543)
 			fmt.Println(app, err)
-			if test.expectedError == nil {
+			if testScenario.expectedError == nil {
 				assert.NoError(t, err)
 				assert.NotEmpty(t, app)
 			} else {
 				assert.Error(t, err)
 				assert.Empty(t, app)
-				assert.Contains(t, err.Error(), *test.expectedError)
+				assert.Contains(t, err.Error(), *testScenario.expectedError)
 			}
 		})
 	}
 }
 
 func TestAppService_DeleteApp(t *testing.T) {
-	env, err := config.SetConfig("../../.env")
+	env, err := config.SetConfig("../../../.env")
 	if err != nil {
 		panic(err)
 	}
 	type args struct {
 		name          string
 		expectedError *string
-		setupMock     func() (appRepository, CacheService)
+		setupMock     func() (interfaces.AppRepository, interfaces.CacheService)
 	}
-	tests := []args{
+	testsScenarios := []args{
 		{
 			name:          "Proper data",
 			expectedError: nil,
-			setupMock: func() (appRepository, CacheService) {
+			setupMock: func() (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				mApp.On("DeleteApp", mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -301,48 +315,51 @@ func TestAppService_DeleteApp(t *testing.T) {
 		},
 		{
 			name:          "failed to delete an app",
-			expectedError: ptr("Failed to delete an app"),
-			setupMock: func() (appRepository, CacheService) {
+			expectedError: tests.Ptr("failed to delete an app"),
+			setupMock: func() (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
-				mApp.On("DeleteApp", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("Failed to delete an app"))
+				mApp.On("DeleteApp", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("failed to delete an app"))
 				return mApp, mCache
 			},
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
 			ctx := context.Background()
-			loggerService := createLogger()
-			appRepository, cacheService := test.setupMock()
+			loggerService := tests.CreateLogger()
+			appRepository, cacheService := testScenario.setupMock()
 			routeRepository := repository.NewRouteRepository(&sql.DB{}, loggerService)
-			appService := NewAppService(appRepository, loggerService, cacheService, env.DockerHost, routeRepository)
+			appStatusService := NewAppStatusService(appRepository, cacheService, *loggerService, env.DockerHost)
+			appNotificationsService := NewAppNotificationsService(appRepository, loggerService)
+			routeStatusService := NewRouteStatusService(routeRepository, loggerService)
+			appService := NewAppService(appRepository, loggerService, appStatusService, appNotificationsService, routeStatusService)
 			err := appService.DeleteApp(ctx,
 				"delete", 21)
-			if test.expectedError == nil {
+			if testScenario.expectedError == nil {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), *test.expectedError)
+				assert.Contains(t, err.Error(), *testScenario.expectedError)
 			}
 		})
 	}
 }
 func TestAppService_UpdateApp(t *testing.T) {
-	env, err := config.SetConfig("../../.env")
+	env, err := config.SetConfig("../../../.env")
 	if err != nil {
 		panic(err)
 	}
 	type args struct {
 		name          string
 		expectedError *string
-		setupMock     func() (appRepository, CacheService)
+		setupMock     func() (interfaces.AppRepository, interfaces.CacheService)
 	}
-	tests := []args{
+	testsScenarios := []args{
 		{
 			name:          "Proper data",
 			expectedError: nil,
-			setupMock: func() (appRepository, CacheService) {
+			setupMock: func() (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				mApp.On("UpdateApp", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -351,37 +368,40 @@ func TestAppService_UpdateApp(t *testing.T) {
 		},
 		{
 			name:          "failed to delete an app",
-			expectedError: ptr("Failed to update an app"),
-			setupMock: func() (appRepository, CacheService) {
+			expectedError: tests.Ptr("failed to update an app"),
+			setupMock: func() (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
-				mApp.On("UpdateApp", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("Failed to update an app"))
+				mApp.On("UpdateApp", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("failed to update an app"))
 				return mApp, mCache
 			},
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
 			ctx := context.Background()
-			loggerService := createLogger()
-			appRepository, cacheService := test.setupMock()
+			loggerService := tests.CreateLogger()
+			appRepository, cacheService := testScenario.setupMock()
 			routeRepository := repository.NewRouteRepository(&sql.DB{}, loggerService)
-			appService := NewAppService(appRepository, loggerService, cacheService, env.DockerHost, routeRepository)
+			appStatusService := NewAppStatusService(appRepository, cacheService, *loggerService, env.DockerHost)
+			appNotificationsService := NewAppNotificationsService(appRepository, loggerService)
+			routeStatusService := NewRouteStatusService(routeRepository, loggerService)
+			appService := NewAppService(appRepository, loggerService, appStatusService, appNotificationsService, routeStatusService)
 			app := DTO.UpdateApp{Name: "Test", Description: "test", Port: "3020", IpAddress: "192.168.20.10"}
 			err := appService.UpdateApp(ctx,
 				"delete", app, 21)
-			if test.expectedError == nil {
+			if testScenario.expectedError == nil {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), *test.expectedError)
+				assert.Contains(t, err.Error(), *testScenario.expectedError)
 			}
 		})
 	}
 }
 
 func TestAppService_CheckAppsStatus(t *testing.T) {
-	env, err := config.SetConfig("../../.env")
+	env, err := config.SetConfig("../../../.env")
 	if err != nil {
 		panic(err)
 	}
@@ -389,14 +409,14 @@ func TestAppService_CheckAppsStatus(t *testing.T) {
 		name          string
 		expectedError *string
 		dockerHost    string
-		setupMock     func(appId string) (appRepository, CacheService)
+		setupMock     func(appId string) (interfaces.AppRepository, interfaces.CacheService)
 	}
-	tests := []args{
+	testsScenarios := []args{
 		{
 			name:          "Failed to get app to check",
-			expectedError: ptr("failed to get app to check"),
+			expectedError: tests.Ptr("failed to get app to check"),
 			dockerHost:    env.DockerHost,
-			setupMock: func(appId string) (appRepository, CacheService) {
+			setupMock: func(appId string) (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				mApp.On("GetAppsToCheck", mock.Anything).Return([]*models.AppToCheck{},
@@ -406,9 +426,9 @@ func TestAppService_CheckAppsStatus(t *testing.T) {
 		},
 		{
 			name:          "Wrong docker host provided",
-			expectedError: ptr("unable to parse docker host"),
+			expectedError: tests.Ptr("unable to parse docker host"),
 			dockerHost:    "192.168.0.100",
-			setupMock: func(appId string) (appRepository, CacheService) {
+			setupMock: func(appId string) (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				mApp.On("GetAppsToCheck", mock.Anything).Return([]*models.AppToCheck{},
@@ -420,7 +440,7 @@ func TestAppService_CheckAppsStatus(t *testing.T) {
 			name:          "Successfully to inspected the container",
 			expectedError: nil,
 			dockerHost:    env.DockerHost,
-			setupMock: func(appId string) (appRepository, CacheService) {
+			setupMock: func(appId string) (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				mApp.On("GetAppsToCheck", mock.Anything).Return([]*models.AppToCheck{
@@ -437,10 +457,10 @@ func TestAppService_CheckAppsStatus(t *testing.T) {
 			},
 		},
 		{
-			name:          "Failed to inspect container",
+			name:          "failed to inspect container",
 			expectedError: nil,
 			dockerHost:    env.DockerHost,
-			setupMock: func(appId string) (appRepository, CacheService) {
+			setupMock: func(appId string) (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				mApp.On("GetAppsToCheck", mock.Anything).Return([]*models.AppToCheck{
@@ -459,7 +479,7 @@ func TestAppService_CheckAppsStatus(t *testing.T) {
 			name:          "Check not a container app",
 			expectedError: nil,
 			dockerHost:    env.DockerHost,
-			setupMock: func(appId string) (appRepository, CacheService) {
+			setupMock: func(appId string) (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				mApp.On("GetAppsToCheck", mock.Anything).Return([]*models.AppToCheck{
@@ -482,7 +502,7 @@ func TestAppService_CheckAppsStatus(t *testing.T) {
 			name:          "failed to save status in cache",
 			expectedError: nil,
 			dockerHost:    env.DockerHost,
-			setupMock: func(appId string) (appRepository, CacheService) {
+			setupMock: func(appId string) (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				mApp.On("GetAppsToCheck", mock.Anything).Return([]*models.AppToCheck{
@@ -495,7 +515,7 @@ func TestAppService_CheckAppsStatus(t *testing.T) {
 				},
 					nil)
 				mCache.On("SetData", mock.Anything, "status-r32r23r", mock.Anything,
-					mock.Anything).Return(errors.New("Failed to save app status in cache"))
+					mock.Anything).Return(errors.New("failed to save app status in cache"))
 				mApp.On("InsertAppStatuses", mock.Anything, mock.Anything).Return(nil)
 
 				return mApp, mCache
@@ -505,7 +525,7 @@ func TestAppService_CheckAppsStatus(t *testing.T) {
 			name:          "App stopped",
 			expectedError: nil,
 			dockerHost:    env.DockerHost,
-			setupMock: func(appId string) (appRepository, CacheService) {
+			setupMock: func(appId string) (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				mApp.On("GetAppsToCheck", mock.Anything).Return([]*models.AppToCheck{
@@ -525,10 +545,10 @@ func TestAppService_CheckAppsStatus(t *testing.T) {
 			},
 		},
 		{
-			name:          "Failed to insert appStatuses to db",
-			expectedError: ptr("Failed to insert appStatuses to db"),
+			name:          "failed to insert appStatuses to db",
+			expectedError: tests.Ptr("failed to insert appStatuses to db"),
 			dockerHost:    env.DockerHost,
-			setupMock: func(appId string) (appRepository, CacheService) {
+			setupMock: func(appId string) (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				mApp.On("GetAppsToCheck", mock.Anything).Return([]*models.AppToCheck{
@@ -542,31 +562,34 @@ func TestAppService_CheckAppsStatus(t *testing.T) {
 					nil)
 				mCache.On("SetData", mock.Anything, "status-r32r23r", mock.Anything,
 					mock.Anything).Return(nil)
-				mApp.On("InsertAppStatuses", mock.Anything, mock.Anything).Return(errors.New("Failed to insert appStatuses to db"))
+				mApp.On("InsertAppStatuses", mock.Anything, mock.Anything).Return(errors.New("failed to insert appStatuses to db"))
 
 				return mApp, mCache
 			},
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
 			ctx := context.Background()
-			loggerService := createLogger()
-			containerId, _ := createTestContainer("alpine", []string{"sleep", "10"},
+			loggerService := tests.CreateLogger()
+			containerId, _ := tests.CreateTestContainer("alpine", []string{"sleep", "10"},
 				loggerService,
 				env.DockerHost)
 			appId := containerId
-			appRepository, cacheService := test.setupMock(appId)
+			appRepository, cacheService := testScenario.setupMock(appId)
 			routeRepository := repository.NewRouteRepository(&sql.DB{}, loggerService)
-			appService := NewAppService(appRepository, loggerService, cacheService, test.dockerHost, routeRepository)
+			appStatusService := NewAppStatusService(appRepository, cacheService, *loggerService, testScenario.dockerHost)
+			appNotificationsService := NewAppNotificationsService(appRepository, loggerService)
+			routeStatusService := NewRouteStatusService(routeRepository, loggerService)
+			appService := NewAppService(appRepository, loggerService, appStatusService, appNotificationsService, routeStatusService)
 			_, err := appService.CheckAppsStatus(ctx)
-			if test.expectedError == nil {
+			if testScenario.expectedError == nil {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), *test.expectedError)
+				assert.Contains(t, err.Error(), *testScenario.expectedError)
 			}
-			err = killAndRemoveContainer(ctx, appId, loggerService, env.DockerHost)
+			err = tests.KillAndRemoveContainer(ctx, appId, loggerService, env.DockerHost)
 			if err != nil {
 				panic(err)
 			}
@@ -575,7 +598,7 @@ func TestAppService_CheckAppsStatus(t *testing.T) {
 	}
 }
 func TestAppService_SendNotifications(t *testing.T) {
-	env, err := config.SetConfig("../../.env")
+	env, err := config.SetConfig("../../../.env")
 	if err != nil {
 		panic(err)
 	}
@@ -583,28 +606,28 @@ func TestAppService_SendNotifications(t *testing.T) {
 		name          string
 		expectedError *string
 		appsStatuses  []DTO.AppStatus
-		setupMock     func() (appRepository, CacheService)
+		setupMock     func() (interfaces.AppRepository, interfaces.CacheService)
 	}
-	tests := []args{
+	testsScenarios := []args{
 		{
 			name:          "No app statuses",
 			expectedError: nil,
 			appsStatuses:  []DTO.AppStatus{},
-			setupMock: func() (appRepository, CacheService) {
+			setupMock: func() (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				return mApp, mCache
 			},
 		},
 		{
-			name:          "Failed to get users to send notifications",
-			expectedError: ptr("Failed to get users to send notifications"),
+			name:          "failed to get users to send notifications",
+			expectedError: tests.Ptr("failed to get users to send notifications"),
 			appsStatuses:  []DTO.AppStatus{{AppID: "32"}},
-			setupMock: func() (appRepository, CacheService) {
+			setupMock: func() (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				mApp.On("GetUsersToSendNotifications", mock.Anything,
-					mock.Anything).Return([]models.NotificationInfo{}, errors.New("Failed to get users to send notifications"))
+					mock.Anything).Return([]models.NotificationInfo{}, errors.New("failed to get users to send notifications"))
 				return mApp, mCache
 			},
 		},
@@ -612,7 +635,7 @@ func TestAppService_SendNotifications(t *testing.T) {
 			name:          "Proper data",
 			expectedError: nil,
 			appsStatuses:  []DTO.AppStatus{{AppID: "32", Status: "running"}},
-			setupMock: func() (appRepository, CacheService) {
+			setupMock: func() (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
 				mApp.On("GetUsersToSendNotifications", mock.Anything,
@@ -629,20 +652,23 @@ func TestAppService_SendNotifications(t *testing.T) {
 			},
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
 			ctx := context.Background()
-			loggerService := createLogger()
-			appRepository, cacheService := test.setupMock()
+			loggerService := tests.CreateLogger()
+			appRepository, cacheService := testScenario.setupMock()
 			routeRepository := repository.NewRouteRepository(&sql.DB{}, loggerService)
-			appService := NewAppService(appRepository, loggerService, cacheService, env.DockerHost, routeRepository)
+			appStatusService := NewAppStatusService(appRepository, cacheService, *loggerService, env.DockerHost)
+			appNotificationsService := NewAppNotificationsService(appRepository, loggerService)
+			routeStatusService := NewRouteStatusService(routeRepository, loggerService)
+			appService := NewAppService(appRepository, loggerService, appStatusService, appNotificationsService, routeStatusService)
 			err := appService.SendNotifications(ctx,
-				test.appsStatuses)
-			if test.expectedError == nil {
+				testScenario.appsStatuses)
+			if testScenario.expectedError == nil {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), *test.expectedError)
+				assert.Contains(t, err.Error(), *testScenario.expectedError)
 			}
 		})
 	}

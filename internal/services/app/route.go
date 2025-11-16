@@ -1,38 +1,22 @@
-package services
+package servicesApp
 
 import (
 	"context"
 	"runtime"
 	"sync"
 
-	"github.com/slodkiadrianek/octopus/internal/models"
+	"github.com/slodkiadrianek/octopus/internal/services/interfaces"
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
-type routeRepository interface {
-	UpdateWorkingRoutesStatuses(ctx context.Context, routesStatuses map[int]string) error
-	GetWorkingRoutesToTest(ctx context.Context) ([]models.RouteToTest, error)
-	InsertRoutesInfo(ctx context.Context, routesInfo []*DTO.RouteInfo) ([]int, error)
-	InsertRoutesRequests(ctx context.Context,
-		routesRequests []*DTO.RouteRequest) ([]int, error)
-	InsertRoutesResponses(ctx context.Context,
-		routesResponses []*DTO.RouteResponse) ([]int,
-		error)
-	InsertNextRoutesData(ctx context.Context,
-		nextRoutesData []*DTO.NextRoute) ([]int,
-		error)
-	InsertWorkingRoute(ctx context.Context, workingRoute DTO.WorkingRoute) (int,
-		error)
-}
-
 type RouteService struct {
-	Logger          *utils.Logger
-	RouteRepository routeRepository
+	Logger          utils.Logger
+	RouteRepository interfaces.RouteRepository
 }
 
-func NewRouteService(logger *utils.Logger, routeRepository routeRepository) *RouteService {
+func NewRouteService(logger utils.Logger, routeRepository interfaces.RouteRepository) *RouteService {
 	return &RouteService{
 		Logger:          logger,
 		RouteRepository: routeRepository,
@@ -59,37 +43,44 @@ func (rs *RouteService) prepareDataAboutRouteToInsertToDb(routes *[]DTO.CreateRo
 					return
 				}
 				responseRoutesChan <- *DTO.NewRouteResponse(job.ResponseStatusCode, job.ParentId, string(responseBodyBytes))
+
 				requestParamsBytes, err := utils.MarshalData(job.RequestParams)
 				if err != nil {
 					errorChan <- err
 					return
 				}
+
 				requestQueryBytes, err := utils.MarshalData(job.RequestQuery)
 				if err != nil {
 					errorChan <- err
 					return
 				}
+
 				requestBodyBytes, err := utils.MarshalData(job.RequestBody)
 				if err != nil {
 					errorChan <- err
 					return
 				}
 				requestRoutesChan <- *DTO.NewRouteRequest(job.RequestAuthorization, string(requestQueryBytes), string(requestParamsBytes), string(requestBodyBytes), job.ParentId)
+
 				nextRouteBodyBytes, err := utils.MarshalData(job.NextRouteBody)
 				if err != nil {
 					errorChan <- err
 					return
 				}
+
 				nextRouteQueryBytes, err := utils.MarshalData(job.NextRouteQuery)
 				if err != nil {
 					errorChan <- err
 					return
 				}
+
 				nextRouteParamsBytes, err := utils.MarshalData(job.NextRouteParams)
 				if err != nil {
 					errorChan <- err
 					return
 				}
+
 				nextRoutesChan <- *DTO.NewNextRouteData(string(nextRouteBodyBytes), string(nextRouteQueryBytes),
 					string(nextRouteParamsBytes), job.NextAuthorizationHeader, job.ParentId)
 				routesInfoChan <- *DTO.NewRouteInfo(job.Path, job.Method, job.ParentId)
@@ -105,11 +96,13 @@ func (rs *RouteService) prepareDataAboutRouteToInsertToDb(routes *[]DTO.CreateRo
 	close(requestRoutesChan)
 	close(responseRoutesChan)
 	close(routesInfoChan)
+
 	select {
 	case err := <-errorChan:
 		return []*DTO.NextRoute{}, []*DTO.RouteRequest{}, []*DTO.RouteResponse{}, []*DTO.RouteInfo{}, err
 	default:
 	}
+
 	var nextRoutes []*DTO.NextRoute
 	var requestRoutes []*DTO.RouteRequest
 	var responseRoutes []*DTO.RouteResponse
@@ -118,12 +111,15 @@ func (rs *RouteService) prepareDataAboutRouteToInsertToDb(routes *[]DTO.CreateRo
 	for nextRoute := range nextRoutesChan {
 		nextRoutes = append(nextRoutes, &nextRoute)
 	}
+
 	for requestRoute := range requestRoutesChan {
 		requestRoutes = append(requestRoutes, &requestRoute)
 	}
+
 	for responseRoute := range responseRoutesChan {
 		responseRoutes = append(responseRoutes, &responseRoute)
 	}
+
 	for routeInfo := range routesInfoChan {
 		routesInfo = append(routesInfo, &routeInfo)
 	}

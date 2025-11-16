@@ -1,4 +1,4 @@
-package services
+package servicesApp
 
 import (
 	"context"
@@ -6,15 +6,16 @@ import (
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
+	"github.com/slodkiadrianek/octopus/internal/services/interfaces"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
 type AppNotificationsService struct {
-	AppRepository appRepository
-	LoggerService *utils.Logger
+	AppRepository interfaces.AppRepository
+	LoggerService utils.Logger
 }
 
-func NewAppNotificationsService(appRepository appRepository, loggerService *utils.Logger,
+func NewAppNotificationsService(appRepository interfaces.AppRepository, loggerService utils.Logger,
 ) *AppNotificationsService {
 	return &AppNotificationsService{
 		AppRepository: appRepository,
@@ -65,7 +66,7 @@ func (an *AppNotificationsService) sortNotificationsBySendToInformation(sortedNo
 	return discordNotifications, slackNotifications
 }
 
-func (an *AppNotificationsService) sendNotifications(ctx context.Context, appsStatuses []DTO.AppStatus) error {
+func (an *AppNotificationsService) SendNotifications(ctx context.Context, appsStatuses []DTO.AppStatus) error {
 	if len(appsStatuses) == 0 {
 		return nil
 	}
@@ -91,7 +92,7 @@ func (an *AppNotificationsService) sendNotifications(ctx context.Context, appsSt
 			return err
 		}
 
-		responseStatusCode, _, err := utils.DoHttpRequest(ctx, webhookURL, "", "POST", body, *an.LoggerService)
+		responseStatusCode, _, err := utils.DoHttpRequest(ctx, webhookURL, "", "POST", body, an.LoggerService)
 		if err != nil {
 			return err
 		}
@@ -112,7 +113,7 @@ func (an *AppNotificationsService) sendNotifications(ctx context.Context, appsSt
 			return err
 		}
 
-		responseStatusCode, _, err := utils.DoHttpRequest(ctx, webhookURL, "", "POST", body, *an.LoggerService)
+		responseStatusCode, _, err := utils.DoHttpRequest(ctx, webhookURL, "", "POST", body, an.LoggerService)
 		if err != nil {
 			return err
 		}
