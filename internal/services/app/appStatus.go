@@ -16,32 +16,32 @@ import (
 )
 
 type AppStatusService struct {
-	AppRepository interfaces.AppRepository
-	CacheService  interfaces.CacheService
-	LoggerService utils.Logger
-	DockerHost    string
+	appRepository interfaces.AppRepository
+	cacheService  interfaces.CacheService
+	loggerService utils.LoggerService
+	dockerHost    string
 }
 
 func NewAppStatusService(appRepository interfaces.AppRepository, cacheService interfaces.CacheService,
-	loggerService utils.Logger, dockerHost string) *AppStatusService {
+	loggerService utils.LoggerService, dockerHost string) *AppStatusService {
 	return &AppStatusService{
-		AppRepository: appRepository,
-		CacheService:  cacheService,
-		LoggerService: loggerService,
-		DockerHost:    dockerHost,
+		appRepository: appRepository,
+		cacheService:  cacheService,
+		loggerService: loggerService,
+		dockerHost:    dockerHost,
 	}
 }
 
 func (as *AppStatusService) readAppStatusFromCache(ctx context.Context, cacheKey string) (DTO.AppStatus, error) {
-	appStatusAsJson, err := as.CacheService.GetData(ctx, cacheKey)
+	appStatusAsJson, err := as.cacheService.GetData(ctx, cacheKey)
 	if err != nil {
-		as.LoggerService.Warn("Failed to get data from cache", err)
+		as.loggerService.Warn("Failed to get data from cache", err)
 		return DTO.AppStatus{}, models.NewError(500, "Server", "Internal server error")
 	}
 
 	appStatus, err := utils.UnmarshalData[DTO.AppStatus]([]byte(appStatusAsJson))
 	if err != nil {
-		as.LoggerService.Warn("Failed to unmarshal  data", err)
+		as.loggerService.Warn("Failed to unmarshal  data", err)
 		return DTO.AppStatus{}, models.NewError(500, "Server", "Internal server error")
 	}
 
@@ -69,14 +69,14 @@ func (as *AppStatusService) checkAndCompareAppStatuses(ctx context.Context, cli 
 				if job.IsDocker {
 					container, err := cli.ContainerInspect(ctx, job.ID)
 					if err != nil {
-						as.LoggerService.Error("Failed to inspect container", err)
+						as.loggerService.Error("Failed to inspect container", err)
 						continue
 					}
 
 					status := container.State.Status
 					startedTime, err := time.Parse(time.RFC3339, container.State.StartedAt)
 					if err != nil {
-						as.LoggerService.Error("Failed to parse container start time", err)
+						as.loggerService.Error("Failed to parse container start time", err)
 						continue
 					}
 
@@ -104,13 +104,13 @@ func (as *AppStatusService) checkAndCompareAppStatuses(ctx context.Context, cli 
 
 				appStatusBytes, err := utils.MarshalData(appStatus)
 				if err != nil {
-					as.LoggerService.Error("Failed to marshal app status", map[string]any{"data": appStatus, "error": err.Error()})
+					as.loggerService.Error("Failed to marshal app status", map[string]any{"data": appStatus, "error": err.Error()})
 					continue
 				}
 
-				if err := as.CacheService.SetData(ctx, "status-"+job.ID, string(appStatusBytes),
+				if err := as.cacheService.SetData(ctx, "status-"+job.ID, string(appStatusBytes),
 					2*time.Minute); err != nil {
-					as.LoggerService.Error("Failed to set cache", map[string]any{"data": appStatus, "error": err.Error()})
+					as.loggerService.Error("Failed to set cache", map[string]any{"data": appStatus, "error": err.Error()})
 				}
 			}
 		}()
@@ -138,12 +138,12 @@ func (as *AppStatusService) checkAndCompareAppStatuses(ctx context.Context, cli 
 }
 
 func (as *AppStatusService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatus, error) {
-	appsToCheck, err := as.AppRepository.GetAppsToCheck(ctx)
+	appsToCheck, err := as.appRepository.GetAppsToCheck(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	cli, err := client.NewClientWithOpts(client.WithHost(as.DockerHost), client.WithAPIVersionNegotiation())
+	cli, err := client.NewClientWithOpts(client.WithHost(as.dockerHost), client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, err
 	}
@@ -151,8 +151,8 @@ func (as *AppStatusService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatu
 
 	appsStatuses, appsToSendNotification := as.checkAndCompareAppStatuses(ctx, cli, appsToCheck)
 	if len(appsStatuses) > 0 {
-		if err := as.AppRepository.InsertAppStatuses(ctx, appsStatuses); err != nil {
-			as.LoggerService.Error("Failed to insert app statuses", err)
+		if err := as.appRepository.InsertAppStatuses(ctx, appsStatuses); err != nil {
+			as.loggerService.Error("Failed to insert app statuses", err)
 			return appsToSendNotification, err
 		}
 	}
@@ -163,9 +163,9 @@ func (as *AppStatusService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatu
 func (as *AppStatusService) GetAppStatus(ctx context.Context, id string, ownerId int) (DTO.AppStatus, error) {
 	cacheKey := fmt.Sprintf("status-%s", id)
 
-	doesAppStatusExists, err := as.CacheService.ExistsData(ctx, cacheKey)
+	doesAppStatusExists, err := as.cacheService.ExistsData(ctx, cacheKey)
 	if err != nil {
-		as.LoggerService.Warn("Failed to get info about data in cache", err)
+		as.loggerService.Warn("Failed to get info about data in cache", err)
 	}
 
 	if doesAppStatusExists > 0 {
@@ -176,7 +176,7 @@ func (as *AppStatusService) GetAppStatus(ctx context.Context, id string, ownerId
 		return appStatus, nil
 	}
 
-	appStatus, err := as.AppRepository.GetAppStatus(ctx, id, ownerId)
+	appStatus, err := as.appRepository.GetAppStatus(ctx, id, ownerId)
 	if err != nil {
 		return DTO.AppStatus{}, err
 	}

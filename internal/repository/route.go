@@ -12,14 +12,14 @@ import (
 )
 
 type RouteRepository struct {
-	Db            *sql.DB
-	LoggerService *utils.Logger
+	db            *sql.DB
+	loggerService utils.LoggerService
 }
 
-func NewRouteRepository(db *sql.DB, logger *utils.Logger) *RouteRepository {
+func NewRouteRepository(db *sql.DB, loggerService utils.LoggerService) *RouteRepository {
 	return &RouteRepository{
-		Db:            db,
-		LoggerService: logger,
+		db:            db,
+		loggerService: loggerService,
 	}
 }
 
@@ -42,9 +42,9 @@ func (r *RouteRepository) UpdateWorkingRoutesStatuses(ctx context.Context, route
 	) AS v(id, status)
 		WHERE t.id = v.id::integer;
 	`, strings.Join(placeholders, ","))
-	_, err := r.Db.ExecContext(ctx, query, args...)
+	_, err := r.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		r.LoggerService.Error("Failed to to update routes statuses", map[string]any{
+		r.loggerService.Error("Failed to to update routes statuses", map[string]any{
 			"query": query,
 			"err":   err.Error(),
 		})
@@ -84,9 +84,9 @@ FROM working_routes wr
     INNER JOIN apps_statuses aps on aps.app_id = wr.app_id
 WHERE aps.status = 'running'
 	`
-	stmt, err := r.Db.PrepareContext(ctx, query)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
-		r.LoggerService.Error("Failed to prepare statement", map[string]any{
+		r.loggerService.Error("Failed to prepare statement", map[string]any{
 			"query": query,
 			"err":   err.Error(),
 		})
@@ -94,7 +94,7 @@ WHERE aps.status = 'running'
 	}
 	rows, err := stmt.QueryContext(ctx)
 	if err != nil {
-		r.LoggerService.Error("Failed to execute query", map[string]any{
+		r.loggerService.Error("Failed to execute query", map[string]any{
 			"query": query,
 			"err":   err.Error(),
 		})
@@ -109,7 +109,7 @@ WHERE aps.status = 'running'
 			&routeToTest.Path,
 			&routeToTest.Method, &routeToTest.RequestAuthorization, &routeToTest.RequestQuery, &routeToTest.RequestParams, &routeToTest.RequestBody, &routeToTest.NextRouteBody, &routeToTest.NextRouteParams, &routeToTest.NextRouteQuery, &routeToTest.NextAuthorizationHeader, &routeToTest.ResponseStatusCode, &routeToTest.ResponseBody)
 		if err != nil {
-			r.LoggerService.Error("Failed to scan row", map[string]any{
+			r.loggerService.Error("Failed to scan row", map[string]any{
 				"query": query,
 				"err":   err.Error(),
 			})
@@ -137,9 +137,9 @@ func (r *RouteRepository) InsertRoutesInfo(ctx context.Context, routesInfo []*DT
 	DO UPDATE
 		SET path = EXCLUDED.path
 	Returning id`, strings.Join(placeholders, ","))
-	stmt, err := r.Db.PrepareContext(ctx, insertQuery)
+	stmt, err := r.db.PrepareContext(ctx, insertQuery)
 	if err != nil {
-		r.LoggerService.Error("Failed to prepare statement", map[string]any{
+		r.loggerService.Error("Failed to prepare statement", map[string]any{
 			"query": insertQuery,
 			"err":   err.Error(),
 		})
@@ -148,7 +148,7 @@ func (r *RouteRepository) InsertRoutesInfo(ctx context.Context, routesInfo []*DT
 	defer stmt.Close()
 	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
-		r.LoggerService.Error("Failed to prepare statement", map[string]any{
+		r.loggerService.Error("Failed to prepare statement", map[string]any{
 			"query": insertQuery,
 			"err":   err.Error(),
 		})
@@ -159,7 +159,7 @@ func (r *RouteRepository) InsertRoutesInfo(ctx context.Context, routesInfo []*DT
 		var routeInfoId int
 		err := rows.Scan(&routeInfoId)
 		if err != nil {
-			r.LoggerService.Error("Failed to scan row", map[string]any{
+			r.loggerService.Error("Failed to scan row", map[string]any{
 				"query": insertQuery,
 				"err":   err.Error(),
 			})
@@ -197,9 +197,9 @@ func (r *RouteRepository) InsertRoutesRequests(ctx context.Context,
 	DO UPDATE
 		SET authorization_header = EXCLUDED.authorization_header
 	Returning id`, strings.Join(placeholders, ","))
-	stmt, err := r.Db.PrepareContext(ctx, insertQuery)
+	stmt, err := r.db.PrepareContext(ctx, insertQuery)
 	if err != nil {
-		r.LoggerService.Error("Failed to prepare statement", map[string]any{
+		r.loggerService.Error("Failed to prepare statement", map[string]any{
 			"query": insertQuery,
 			"err":   err.Error(),
 		})
@@ -208,7 +208,7 @@ func (r *RouteRepository) InsertRoutesRequests(ctx context.Context,
 	defer stmt.Close()
 	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
-		r.LoggerService.Error("Failed to prepare statement", map[string]any{
+		r.loggerService.Error("Failed to prepare statement", map[string]any{
 			"query": insertQuery,
 			"err":   err.Error(),
 		})
@@ -219,7 +219,7 @@ func (r *RouteRepository) InsertRoutesRequests(ctx context.Context,
 		var routeRequestId int
 		err := rows.Scan(&routeRequestId)
 		if err != nil {
-			r.LoggerService.Error("Failed to scan row", map[string]any{
+			r.loggerService.Error("Failed to scan row", map[string]any{
 				"query": insertQuery,
 				"err":   err.Error(),
 			})
@@ -253,9 +253,9 @@ func (r *RouteRepository) InsertRoutesResponses(ctx context.Context,
 	DO UPDATE
 		SET status_code = EXCLUDED.status_code
 	Returning id`, strings.Join(placeholders, ","))
-	stmt, err := r.Db.PrepareContext(ctx, insertQuery)
+	stmt, err := r.db.PrepareContext(ctx, insertQuery)
 	if err != nil {
-		r.LoggerService.Error("Failed to prepare statement", map[string]any{
+		r.loggerService.Error("Failed to prepare statement", map[string]any{
 			"query": insertQuery,
 			"err":   err.Error(),
 		})
@@ -264,7 +264,7 @@ func (r *RouteRepository) InsertRoutesResponses(ctx context.Context,
 	defer stmt.Close()
 	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
-		r.LoggerService.Error("Failed to prepare statement", map[string]any{
+		r.loggerService.Error("Failed to prepare statement", map[string]any{
 			"query": insertQuery,
 			"err":   err.Error(),
 		})
@@ -275,7 +275,7 @@ func (r *RouteRepository) InsertRoutesResponses(ctx context.Context,
 		var routeResponseId int
 		err := rows.Scan(&routeResponseId)
 		if err != nil {
-			r.LoggerService.Error("Failed to scan row", map[string]any{
+			r.loggerService.Error("Failed to scan row", map[string]any{
 				"query": insertQuery,
 				"err":   err.Error(),
 			})
@@ -318,9 +318,9 @@ SELECT u.id
 FROM input_data i
 JOIN upserted u USING (body,params,query,authorization_header);
 	`, strings.Join(placeholders, ","))
-	stmt, err := r.Db.PrepareContext(ctx, insertQuery)
+	stmt, err := r.db.PrepareContext(ctx, insertQuery)
 	if err != nil {
-		r.LoggerService.Error("Failed to prepare statement", map[string]any{
+		r.loggerService.Error("Failed to prepare statement", map[string]any{
 			"query": insertQuery,
 			"err":   err.Error(),
 		})
@@ -329,7 +329,7 @@ JOIN upserted u USING (body,params,query,authorization_header);
 	defer stmt.Close()
 	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
-		r.LoggerService.Error("Failed to prepare statement", map[string]any{
+		r.loggerService.Error("Failed to prepare statement", map[string]any{
 			"query": insertQuery,
 			"err":   err.Error(),
 		})
@@ -340,7 +340,7 @@ JOIN upserted u USING (body,params,query,authorization_header);
 		var nextRouteDataId int
 		err := rows.Scan(&nextRouteDataId)
 		if err != nil {
-			r.LoggerService.Error("Failed to scan row", map[string]any{
+			r.loggerService.Error("Failed to scan row", map[string]any{
 				"query": insertQuery,
 				"err":   err.Error(),
 			})
@@ -376,9 +376,9 @@ ON CONFLICT (
 DO UPDATE SET 
     status = EXCLUDED.status
 RETURNING id`
-	stmt, err := r.Db.PrepareContext(ctx, insertQuery)
+	stmt, err := r.db.PrepareContext(ctx, insertQuery)
 	if err != nil {
-		r.LoggerService.Error("Failed to prepare statement", map[string]any{
+		r.loggerService.Error("Failed to prepare statement", map[string]any{
 			"query": insertQuery,
 			"err":   err.Error(),
 		})
@@ -388,7 +388,7 @@ RETURNING id`
 	err = stmt.QueryRowContext(ctx, workingRoute.Name, workingRoute.AppId, workingRoute.ParentID, workingRoute.RouteID,
 		workingRoute.RequestID, workingRoute.ResponseID, workingRoute.NextRouteDataId, workingRoute.Status).Scan(&id)
 	if err != nil {
-		r.LoggerService.Error("Failed to prepare statement", map[string]any{
+		r.loggerService.Error("Failed to prepare statement", map[string]any{
 			"query": insertQuery,
 			"err":   err.Error(),
 			"data":  workingRoute,

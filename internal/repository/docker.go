@@ -7,14 +7,14 @@ import (
 )
 
 type DockerRepository struct {
-	Db     *sql.DB
-	Logger *utils.Logger
+	db            *sql.DB
+	loggerService utils.LoggerService
 }
 
-func NewDockerRepository(db *sql.DB, logger *utils.Logger) *DockerRepository {
+func NewDockerRepository(db *sql.DB, loggerService utils.LoggerService) *DockerRepository {
 	return &DockerRepository{
-		Db:     db,
-		Logger: logger,
+		db:            db,
+		loggerService: loggerService,
 	}
 }
 

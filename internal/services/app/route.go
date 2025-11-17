@@ -12,14 +12,14 @@ import (
 )
 
 type RouteService struct {
-	Logger          utils.Logger
-	RouteRepository interfaces.RouteRepository
+	logger          utils.LoggerService
+	routeRepository interfaces.RouteRepository
 }
 
-func NewRouteService(logger utils.Logger, routeRepository interfaces.RouteRepository) *RouteService {
+func NewRouteService(logger utils.LoggerService, routeRepository interfaces.RouteRepository) *RouteService {
 	return &RouteService{
-		Logger:          logger,
-		RouteRepository: routeRepository,
+		logger:          logger,
+		routeRepository: routeRepository,
 	}
 }
 
@@ -138,19 +138,19 @@ func (rs *RouteService) saveRouteComponents(ctx context.Context, nextRoutes []*D
 	wg.Add(4)
 	go func() {
 		defer wg.Done()
-		routesInfoIds, routesInfoErr = rs.RouteRepository.InsertRoutesInfo(ctx, routesInfo)
+		routesInfoIds, routesInfoErr = rs.routeRepository.InsertRoutesInfo(ctx, routesInfo)
 	}()
 	go func() {
 		defer wg.Done()
-		nextRoutesDataIds, nextRoutesDataErr = rs.RouteRepository.InsertNextRoutesData(ctx, nextRoutes)
+		nextRoutesDataIds, nextRoutesDataErr = rs.routeRepository.InsertNextRoutesData(ctx, nextRoutes)
 	}()
 	go func() {
 		defer wg.Done()
-		routesResponsesIds, routesResponsesErr = rs.RouteRepository.InsertRoutesResponses(ctx, responseRoutes)
+		routesResponsesIds, routesResponsesErr = rs.routeRepository.InsertRoutesResponses(ctx, responseRoutes)
 	}()
 	go func() {
 		defer wg.Done()
-		routesRequestsIds, routesRequestsErr = rs.RouteRepository.InsertRoutesRequests(ctx, requestRoutes)
+		routesRequestsIds, routesRequestsErr = rs.routeRepository.InsertRoutesRequests(ctx, requestRoutes)
 	}()
 	wg.Wait()
 
@@ -183,7 +183,7 @@ func (rs *RouteService) saveWorkingRoutes(ctx context.Context, routes *[]DTO.Cre
 		workingRoutes[i].RouteID = routesInfoIds[i]
 		workingRoutes[i].ParentID = parentId
 		workingRoutes[i].Status = "unknown"
-		res, err := rs.RouteRepository.InsertWorkingRoute(ctx, workingRoutes[i])
+		res, err := rs.routeRepository.InsertWorkingRoute(ctx, workingRoutes[i])
 		if err != nil {
 			return err
 		}

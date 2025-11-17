@@ -6,14 +6,14 @@ import (
 )
 
 type Pm2Service struct {
-	AppRepository interfaces.AppRepository
-	LoggerService *utils.Logger
+	appRepository interfaces.AppRepository
+	loggerService utils.LoggerService
 }
 
-func NewPm2Service(appRepository interfaces.AppRepository, loggerService *utils.Logger) *Pm2Service {
+func NewPm2Service(appRepository interfaces.AppRepository, loggerService utils.LoggerService) *Pm2Service {
 	return &Pm2Service{
-		AppRepository: appRepository,
-		LoggerService: loggerService,
+		appRepository: appRepository,
+		loggerService: loggerService,
 	}
 }
 

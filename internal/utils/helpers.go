@@ -56,7 +56,7 @@ func InsertionSortForRoutes[T DTO.RoutesParentID](data []T) []T {
 	return data
 }
 
-func DoHttpRequest(ctx context.Context, url, authorizationHeader, method string, body []byte, loggerService Logger) (int,
+func DoHttpRequest(ctx context.Context, url, authorizationHeader, method string, body []byte, loggerService LoggerService) (int,
 	map[string]any, error,
 ) {
 	httpClient := &http.Client{}

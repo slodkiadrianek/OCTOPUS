@@ -22,14 +22,14 @@ type userService interface {
 	ChangeUserPassword(ctx context.Context, userId int, currentPassword string, newPassword string) error
 }
 type UserController struct {
-	UserService userService
-	Logger      *utils.Logger
+	userService   userService
+	loggerService utils.LoggerService
 }
 
-func NewUserController(userService userService, logger *utils.Logger) *UserController {
+func NewUserController(userService userService, loggerService utils.LoggerService) *UserController {
 	return &UserController{
-		UserService: userService,
-		Logger:      logger,
+		userService:   userService,
+		loggerService: loggerService,
 	}
 }
 
@@ -40,12 +40,12 @@ func (u *UserController) GetUserInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userId, err := strconv.Atoi(userIdString)
-	userIdToken := utils.ReadUserIdFromToken(w, r, u.Logger)
+	userIdToken := utils.ReadUserIdFromToken(w, r, u.loggerService)
 	if userId == 0 {
 		return
 	}
-	utils.ValidateUsersIds(w, r, u.Logger, userId, userIdToken)
-	user, err := u.UserService.GetUser(r.Context(), userId)
+	utils.ValidateUsersIds(w, r, u.loggerService, userId, userIdToken)
+	user, err := u.userService.GetUser(r.Context(), userId)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
@@ -60,7 +60,7 @@ func (u *UserController) InsertUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userDto := DTO.NewCreateUser(userBody.Email, userBody.Name, userBody.Surname)
-	err = u.UserService.InsertUserToDb(r.Context(), *userDto, userBody.Password)
+	err = u.userService.InsertUserToDb(r.Context(), *userDto, userBody.Password)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
@@ -84,13 +84,13 @@ func (u *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		utils.SetError(w, r, err)
 		return
 	}
-	userIdToken := utils.ReadUserIdFromToken(w, r, u.Logger)
+	userIdToken := utils.ReadUserIdFromToken(w, r, u.loggerService)
 	if userId == 0 {
 		return
 	}
-	utils.ValidateUsersIds(w, r, u.Logger, userId, userIdToken)
+	utils.ValidateUsersIds(w, r, u.loggerService, userId, userIdToken)
 	userDto := DTO.NewCreateUser(userBody.Email, userBody.Name, userBody.Surname)
-	err = u.UserService.UpdateUser(r.Context(), *userDto, userId)
+	err = u.userService.UpdateUser(r.Context(), *userDto, userId)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
@@ -113,12 +113,12 @@ func (u *UserController) UpdateUserNotifications(w http.ResponseWriter, r *http.
 		utils.SetError(w, r, err)
 		return
 	}
-	userIdToken := utils.ReadUserIdFromToken(w, r, u.Logger)
+	userIdToken := utils.ReadUserIdFromToken(w, r, u.loggerService)
 	if userId == 0 {
 		return
 	}
-	utils.ValidateUsersIds(w, r, u.Logger, userId, userIdToken)
-	err = u.UserService.UpdateUserNotifications(r.Context(), userId, *userBody)
+	utils.ValidateUsersIds(w, r, u.loggerService, userId, userIdToken)
+	err = u.userService.UpdateUserNotifications(r.Context(), userId, *userBody)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
@@ -138,12 +138,12 @@ func (u *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userId, err := strconv.Atoi(userIdString)
-	userIdToken := utils.ReadUserIdFromToken(w, r, u.Logger)
+	userIdToken := utils.ReadUserIdFromToken(w, r, u.loggerService)
 	if userId == 0 {
 		return
 	}
-	utils.ValidateUsersIds(w, r, u.Logger, userId, userIdToken)
-	err = u.UserService.DeleteUser(r.Context(), userId, userBody.Password)
+	utils.ValidateUsersIds(w, r, u.loggerService, userId, userIdToken)
+	err = u.userService.DeleteUser(r.Context(), userId, userBody.Password)
 	if err != nil {
 
 		utils.SetError(w, r, err)
@@ -164,11 +164,11 @@ func (u *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	userId, err := strconv.Atoi(userIdString)
-	userIdToken := utils.ReadUserIdFromToken(w, r, u.Logger)
+	userIdToken := utils.ReadUserIdFromToken(w, r, u.loggerService)
 	if userId == 0 {
 		return
 	}
-	utils.ValidateUsersIds(w, r, u.Logger, userId, userIdToken)
+	utils.ValidateUsersIds(w, r, u.loggerService, userId, userIdToken)
 	if userBody.NewPassword != userBody.ConfirmPassword {
 		err = fmt.Errorf("passwords do not match")
 		errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
@@ -181,7 +181,7 @@ func (u *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Reque
 		})
 		return
 	}
-	err = u.UserService.ChangeUserPassword(r.Context(), userId, userBody.CurrentPassword, userBody.NewPassword)
+	err = u.userService.ChangeUserPassword(r.Context(), userId, userBody.CurrentPassword, userBody.NewPassword)
 	if err != nil {
 		errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
 		if ok {

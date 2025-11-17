@@ -12,7 +12,7 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/models"
 )
 
-func ReadUserIdFromToken(w http.ResponseWriter, r *http.Request, logger *Logger) int {
+func ReadUserIdFromToken(w http.ResponseWriter, r *http.Request, logger LoggerService) int {
 	userId, ok := r.Context().Value("id").(int)
 	if !ok || userId == 0 {
 		logger.Error("Failed to read user id from context", r.URL.Path)
@@ -23,7 +23,7 @@ func ReadUserIdFromToken(w http.ResponseWriter, r *http.Request, logger *Logger)
 	return userId
 }
 
-func ValidateUsersIds(w http.ResponseWriter, r *http.Request, logger *Logger, userId int, userIdToken int) {
+func ValidateUsersIds(w http.ResponseWriter, r *http.Request, logger LoggerService, userId int, userIdToken int) {
 	if userIdToken != userId {
 		logger.Error("You are not allowed to do this action", map[string]any{
 			"path":        r.URL.Path,

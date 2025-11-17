@@ -10,20 +10,20 @@ import (
 )
 
 type AppService struct {
-	AppRepository           interfaces.AppRepository
-	LoggerService           utils.Logger
+	appRepository           interfaces.AppRepository
+	loggerService           utils.LoggerService
 	appStatusService        interfaces.AppStatusService
 	appNotificationsService interfaces.AppNotificationsService
 	routeStatusService      interfaces.RouteStatusService
 }
 
-func NewAppService(appRepository interfaces.AppRepository, loggerService utils.Logger,
+func NewAppService(appRepository interfaces.AppRepository, loggerService utils.LoggerService,
 	appStatusService interfaces.AppStatusService, appNotificationsService interfaces.AppNotificationsService,
 	routeStatusService interfaces.RouteStatusService,
 ) *AppService {
 	return &AppService{
-		AppRepository:           appRepository,
-		LoggerService:           loggerService,
+		appRepository:           appRepository,
+		loggerService:           loggerService,
 		appStatusService:        appStatusService,
 		appNotificationsService: appNotificationsService,
 		routeStatusService:      routeStatusService,
@@ -36,7 +36,7 @@ func (a *AppService) CreateApp(ctx context.Context, app DTO.CreateApp, ownerId i
 		return err
 	}
 	appDto := DTO.NewApp(GeneratedId, app.Name, app.Description, false, ownerId, app.IpAddress, app.Port)
-	err = a.AppRepository.InsertApp(ctx, []DTO.App{*appDto})
+	err = a.appRepository.InsertApp(ctx, []DTO.App{*appDto})
 	if err != nil {
 		return err
 	}
@@ -44,7 +44,7 @@ func (a *AppService) CreateApp(ctx context.Context, app DTO.CreateApp, ownerId i
 }
 
 func (a *AppService) GetApp(ctx context.Context, id string, ownerId int) (*models.App, error) {
-	app, err := a.AppRepository.GetApp(ctx, id, ownerId)
+	app, err := a.appRepository.GetApp(ctx, id, ownerId)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (a *AppService) GetApp(ctx context.Context, id string, ownerId int) (*model
 }
 
 func (a *AppService) GetApps(ctx context.Context, ownerId int) ([]models.App, error) {
-	apps, err := a.AppRepository.GetApps(ctx, ownerId)
+	apps, err := a.appRepository.GetApps(ctx, ownerId)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func (a *AppService) GetApps(ctx context.Context, ownerId int) ([]models.App, er
 }
 
 func (a *AppService) DeleteApp(ctx context.Context, appId string, ownerId int) error {
-	err := a.AppRepository.DeleteApp(ctx, appId, ownerId)
+	err := a.appRepository.DeleteApp(ctx, appId, ownerId)
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func (a *AppService) DeleteApp(ctx context.Context, appId string, ownerId int) e
 }
 
 func (a *AppService) UpdateApp(ctx context.Context, appId string, app DTO.UpdateApp, ownerId int) error {
-	err := a.AppRepository.UpdateApp(ctx, appId, app, ownerId)
+	err := a.appRepository.UpdateApp(ctx, appId, app, ownerId)
 	if err != nil {
 		return err
 	}

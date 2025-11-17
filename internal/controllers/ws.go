@@ -13,14 +13,14 @@ type wsService interface {
 }
 
 type WsController struct {
-	WsService wsService
-	Logger    *utils.Logger
+	wsService     wsService
+	loggerService utils.LoggerService
 }
 
-func NewWsController(wsService wsService, logger *utils.Logger) *WsController {
+func NewWsController(wsService wsService, loggerService utils.LoggerService) *WsController {
 	return &WsController{
-		WsService: wsService,
-		Logger:    logger,
+		wsService:     wsService,
+		loggerService: loggerService,
 	}
 }
 
@@ -33,15 +33,18 @@ var upgrader = websocket.Upgrader{
 func (ws *WsController) Logs(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		ws.Logger.Error("Failed to upgrade connection", err)
+		ws.loggerService.Error("Failed to upgrade connection", err)
 		return
 	}
 	appId, err := utils.ReadParam(r, "appId")
 	if err != nil {
-		ws.Logger.Error("Failed to read param", appId)
-		conn.WriteMessage(websocket.TextMessage, []byte("Failed to read appId"))
+		ws.loggerService.Error("Failed to read param", appId)
+		err := conn.WriteMessage(websocket.TextMessage, []byte("Failed to read appId"))
+		if err != nil {
+			return
+		}
 		return
 	}
 	ctx := context.Background()
-	ws.WsService.Logs(ctx, appId, conn)
+	ws.wsService.Logs(ctx, appId, conn)
 }

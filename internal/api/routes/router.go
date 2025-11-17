@@ -9,7 +9,6 @@ import (
 )
 
 type (
-	key      string
 	routeKey struct {
 		method string
 		path   string
@@ -18,7 +17,7 @@ type (
 
 type (
 	Router struct {
-		MiddlewarePreChain []Middleware
+		middlewarePreChain []Middleware
 		routes             map[routeKey]http.Handler
 	}
 	Middleware func(http.Handler) http.Handler
@@ -26,7 +25,7 @@ type (
 
 func NewRouter() *Router {
 	return &Router{
-		MiddlewarePreChain: []Middleware{},
+		middlewarePreChain: []Middleware{},
 		routes:             make(map[routeKey]http.Handler),
 	}
 }
@@ -35,8 +34,8 @@ func (r *Router) Request(route string, method string, fns ...any) {
 	var middlewares []Middleware
 	middlewares = append(middlewares, middleware.MethodCheckMiddleware(method))
 	var finalHandler http.Handler
-	if len(r.MiddlewarePreChain) > 0 {
-		middlewares = append(middlewares, r.MiddlewarePreChain...)
+	if len(r.middlewarePreChain) > 0 {
+		middlewares = append(middlewares, r.middlewarePreChain...)
 	}
 	for _, el := range fns {
 		switch fn := el.(type) {
@@ -63,7 +62,6 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 
 		if utils.MatchRoute(routeKey.path, req.URL.Path) {
-			const routeKeyPath key = "routeKeyPath"
 			ctx := context.WithValue(req.Context(), "routeKeyPath", routeKey.path)
 			req = req.WithContext(ctx)
 			handler.ServeHTTP(w, req)
@@ -78,7 +76,7 @@ func (r *Router) Group(prefix string) *GroupRouter {
 }
 
 func (r *Router) USE(fns Middleware) {
-	r.MiddlewarePreChain = append(r.MiddlewarePreChain, fns)
+	r.middlewarePreChain = append(r.middlewarePreChain, fns)
 }
 
 func (r *Router) GET(route string, fns ...any) {

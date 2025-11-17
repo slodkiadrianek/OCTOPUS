@@ -21,23 +21,23 @@ type appService interface {
 }
 
 type AppController struct {
-	AppService appService
-	Logger     *utils.Logger
+	appService    appService
+	loggerService utils.LoggerService
 }
 
-func NewAppController(appService appService, logger *utils.Logger) *AppController {
+func NewAppController(appService appService, loggerService utils.LoggerService) *AppController {
 	return &AppController{
-		AppService: appService,
-		Logger:     logger,
+		appService:    appService,
+		loggerService: loggerService,
 	}
 }
 
 func (a *AppController) GetInfoAboutApps(w http.ResponseWriter, r *http.Request) {
-	ownerId := utils.ReadUserIdFromToken(w, r, a.Logger)
+	ownerId := utils.ReadUserIdFromToken(w, r, a.loggerService)
 	if ownerId == 0 {
 		return
 	}
-	apps, err := a.AppService.GetApps(r.Context(), ownerId)
+	apps, err := a.appService.GetApps(r.Context(), ownerId)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
@@ -51,11 +51,11 @@ func (a *AppController) GetInfoAboutApp(w http.ResponseWriter, r *http.Request) 
 		utils.SetError(w, r, err)
 		return
 	}
-	ownerId := utils.ReadUserIdFromToken(w, r, a.Logger)
+	ownerId := utils.ReadUserIdFromToken(w, r, a.loggerService)
 	if ownerId == 0 {
 		return
 	}
-	app, err := a.AppService.GetApp(r.Context(), appId, ownerId)
+	app, err := a.appService.GetApp(r.Context(), appId, ownerId)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
@@ -69,11 +69,11 @@ func (a *AppController) CreateApp(w http.ResponseWriter, r *http.Request) {
 		utils.SetError(w, r, err)
 		return
 	}
-	ownerId := utils.ReadUserIdFromToken(w, r, a.Logger)
+	ownerId := utils.ReadUserIdFromToken(w, r, a.loggerService)
 	if ownerId == 0 {
 		return
 	}
-	err = a.AppService.CreateApp(r.Context(), *appBody, ownerId)
+	err = a.appService.CreateApp(r.Context(), *appBody, ownerId)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
@@ -92,11 +92,11 @@ func (a *AppController) UpdateApp(w http.ResponseWriter, r *http.Request) {
 		utils.SetError(w, r, err)
 		return
 	}
-	ownerId := utils.ReadUserIdFromToken(w, r, a.Logger)
+	ownerId := utils.ReadUserIdFromToken(w, r, a.loggerService)
 	if ownerId == 0 {
 		return
 	}
-	err = a.AppService.UpdateApp(r.Context(), appId, *app, ownerId)
+	err = a.appService.UpdateApp(r.Context(), appId, *app, ownerId)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
@@ -107,16 +107,16 @@ func (a *AppController) UpdateApp(w http.ResponseWriter, r *http.Request) {
 func (a *AppController) DeleteApp(w http.ResponseWriter, r *http.Request) {
 	appId, err := utils.ReadParam(r, "appId")
 	if err != nil {
-		a.Logger.Error("Failed to read app id from params", r.URL.Path)
+		a.loggerService.Error("Failed to read app id from params", r.URL.Path)
 		err := models.NewError(500, "Server", "Internal server error")
 		utils.SetError(w, r, err)
 		return
 	}
-	ownerId := utils.ReadUserIdFromToken(w, r, a.Logger)
+	ownerId := utils.ReadUserIdFromToken(w, r, a.loggerService)
 	if ownerId == 0 {
 		return
 	}
-	err = a.AppService.DeleteApp(r.Context(), appId, ownerId)
+	err = a.appService.DeleteApp(r.Context(), appId, ownerId)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
@@ -127,16 +127,16 @@ func (a *AppController) DeleteApp(w http.ResponseWriter, r *http.Request) {
 func (a *AppController) GetAppStatus(w http.ResponseWriter, r *http.Request) {
 	appId, err := utils.ReadParam(r, "appId")
 	if err != nil {
-		a.Logger.Error("Failed to read app id from params", r.URL.Path)
+		a.loggerService.Error("Failed to read app id from params", r.URL.Path)
 		err := models.NewError(500, "Server", "Internal server error")
 		utils.SetError(w, r, err)
 		return
 	}
-	ownerId := utils.ReadUserIdFromToken(w, r, a.Logger)
+	ownerId := utils.ReadUserIdFromToken(w, r, a.loggerService)
 	if ownerId == 0 {
 		return
 	}
-	appStatus, err := a.AppService.GetAppStatus(r.Context(), appId, ownerId)
+	appStatus, err := a.appService.GetAppStatus(r.Context(), appId, ownerId)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
@@ -149,12 +149,12 @@ func (a *AppController) GetAppStatus(w http.ResponseWriter, r *http.Request) {
 func (a *AppController) GetDbStatus(w http.ResponseWriter, r *http.Request) {
 	appId, ok := r.Context().Value("appId").(int)
 	if !ok || appId == 0 {
-		a.Logger.Error("Failed to read app id from context", r.URL.Path)
+		a.loggerService.Error("Failed to read app id from context", r.URL.Path)
 		err := models.NewError(500, "Server", "Internal server error")
 		utils.SetError(w, r, err)
 		return
 	}
-	// status, err := a.AppService.GetDbStatus(r.Context(), appId)
+	// status, err := a.appService.GetDbStatus(r.Context(), appId)
 	// if err != nil {
 	// 	utils.SetError(w, r, err)
 	// 	return
@@ -167,12 +167,12 @@ func (a *AppController) GetDbStatus(w http.ResponseWriter, r *http.Request) {
 // func (a *AppController) GetServerMetrics(w http.ResponseWriter, r *http.Request){
 // 	appId,  err := utils.ReadParam(r, "appId")
 // 	if err != nil {
-// 		a.Logger.Error("Failed to read app id from context", r.URL.Path)
+// 		a.loggerService.Error("Failed to read app id from context", r.URL.Path)
 // 		err := models.NewError(500, "Server", "Internal server error")
 // 		utils.SetError(w, r, err)
 // 		return
 // 	}
-// 	metrics , err := a.AppService.GetServerMetrics(r.Context(), appId)
+// 	metrics , err := a.appService.GetServerMetrics(r.Context(), appId)
 // 	if err != nil {
 // 		utils.SetError(w, r, err)
 // 		return

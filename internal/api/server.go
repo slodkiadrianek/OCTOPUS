@@ -2,10 +2,7 @@ package api
 
 import (
 	"context"
-
-	"github.com/slodkiadrianek/octopus/internal/controllers"
-
-	// "fmt"
+	"github.com/slodkiadrianek/octopus/internal/api/interfaces"
 	"net/http"
 	"time"
 
@@ -15,46 +12,46 @@ import (
 )
 
 type DependencyConfig struct {
-	Port                string
-	UserController      *controllers.UserController
-	AppController       *controllers.AppController
-	DockerController    *controllers.DockerController
-	AuthController      *controllers.AuthController
-	ServerController    *controllers.ServerController
-	WebSocketController *controllers.WsController
-	RouteController     *controllers.RouteController
-	JWT                 *middleware.JWT
-	RateLimiter         *middleware.RateLimiter
+	port                string
+	userController      interfaces.UserController
+	appController       interfaces.AppController
+	dockerController    interfaces.DockerController
+	authController      interfaces.AuthController
+	serverController    interfaces.ServerController
+	webSocketController interfaces.WsController
+	routeController     interfaces.RouteController
+	jwt                 *middleware.JWT
+	rateLimiter         *middleware.RateLimiter
 }
 
-func NewDependencyConfig(port string, userController *controllers.UserController,
-	appController *controllers.AppController, dockerController *controllers.DockerController,
-	authController *controllers.AuthController, jwt *middleware.JWT, serverController *controllers.ServerController,
-	wsController *controllers.WsController, rateLimiter *middleware.RateLimiter, routeController *controllers.RouteController) *DependencyConfig {
+func NewDependencyConfig(port string, userController interfaces.UserController,
+	appController interfaces.AppController, dockerController interfaces.DockerController,
+	authController interfaces.AuthController, jwt *middleware.JWT, serverController interfaces.ServerController,
+	wsController interfaces.WsController, rateLimiter *middleware.RateLimiter, routeController interfaces.RouteController) *DependencyConfig {
 	return &DependencyConfig{
-		Port:                port,
-		UserController:      userController,
-		AppController:       appController,
-		DockerController:    dockerController,
-		AuthController:      authController,
-		ServerController:    serverController,
-		WebSocketController: wsController,
-		RouteController:     routeController,
-		JWT:                 jwt,
-		RateLimiter:         rateLimiter,
+		port:                port,
+		userController:      userController,
+		appController:       appController,
+		dockerController:    dockerController,
+		authController:      authController,
+		serverController:    serverController,
+		webSocketController: wsController,
+		routeController:     routeController,
+		jwt:                 jwt,
+		rateLimiter:         rateLimiter,
 	}
 }
 
 type Server struct {
-	Config *DependencyConfig
+	config *DependencyConfig
 	server *http.Server
-	Router *routes.Router
+	router *routes.Router
 }
 
 func NewServer(cfg *DependencyConfig) *Server {
 	return &Server{
-		Config: cfg,
-		Router: routes.NewRouter(),
+		config: cfg,
+		router: routes.NewRouter(),
 	}
 }
 
@@ -62,8 +59,8 @@ func (s *Server) Start() error {
 	s.SetupMiddleware()
 	s.SetupRoutes()
 	s.server = &http.Server{
-		Addr:         ":" + s.Config.Port,
-		Handler:      s.Router,
+		Addr:         ":" + s.config.port,
+		Handler:      s.router,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
 		IdleTimeout:  30 * time.Second,
@@ -72,18 +69,18 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) SetupRoutes() {
-	authHandler := handlers.NewAuthHandler(s.Config.UserController, s.Config.AuthController, s.Config.JWT, s.Config.RateLimiter)
-	userHandler := handlers.NewUserHandler(s.Config.UserController, s.Config.JWT)
-	appHandler := handlers.NewAppAppHandler(s.Config.AppController, s.Config.DockerController, s.Config.JWT)
-	serverHandler := handlers.NewServerHandlers(s.Config.ServerController, s.Config.JWT)
-	wsHandler := handlers.NewWebsocketHandler(s.Config.WebSocketController, s.Config.JWT)
-	routeHandler := handlers.NewRouteHandlers(s.Config.RouteController)
-	authHandler.SetupAuthHandlers(*s.Router)
-	appHandler.SetupAppHandlers(*s.Router)
-	wsHandler.SetupWebsocketHandlers(*s.Router)
-	serverHandler.SetupServerHandlers(*s.Router)
-	userHandler.SetupUserHandlers(*s.Router)
-	routeHandler.SetupRouteHandler(*s.Router)
+	authHandler := handlers.NewAuthHandler(s.config.userController, s.config.authController, s.config.jwt, s.config.rateLimiter)
+	userHandler := handlers.NewUserHandler(s.config.userController, s.config.jwt)
+	appHandler := handlers.NewAppAppHandler(s.config.appController, s.config.dockerController, s.config.jwt)
+	serverHandler := handlers.NewServerHandlers(s.config.serverController, s.config.jwt)
+	wsHandler := handlers.NewWebsocketHandler(s.config.webSocketController, s.config.jwt)
+	routeHandler := handlers.NewRouteHandlers(s.config.routeController)
+	authHandler.SetupAuthHandlers(*s.router)
+	appHandler.SetupAppHandlers(*s.router)
+	wsHandler.SetupWebsocketHandlers(*s.router)
+	serverHandler.SetupServerHandlers(*s.router)
+	userHandler.SetupUserHandlers(*s.router)
+	routeHandler.SetupRouteHandler(*s.router)
 
 }
 
@@ -92,7 +89,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 }
 
 func (s *Server) SetupMiddleware() {
-	s.Router.USE(middleware.Logger)
-	s.Router.USE(middleware.CorsHandler)
-	s.Router.USE(middleware.ErrorHandler)
+	s.router.USE(middleware.Logger)
+	s.router.USE(middleware.CorsHandler)
+	s.router.USE(middleware.ErrorHandler)
 }

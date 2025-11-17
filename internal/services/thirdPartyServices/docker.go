@@ -13,23 +13,23 @@ import (
 )
 
 type DockerService struct {
-	AppRepository interfaces.AppRepository
-	DockerHost    string
-	Logger        *utils.Logger
+	appRepository interfaces.AppRepository
+	dockerHost    string
+	logger        utils.LoggerService
 }
 
-func NewDockerService(appRepository interfaces.AppRepository, logger *utils.Logger,
+func NewDockerService(appRepository interfaces.AppRepository, logger utils.LoggerService,
 	dockerHost string,
 ) *DockerService {
 	return &DockerService{
-		AppRepository: appRepository,
-		DockerHost:    dockerHost,
-		Logger:        logger,
+		appRepository: appRepository,
+		dockerHost:    dockerHost,
+		logger:        logger,
 	}
 }
 
 func (dc *DockerService) PauseContainer(ctx context.Context, appId string) error {
-	cli, err := client.NewClientWithOpts(client.WithHost(dc.DockerHost), client.WithAPIVersionNegotiation())
+	cli, err := client.NewClientWithOpts(client.WithHost(dc.dockerHost), client.WithAPIVersionNegotiation())
 	if err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func (dc *DockerService) PauseContainer(ctx context.Context, appId string) error
 }
 
 func (dc *DockerService) RestartContainer(ctx context.Context, appId string) error {
-	cli, err := client.NewClientWithOpts(client.WithHost(dc.DockerHost), client.WithAPIVersionNegotiation())
+	cli, err := client.NewClientWithOpts(client.WithHost(dc.dockerHost), client.WithAPIVersionNegotiation())
 	if err != nil {
 		return err
 	}
@@ -50,7 +50,7 @@ func (dc *DockerService) RestartContainer(ctx context.Context, appId string) err
 }
 
 func (dc *DockerService) StartContainer(ctx context.Context, appId string) error {
-	cli, err := client.NewClientWithOpts(client.WithHost(dc.DockerHost), client.WithAPIVersionNegotiation())
+	cli, err := client.NewClientWithOpts(client.WithHost(dc.dockerHost), client.WithAPIVersionNegotiation())
 	if err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func (dc *DockerService) StartContainer(ctx context.Context, appId string) error
 }
 
 func (dc *DockerService) UnpauseContainer(ctx context.Context, appId string) error {
-	cli, err := client.NewClientWithOpts(client.WithHost(dc.DockerHost), client.WithAPIVersionNegotiation())
+	cli, err := client.NewClientWithOpts(client.WithHost(dc.dockerHost), client.WithAPIVersionNegotiation())
 	if err != nil {
 		return err
 	}
@@ -70,7 +70,7 @@ func (dc *DockerService) UnpauseContainer(ctx context.Context, appId string) err
 }
 
 func (dc *DockerService) StopContainer(ctx context.Context, appId string) error {
-	cli, err := client.NewClientWithOpts(client.WithHost(dc.DockerHost), client.WithAPIVersionNegotiation())
+	cli, err := client.NewClientWithOpts(client.WithHost(dc.dockerHost), client.WithAPIVersionNegotiation())
 	if err != nil {
 		return err
 	}
@@ -107,17 +107,17 @@ func (dc *DockerService) prepareContainersDataToInert(containers []containerType
 }
 
 func (dc *DockerService) ImportContainers(ctx context.Context, ownerId int) error {
-	cli, err := client.NewClientWithOpts(client.WithHost(dc.DockerHost), client.WithAPIVersionNegotiation())
+	cli, err := client.NewClientWithOpts(client.WithHost(dc.dockerHost), client.WithAPIVersionNegotiation())
 	if err != nil {
 		return err
 	}
 	defer cli.Close()
 	containers, err := cli.ContainerList(ctx, containerTypes.ListOptions{})
 	if err != nil {
-		dc.Logger.Error("Failed to list containers", err)
+		dc.logger.Error("Failed to list containers", err)
 		return err
 	}
 	appsToInsert := dc.prepareContainersDataToInert(containers, ownerId)
-	err = dc.AppRepository.InsertApp(ctx, appsToInsert)
+	err = dc.appRepository.InsertApp(ctx, appsToInsert)
 	return err
 }

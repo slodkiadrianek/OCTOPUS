@@ -6,13 +6,13 @@ import (
 )
 
 type Pm2Controller struct {
-	Logger     *utils.Logger
-	Pm2Service *thirdPartyServices.Pm2Service
+	loggerService utils.LoggerService
+	pm2Service    *thirdPartyServices.Pm2Service
 }
 
-func NewPm2Controller(logger *utils.Logger, pm2Service *thirdPartyServices.Pm2Service) *Pm2Controller {
+func NewPm2Controller(loggerService utils.LoggerService, pm2Service *thirdPartyServices.Pm2Service) *Pm2Controller {
 	return &Pm2Controller{
-		Logger:     logger,
-		Pm2Service: pm2Service,
+		loggerService: loggerService,
+		pm2Service:    pm2Service,
 	}
 }

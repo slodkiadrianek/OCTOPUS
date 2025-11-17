@@ -18,28 +18,28 @@ type DockerService interface {
 }
 
 type DockerController struct {
-	DockerService DockerService
-	Logger        *utils.Logger
+	dockerService DockerService
+	loggerService utils.LoggerService
 }
 
-func NewDockerController(service DockerService, logger *utils.Logger) *DockerController {
+func NewDockerController(service DockerService, loggerService utils.LoggerService) *DockerController {
 	return &DockerController{
-		DockerService: service,
-		Logger:        logger,
+		dockerService: service,
+		loggerService: loggerService,
 	}
 }
 
 func (dc *DockerController) PauseContainer(w http.ResponseWriter, r *http.Request) {
 	appId, err := utils.ReadParam(r, "appId")
 	if err != nil {
-		dc.Logger.Error("Failed to read app id from params", r.URL.Path)
+		dc.loggerService.Error("Failed to read app id from params", r.URL.Path)
 		err := models.NewError(500, "Server", "Internal server error")
 		utils.SetError(w, r, err)
 		return
 	}
-	err = dc.DockerService.PauseContainer(r.Context(), appId)
+	err = dc.dockerService.PauseContainer(r.Context(), appId)
 	if err != nil {
-		dc.Logger.Error("Failed to import docker containers", r.URL.Path, err)
+		dc.loggerService.Error("Failed to import docker containers", r.URL.Path, err)
 		utils.SetError(w, r, err)
 		return
 	}
@@ -49,14 +49,14 @@ func (dc *DockerController) PauseContainer(w http.ResponseWriter, r *http.Reques
 func (dc *DockerController) RestartContainer(w http.ResponseWriter, r *http.Request) {
 	appId, err := utils.ReadParam(r, "appId")
 	if err != nil {
-		dc.Logger.Error("Failed to read app id from params", r.URL.Path)
+		dc.loggerService.Error("Failed to read app id from params", r.URL.Path)
 		err := models.NewError(500, "Server", "Internal server error")
 		utils.SetError(w, r, err)
 		return
 	}
-	err = dc.DockerService.RestartContainer(r.Context(), appId)
+	err = dc.dockerService.RestartContainer(r.Context(), appId)
 	if err != nil {
-		dc.Logger.Error("Failed to import docker containers", r.URL.Path, err)
+		dc.loggerService.Error("Failed to import docker containers", r.URL.Path, err)
 		utils.SetError(w, r, err)
 		return
 	}
@@ -66,14 +66,14 @@ func (dc *DockerController) RestartContainer(w http.ResponseWriter, r *http.Requ
 func (dc *DockerController) StartContainer(w http.ResponseWriter, r *http.Request) {
 	appId, err := utils.ReadParam(r, "appId")
 	if err != nil {
-		dc.Logger.Error("Failed to read app id from params", r.URL.Path)
+		dc.loggerService.Error("Failed to read app id from params", r.URL.Path)
 		err := models.NewError(500, "Server", "Internal server error")
 		utils.SetError(w, r, err)
 		return
 	}
-	err = dc.DockerService.StartContainer(r.Context(), appId)
+	err = dc.dockerService.StartContainer(r.Context(), appId)
 	if err != nil {
-		dc.Logger.Error("Failed to import docker containers", r.URL.Path, err)
+		dc.loggerService.Error("Failed to import docker containers", r.URL.Path, err)
 		utils.SetError(w, r, err)
 		return
 	}
@@ -83,14 +83,14 @@ func (dc *DockerController) StartContainer(w http.ResponseWriter, r *http.Reques
 func (dc *DockerController) UnpauseContainer(w http.ResponseWriter, r *http.Request) {
 	appId, err := utils.ReadParam(r, "appId")
 	if err != nil {
-		dc.Logger.Error("Failed to read app id from params", r.URL.Path)
+		dc.loggerService.Error("Failed to read app id from params", r.URL.Path)
 		err := models.NewError(500, "Server", "Internal server error")
 		utils.SetError(w, r, err)
 		return
 	}
-	err = dc.DockerService.UnpauseContainer(r.Context(), appId)
+	err = dc.dockerService.UnpauseContainer(r.Context(), appId)
 	if err != nil {
-		dc.Logger.Error("Failed to import docker containers", r.URL.Path, err)
+		dc.loggerService.Error("Failed to import docker containers", r.URL.Path, err)
 		utils.SetError(w, r, err)
 		return
 	}
@@ -99,14 +99,14 @@ func (dc *DockerController) UnpauseContainer(w http.ResponseWriter, r *http.Requ
 func (dc *DockerController) StopContainer(w http.ResponseWriter, r *http.Request) {
 	appId, err := utils.ReadParam(r, "appId")
 	if err != nil {
-		dc.Logger.Error("Failed to read app id from params", r.URL.Path)
+		dc.loggerService.Error("Failed to read app id from params", r.URL.Path)
 		err := models.NewError(500, "Server", "Internal server error")
 		utils.SetError(w, r, err)
 		return
 	}
-	err = dc.DockerService.StopContainer(r.Context(), appId)
+	err = dc.dockerService.StopContainer(r.Context(), appId)
 	if err != nil {
-		dc.Logger.Error("Failed to import docker containers", r.URL.Path, err)
+		dc.loggerService.Error("Failed to import docker containers", r.URL.Path, err)
 		utils.SetError(w, r, err)
 		return
 	}
@@ -116,13 +116,13 @@ func (dc *DockerController) StopContainer(w http.ResponseWriter, r *http.Request
 func (dc *DockerController) ImportDockerContainers(w http.ResponseWriter, r *http.Request) {
 	ownerId, ok := r.Context().Value("id").(int)
 	if !ok || ownerId == 0 {
-		dc.Logger.Error("Failed to read user id from context", r.URL.Path)
+		dc.loggerService.Error("Failed to read user id from context", r.URL.Path)
 		err := models.NewError(500, "Server", "Internal server error")
 		utils.SetError(w, r, err)
 	}
-	err := dc.DockerService.ImportContainers(r.Context(), ownerId)
+	err := dc.dockerService.ImportContainers(r.Context(), ownerId)
 	if err != nil {
-		dc.Logger.Error("Failed to import docker containers", r.URL.Path, err)
+		dc.loggerService.Error("Failed to import docker containers", r.URL.Path, err)
 		utils.SetError(w, r, err)
 		return
 	}

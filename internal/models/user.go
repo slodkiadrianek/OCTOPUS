@@ -14,11 +14,3 @@ type User struct {
 	CreatedAt                    time.Time `json:"created_at" sql:"created_at" example:"2023-01-01T00:00:00Z"`
 	UpdatedAt                    time.Time `json:"updated_at" sql:"updated_at" example:"2023-01-01T00:00:00Z"`
 }
-
-// var query string = "CREATE TABLE IF NOT EXISTS users (" +
-//	"id INT PRIMARY KEY AUTOINCREMENT," +
-//	"email VARCHAR(128) UNIQUE," +
-//	"name VARCHAR(64)," +
-//	"surname VARCHAR(64)," +
-//	"role VARCHAR(64)," +
-//	")"

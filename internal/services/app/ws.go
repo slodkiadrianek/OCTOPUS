@@ -14,21 +14,21 @@ import (
 )
 
 type WsService struct {
-	DockerHost string
-	Logger     utils.Logger
+	dockerHost string
+	logger     utils.LoggerService
 }
 
-func NewWsService(logger utils.Logger, dockerHost string) *WsService {
+func NewWsService(logger utils.LoggerService, dockerHost string) *WsService {
 	return &WsService{
-		DockerHost: dockerHost,
-		Logger:     logger,
+		dockerHost: dockerHost,
+		logger:     logger,
 	}
 }
 
 func (ws *WsService) Logs(ctx context.Context, appId string, conn *websocket.Conn) {
-	cli, err := client.NewClientWithOpts(client.WithHost(ws.DockerHost), client.WithAPIVersionNegotiation())
+	cli, err := client.NewClientWithOpts(client.WithHost(ws.dockerHost), client.WithAPIVersionNegotiation())
 	if err != nil {
-		ws.Logger.Error("Error creating Docker client", err)
+		ws.logger.Error("Error creating Docker client", err)
 		return
 	}
 	defer cli.Close()
@@ -46,7 +46,7 @@ func (ws *WsService) Logs(ctx context.Context, appId string, conn *websocket.Con
 
 	reader, err := cli.ContainerLogs(ctx, appId, options)
 	if err != nil {
-		ws.Logger.Error("Failed to connect to container", err)
+		ws.logger.Error("Failed to connect to container", err)
 		conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Failed to connect to container: %v", err)))
 		return
 	}
@@ -61,11 +61,11 @@ func (ws *WsService) Logs(ctx context.Context, appId string, conn *websocket.Con
 		select {
 		case <-pingTicker.C:
 			if err := conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(10*time.Second)); err != nil {
-				ws.Logger.Info("Client disconnected during ping")
+				ws.logger.Info("Client disconnected during ping")
 				return
 			}
 		case <-ctx.Done():
-			ws.Logger.Info("Status check stopped by context")
+			ws.logger.Info("Status check stopped by context")
 			return
 		default:
 			if scanner.Scan() {
@@ -80,13 +80,13 @@ func (ws *WsService) Logs(ctx context.Context, appId string, conn *websocket.Con
 				utf8Bytes := []byte(string(filteredRunes))
 				if err := conn.WriteMessage(websocket.TextMessage, utf8Bytes); err != nil {
 					if !websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
-						ws.Logger.Info("Client disconnected")
+						ws.logger.Info("Client disconnected")
 					}
 					return
 				}
 			} else {
 				if err := scanner.Err(); err != nil {
-					ws.Logger.Error("Scanner error", err)
+					ws.logger.Error("Scanner error", err)
 				}
 				return
 			}

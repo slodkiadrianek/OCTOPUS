@@ -6,6 +6,14 @@ import (
 	"time"
 )
 
+type LoggerService interface {
+	InitializeLogger()
+	Info(msg string, data ...any)
+	Warn(msg string, data ...any)
+	Error(msg string, data ...any)
+	Close() error
+}
+
 const (
 	RED    = "\x1b[31m"
 	GREEN  = "\x1b[32m"
@@ -14,16 +22,16 @@ const (
 )
 
 type Logger struct {
-	LogDir     string
-	DateFormat string
-	File       *os.File
-	StartTime  string
+	logDir     string
+	dateFormat string
+	file       *os.File
+	startTime  string
 }
 
 func NewLogger(logDir string, dateFormat string) *Logger {
 	return &Logger{
-		LogDir:     logDir,
-		DateFormat: dateFormat,
+		logDir:     logDir,
+		dateFormat: dateFormat,
 	}
 }
 
@@ -37,29 +45,29 @@ func (l *Logger) getActualDate() string {
 }
 
 func (l *Logger) InitializeLogger() {
-	if _, err := os.Stat(l.LogDir); os.IsNotExist(err) {
-		if err := os.Mkdir(l.LogDir, os.ModePerm); err != nil {
+	if _, err := os.Stat(l.logDir); os.IsNotExist(err) {
+		if err := os.Mkdir(l.logDir, os.ModePerm); err != nil {
 			panic(err)
 		}
 	}
 	actualDate := time.Now()
-	l.StartTime = l.getActualDate()
+	l.startTime = l.getActualDate()
 	fileName := l.getActualDate()
 	logTime := actualDate.Format("2006-01-02 15:04:05")
 
-	file, err := os.OpenFile(l.LogDir+"/"+fileName+".log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o666)
+	file, err := os.OpenFile(l.logDir+"/"+fileName+".log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o666)
 	if err != nil {
 		panic(err)
 	}
 
-	l.File = file
+	l.file = file
 
-	fmt.Println(GREEN + "[INFO: " + actualDate.Format(l.DateFormat) + "] Logger created successfully" + RESET)
+	fmt.Println(GREEN + "[INFO: " + actualDate.Format(l.dateFormat) + "] Logger created successfully" + RESET)
 
 	fileRes := fmt.Sprintf("date:%s,type:success,message:Successfully created a logger,data:%v\n", logTime,
 		map[string]any{})
 
-	_, err = l.File.Write([]byte(fileRes))
+	_, err = l.file.Write([]byte(fileRes))
 	if err != nil {
 		fmt.Println("Something went wrong during writing to data to the file")
 	}
@@ -69,7 +77,7 @@ func (l *Logger) Info(msg string, data ...any) {
 	l.Validate()
 
 	actualDate := time.Now()
-	fileName := actualDate.Format(l.DateFormat)
+	fileName := actualDate.Format(l.dateFormat)
 	logTime := actualDate.Format("2006-01-02 15:04:05")
 
 	fmt.Println(GREEN + "[INFO: " + logTime + "] " + msg)
@@ -85,7 +93,7 @@ func (l *Logger) Info(msg string, data ...any) {
 
 	fileRes := fmt.Sprintf("date:%s,type:info,message:%s,data:%v\n", fileName, msg, data)
 
-	_, err := l.File.WriteString(fileRes)
+	_, err := l.file.WriteString(fileRes)
 	if err != nil {
 		fmt.Println("Something went wrong during writing to data to the file", err)
 	}
@@ -95,7 +103,7 @@ func (l *Logger) Warn(msg string, data ...any) {
 	l.Validate()
 
 	actualDate := time.Now()
-	fileName := actualDate.Format(l.DateFormat)
+	fileName := actualDate.Format(l.dateFormat)
 
 	fmt.Print(YELLOW + "[WARN: " + fileName + "] " + msg)
 
@@ -110,7 +118,7 @@ func (l *Logger) Warn(msg string, data ...any) {
 
 	fileRes := fmt.Sprintf("date:%s,type:warn,message:%s,data:%v\n", fileName, msg, data)
 
-	_, err := l.File.Write([]byte(fileRes))
+	_, err := l.file.Write([]byte(fileRes))
 	if err != nil {
 		fmt.Println("Something went wrong during writing to data to the file")
 	}
@@ -120,7 +128,7 @@ func (l *Logger) Error(msg string, data ...any) {
 	l.Validate()
 
 	actualDate := time.Now()
-	fileName := actualDate.Format(l.DateFormat)
+	fileName := actualDate.Format(l.dateFormat)
 
 	fmt.Print(RED + "[ERROR: " + fileName + "] " + msg)
 
@@ -135,7 +143,7 @@ func (l *Logger) Error(msg string, data ...any) {
 
 	fileRes := fmt.Sprintf("date:%s,type:error,message:%s,data:%v\n", fileName, msg, data)
 
-	_, err := l.File.Write([]byte(fileRes))
+	_, err := l.file.Write([]byte(fileRes))
 	if err != nil {
 		fmt.Println("Something went wrong during writing to data to the file")
 	}
@@ -143,30 +151,30 @@ func (l *Logger) Error(msg string, data ...any) {
 
 func (l *Logger) Validate() {
 	actualDateFormat := l.getActualDate()
-	if actualDateFormat != l.StartTime {
+	if actualDateFormat != l.startTime {
 
 		fmt.Println("Closing old file and creating the new one for new date")
 
-		err := l.File.Close()
+		err := l.file.Close()
 		if err != nil {
 			fmt.Println("Something went wrong during writing to data to the file")
 		}
 
-		l.StartTime = actualDateFormat
+		l.startTime = actualDateFormat
 		fileName := actualDateFormat
 
-		file, err := os.OpenFile(l.LogDir+"/"+fileName+".log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o666)
+		file, err := os.OpenFile(l.logDir+"/"+fileName+".log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o666)
 		if err != nil {
 			panic(err)
 		}
 
-		l.File = file
+		l.file = file
 	}
 }
 
 func (l *Logger) Close() error {
-	if l.File != nil {
-		return l.File.Close()
+	if l.file != nil {
+		return l.file.Close()
 	}
 	return nil
 }

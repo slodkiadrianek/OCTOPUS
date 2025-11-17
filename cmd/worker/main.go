@@ -40,12 +40,12 @@ func main() {
 	}
 	// Route
 	routeRepository := repository.NewRouteRepository(db.DbConnection, loggerService)
-	routeStatusService := servicesApp.NewRouteStatusService(routeRepository, loggerService)
+	routeStatusService := servicesApp.NewRouteStatusService(routeRepository, *loggerService)
 	// App
 	appRepository := repository.NewAppRepository(db.DbConnection, loggerService)
 	appStatusService := servicesApp.NewAppStatusService(appRepository, cacheService, *loggerService, cfg.DockerHost)
-	appNotificationsService := servicesApp.NewAppNotificationsService(appRepository, loggerService)
-	appService := servicesApp.NewAppService(appRepository, loggerService, appStatusService, appNotificationsService, routeStatusService)
+	appNotificationsService := servicesApp.NewAppNotificationsService(appRepository, *loggerService)
+	appService := servicesApp.NewAppService(appRepository, *loggerService, appStatusService, appNotificationsService, routeStatusService)
 	// Server
 	serverService := server.NewServerService(loggerService, cacheService)
 

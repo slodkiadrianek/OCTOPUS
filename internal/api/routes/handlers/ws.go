@@ -1,29 +1,25 @@
 package handlers
 
 import (
-	"net/http"
-
+	"github.com/slodkiadrianek/octopus/internal/api/interfaces"
 	"github.com/slodkiadrianek/octopus/internal/api/routes"
 	"github.com/slodkiadrianek/octopus/internal/middleware"
 )
 
-type wsController interface {
-	Logs(w http.ResponseWriter, r *http.Request)
-}
 type WebSocketHandlers struct {
-	WsController wsController
-	JWT          *middleware.JWT
+	wsController interfaces.WsController
+	jwt          *middleware.JWT
 }
 
-func NewWebsocketHandler(wsController wsController, jwt *middleware.JWT) *WebSocketHandlers {
+func NewWebsocketHandler(wsController interfaces.WsController, jwt *middleware.JWT) *WebSocketHandlers {
 	return &WebSocketHandlers{
-		WsController: wsController,
-		JWT:          jwt,
+		wsController: wsController,
+		jwt:          jwt,
 	}
 }
 
 func (ws *WebSocketHandlers) SetupWebsocketHandlers(router routes.Router) {
 	groupRouter := router.Group("/ws/v1/apps")
-	groupRouter.GET("/:appId/logs", ws.WsController.Logs)
-	//groupRouter.GET("/:appId/console", ws.JWT.VerifyToken)
+	groupRouter.GET("/:appId/logs", ws.wsController.Logs)
+	//groupRouter.GET("/:appId/console", ws.jwt.VerifyToken)
 }

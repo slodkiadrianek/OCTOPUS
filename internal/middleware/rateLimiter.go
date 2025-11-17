@@ -13,26 +13,26 @@ import (
 )
 
 type RateLimiterUser struct {
-	Tokens     int
-	LastRefill time.Time
-	BlockUntil time.Time
+	tokens     int
+	lastRefill time.Time
+	blockUntil time.Time
 }
 
 func NewRateLimiterUser(token int, lastRefill time.Time, blockUntil time.Time) *RateLimiterUser {
 	return &RateLimiterUser{
-		Tokens:     token,
-		LastRefill: lastRefill,
-		BlockUntil: blockUntil,
+		tokens:     token,
+		lastRefill: lastRefill,
+		blockUntil: blockUntil,
 	}
 }
 
 type RateLimiter struct {
 	Users           map[string]*RateLimiterUser
-	LoggerService   *utils.Logger
-	MaxTokens       int
-	RefillRate      time.Duration
-	BlockDuration   time.Duration
-	InactiveTimeout time.Duration
+	loggerService   utils.LoggerService
+	maxTokens       int
+	refillRate      time.Duration
+	blockDuration   time.Duration
+	inactiveTimeout time.Duration
 }
 
 func RateLimiterMiddleware(rateLimiter RateLimiter) func(http.Handler) http.Handler {
@@ -59,21 +59,21 @@ func RateLimiterHandler(next http.Handler, rateLimiter RateLimiter) http.Handler
 				return
 			}
 		}
-		newUser := NewRateLimiterUser(rateLimiter.MaxTokens, time.Now(), time.Unix(0, 0))
+		newUser := NewRateLimiterUser(rateLimiter.maxTokens, time.Now(), time.Unix(0, 0))
 		rateLimiter.Users[ipAddress] = newUser
 		rateLimiter.Allow(ipAddress)
 		next.ServeHTTP(w, r)
 	})
 }
 
-func NewRateLimiter(maxTokens int, refillRate time.Duration, blockDuration time.Duration, inactiveTimeout time.Duration, loggerService *utils.Logger) *RateLimiter {
+func NewRateLimiter(maxTokens int, refillRate time.Duration, blockDuration time.Duration, inactiveTimeout time.Duration, loggerService utils.LoggerService) *RateLimiter {
 	return &RateLimiter{
 		Users:           map[string]*RateLimiterUser{},
-		LoggerService:   loggerService,
-		MaxTokens:       maxTokens,
-		RefillRate:      refillRate,
-		BlockDuration:   blockDuration,
-		InactiveTimeout: inactiveTimeout,
+		loggerService:   loggerService,
+		maxTokens:       maxTokens,
+		refillRate:      refillRate,
+		blockDuration:   blockDuration,
+		inactiveTimeout: inactiveTimeout,
 	}
 }
 
@@ -85,10 +85,10 @@ func (ra *RateLimiter) CleanWorker(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			ra.LoggerService.Info("Started cleaning users in rate limiter")
+			ra.loggerService.Info("Started cleaning users in rate limiter")
 			ra.Cleanup()
 		case <-ctx.Done():
-			ra.LoggerService.Info("Ended cleaning rate limiter")
+			ra.loggerService.Info("Ended cleaning rate limiter")
 			return
 		}
 	}
@@ -96,38 +96,38 @@ func (ra *RateLimiter) CleanWorker(ctx context.Context) {
 
 func (ra *RateLimiter) Cleanup() {
 	now := time.Now()
-	removeTime := now.Add(ra.InactiveTimeout)
+	removeTime := now.Add(ra.inactiveTimeout)
 	removed := 0
 	for ipAddress, user := range ra.Users {
-		if removeTime.Before(user.LastRefill) {
+		if removeTime.Before(user.lastRefill) {
 			delete(ra.Users, ipAddress)
 			removed++
 		}
 	}
-	ra.LoggerService.Info("Removed users from rate limiter", removed)
+	ra.loggerService.Info("Removed users from rate limiter", removed)
 }
 
 func (ra *RateLimiter) Allow(ipAddress string) bool {
 	now := time.Now()
 	user := ra.Users[ipAddress]
-	if now.Before(user.BlockUntil) {
+	if now.Before(user.blockUntil) {
 		return false
 	}
-	elapsed := now.Sub(user.LastRefill)
-	newTokens := elapsed / ra.RefillRate
+	elapsed := now.Sub(user.lastRefill)
+	newTokens := elapsed / ra.refillRate
 	if newTokens > 0 {
-		user.Tokens += int(newTokens)
-		if user.Tokens > ra.MaxTokens {
-			user.Tokens = ra.MaxTokens
+		user.tokens += int(newTokens)
+		if user.tokens > ra.maxTokens {
+			user.tokens = ra.maxTokens
 		}
-		user.LastRefill = now
+		user.lastRefill = now
 	}
 
-	if user.Tokens > 0 {
-		user.Tokens--
+	if user.tokens > 0 {
+		user.tokens--
 		return true
 	} else {
-		user.BlockUntil = now.Add(ra.BlockDuration)
+		user.blockUntil = now.Add(ra.blockDuration)
 	}
 
 	return false

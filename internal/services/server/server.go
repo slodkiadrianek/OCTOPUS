@@ -14,26 +14,26 @@ import (
 )
 
 type ServerService struct {
-	Logger       *utils.Logger
-	CacheService interfaces.CacheService
+	logger       utils.LoggerService
+	cacheService interfaces.CacheService
 }
 
-func NewServerService(logger *utils.Logger, cacheService interfaces.CacheService) *ServerService {
+func NewServerService(logger utils.LoggerService, cacheService interfaces.CacheService) *ServerService {
 	return &ServerService{
-		Logger:       logger,
-		CacheService: cacheService,
+		logger:       logger,
+		cacheService: cacheService,
 	}
 }
 
 func (s *ServerService) GetServerMetrics(ctx context.Context) ([]models.ServerMetrics, error) {
-	serverMetricsData, err := s.CacheService.GetData(ctx, "server_metrics")
+	serverMetricsData, err := s.cacheService.GetData(ctx, "server_metrics")
 	if err != nil {
-		s.Logger.Error("Failed to get server metrics from cache", err)
+		s.logger.Error("Failed to get server metrics from cache", err)
 		return nil, err
 	}
 	existingMetrics, err := utils.UnmarshalData[[]models.ServerMetrics]([]byte(serverMetricsData))
 	if err != nil {
-		s.Logger.Error("Failed to unmarshal server metrics data", err)
+		s.logger.Error("Failed to unmarshal server metrics data", err)
 		return nil, err
 	}
 	return *existingMetrics, nil
@@ -42,27 +42,27 @@ func (s *ServerService) GetServerMetrics(ctx context.Context) ([]models.ServerMe
 func (s *ServerService) GetServerInfo() (models.ServerInfo, error) {
 	cpuInfo, err := cpu.Info()
 	if err != nil {
-		s.Logger.Warn("Failed to read cpu data", err)
+		s.logger.Warn("Failed to read cpu data", err)
 		return models.ServerInfo{}, err
 	}
 	ram, err := mem.VirtualMemory()
 	if err != nil {
-		s.Logger.Warn("Failed to read memory data", err)
+		s.logger.Warn("Failed to read memory data", err)
 		return models.ServerInfo{}, err
 	}
 	diskUsage, err := disk.Usage("./")
 	if err != nil {
-		s.Logger.Warn("Failed to read disk data", err)
+		s.logger.Warn("Failed to read disk data", err)
 		return models.ServerInfo{}, err
 	}
 	workTime, err := host.Uptime()
 	if err != nil {
-		s.Logger.Warn("Failed to uptime  data", err)
+		s.logger.Warn("Failed to uptime  data", err)
 		return models.ServerInfo{}, err
 	}
 	info, err := host.Info()
 	if err != nil {
-		s.Logger.Warn("Failed to info data", err)
+		s.logger.Warn("Failed to info data", err)
 		return models.ServerInfo{}, err
 	}
 
@@ -77,38 +77,38 @@ func (s *ServerService) GetServerInfo() (models.ServerInfo, error) {
 func (s *ServerService) InsertServerMetrics(ctx context.Context) error {
 	cpuData, err := cpu.Percent(time.Second, false)
 	if err != nil {
-		s.Logger.Warn("Failed to read cpu data", err)
+		s.logger.Warn("Failed to read cpu data", err)
 		return err
 	}
 	memData, err := mem.VirtualMemory()
 	if err != nil {
-		s.Logger.Warn("Failed to read memory data", err)
+		s.logger.Warn("Failed to read memory data", err)
 		return err
 	}
 	memPercent := memData.UsedPercent
 	diskUsage, err := disk.Usage("./")
 	if err != nil {
-		s.Logger.Warn("Failed to read disk data", err)
+		s.logger.Warn("Failed to read disk data", err)
 		return err
 	}
 	actualDate := time.Now()
 	serverMetricsData := models.NewServerMetrics(int(cpuData[0]), int(memPercent), int(diskUsage.UsedPercent), actualDate)
-	s.Logger.Info("Server metrics data", map[string]any{
+	s.logger.Info("Server metrics data", map[string]any{
 		"CPU":  int(cpuData[0]),
 		"RAM":  int(memPercent),
 		"Disk": int(diskUsage.UsedPercent),
 		"Date": actualDate,
 	})
-	doesServerMetricsExists, err := s.CacheService.ExistsData(ctx, "server_metrics")
+	doesServerMetricsExists, err := s.cacheService.ExistsData(ctx, "server_metrics")
 	var existingMetrics *[]models.ServerMetrics
 	if err != nil {
-		s.Logger.Warn("Failed to check if server metrics exist in cache", err)
+		s.logger.Warn("Failed to check if server metrics exist in cache", err)
 		return err
 	}
 	if doesServerMetricsExists == 1 {
-		serverMetricsData, err := s.CacheService.GetData(ctx, "server_metrics")
+		serverMetricsData, err := s.cacheService.GetData(ctx, "server_metrics")
 		if err != nil {
-			s.Logger.Warn("Failed to get server metrics from cache", err)
+			s.logger.Warn("Failed to get server metrics from cache", err)
 			return err
 		}
 		existingMetrics, err = utils.UnmarshalData[[]models.ServerMetrics]([]byte(serverMetricsData))
@@ -122,9 +122,9 @@ func (s *ServerService) InsertServerMetrics(ctx context.Context) error {
 		existingMetrics = &[]models.ServerMetrics{*serverMetricsData}
 	}
 	bodyBytes, err := utils.MarshalData(existingMetrics)
-	err = s.CacheService.SetData(ctx, "server_metrics", string(bodyBytes), 0)
+	err = s.cacheService.SetData(ctx, "server_metrics", string(bodyBytes), 0)
 	if err != nil {
-		s.Logger.Warn("Failed to cache server metrics", err)
+		s.logger.Warn("Failed to cache server metrics", err)
 		return err
 	}
 	return nil

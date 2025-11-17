@@ -14,14 +14,14 @@ type authService interface {
 }
 
 type AuthController struct {
-	AuthService authService
-	Logger      *utils.Logger
+	authService   authService
+	loggerService utils.LoggerService
 }
 
-func NewAuthController(authService authService, logger *utils.Logger) *AuthController {
+func NewAuthController(authService authService, loggerService utils.LoggerService) *AuthController {
 	return &AuthController{
-		AuthService: authService,
-		Logger:      logger,
+		authService:   authService,
+		loggerService: loggerService,
 	}
 }
 
@@ -38,7 +38,7 @@ func (a AuthController) LoginUser(w http.ResponseWriter, r *http.Request) {
 			"errorDescription": "Internal server error",
 		})
 	}
-	tokenString, err := a.AuthService.LoginUser(r.Context(), *userBody)
+	tokenString, err := a.authService.LoginUser(r.Context(), *userBody)
 	if err != nil {
 		errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
 		if ok {
@@ -54,7 +54,7 @@ func (a AuthController) LoginUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a AuthController) VerifyUser(w http.ResponseWriter, r *http.Request) {
-	userId := utils.ReadUserIdFromToken(w, r, a.Logger)
+	userId := utils.ReadUserIdFromToken(w, r, a.loggerService)
 	if userId == 0 {
 		return
 	}
@@ -63,6 +63,6 @@ func (a AuthController) VerifyUser(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (a AuthController) LogoutUser(w http.ResponseWriter, r *http.Request) {
+func (a AuthController) LogoutUser(w http.ResponseWriter, _ *http.Request) {
 	utils.SendResponse(w, 204, map[string]string{})
 }

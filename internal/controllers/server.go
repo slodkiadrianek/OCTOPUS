@@ -14,19 +14,19 @@ type serverService interface {
 	InsertServerMetrics(ctx context.Context) error
 }
 type ServerController struct {
-	Logger        *utils.Logger
-	ServerService serverService
+	loggerService utils.LoggerService
+	serverService serverService
 }
 
-func NewServerController(logger *utils.Logger, serverService serverService) *ServerController {
+func NewServerController(loggerService utils.LoggerService, serverService serverService) *ServerController {
 	return &ServerController{
-		ServerService: serverService,
-		Logger:        logger,
+		serverService: serverService,
+		loggerService: loggerService,
 	}
 }
 
 func (s *ServerController) GetServerInfo(w http.ResponseWriter, r *http.Request) {
-	serverInfo, err := s.ServerService.GetServerInfo()
+	serverInfo, err := s.serverService.GetServerInfo()
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
@@ -35,7 +35,7 @@ func (s *ServerController) GetServerInfo(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *ServerController) GetServerMetrics(w http.ResponseWriter, r *http.Request) {
-	serverMetrics, err := s.ServerService.GetServerMetrics(r.Context())
+	serverMetrics, err := s.serverService.GetServerMetrics(r.Context())
 	if err != nil {
 		err := models.NewError(500, "Server", "Internal server error")
 		utils.SetError(w, r, err)

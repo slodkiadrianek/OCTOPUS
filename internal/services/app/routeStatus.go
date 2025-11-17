@@ -11,15 +11,15 @@ import (
 )
 
 type RouteStatusService struct {
-	RouteRepository interfaces.RouteRepository
-	LoggerService   utils.Logger
+	routeRepository interfaces.RouteRepository
+	loggerService   utils.LoggerService
 }
 
 func NewRouteStatusService(routeRepository interfaces.RouteRepository,
-	loggerService utils.Logger) *RouteStatusService {
+	loggerService utils.LoggerService) *RouteStatusService {
 	return &RouteStatusService{
-		RouteRepository: routeRepository,
-		LoggerService:   loggerService,
+		routeRepository: routeRepository,
+		loggerService:   loggerService,
 	}
 }
 
@@ -66,7 +66,7 @@ func (rs *RouteStatusService) prepareRouteDataForTestRequest(route models.RouteT
 
 	jsonData, err := utils.MarshalData(route.RequestBody)
 	if err != nil {
-		rs.LoggerService.Error("Failed to marshal webhook payload", err)
+		rs.loggerService.Error("Failed to marshal webhook payload", err)
 		return "", "", []byte{}, err
 	}
 
@@ -117,9 +117,9 @@ func (rs *RouteStatusService) prepareDataForTheNextRoute(route models.RouteToTes
 }
 
 func (rs *RouteStatusService) CheckRoutesStatus(ctx context.Context) error {
-	rs.LoggerService.Info("Started checking statuses of the routes")
+	rs.loggerService.Info("Started checking statuses of the routes")
 
-	routesToTest, err := rs.RouteRepository.GetWorkingRoutesToTest(ctx)
+	routesToTest, err := rs.routeRepository.GetWorkingRoutesToTest(ctx)
 	if err != nil {
 		return err
 	}
@@ -161,7 +161,7 @@ func (rs *RouteStatusService) CheckRoutesStatus(ctx context.Context) error {
 				return err
 			}
 
-			responseStatusCode, responseBody, err := utils.DoHttpRequest(ctx, url, authorizationHeader, route.Method, body, rs.LoggerService)
+			responseStatusCode, responseBody, err := utils.DoHttpRequest(ctx, url, authorizationHeader, route.Method, body, rs.loggerService)
 			if len(responseBody) != len(route.ResponseBody) {
 				routeStatus = "Failed;Different body"
 				routesStatuses[route.ID] = routeStatus
@@ -183,13 +183,13 @@ func (rs *RouteStatusService) CheckRoutesStatus(ctx context.Context) error {
 		}
 
 	}
-	rs.LoggerService.Info("The routes statuses have started inserting into database", routesStatuses)
+	rs.loggerService.Info("The routes statuses have started inserting into database", routesStatuses)
 
-	err = rs.RouteRepository.UpdateWorkingRoutesStatuses(ctx, routesStatuses)
+	err = rs.routeRepository.UpdateWorkingRoutesStatuses(ctx, routesStatuses)
 	if err != nil {
 		return err
 	}
 
-	rs.LoggerService.Info("The route statuses have finished inserting into the database.", routesStatuses)
+	rs.loggerService.Info("The route statuses have finished inserting into the database.", routesStatuses)
 	return nil
 }

@@ -11,15 +11,15 @@ import (
 )
 
 type AppNotificationsService struct {
-	AppRepository interfaces.AppRepository
-	LoggerService utils.Logger
+	appRepository interfaces.AppRepository
+	loggerService utils.LoggerService
 }
 
-func NewAppNotificationsService(appRepository interfaces.AppRepository, loggerService utils.Logger,
+func NewAppNotificationsService(appRepository interfaces.AppRepository, loggerService utils.LoggerService,
 ) *AppNotificationsService {
 	return &AppNotificationsService{
-		AppRepository: appRepository,
-		LoggerService: loggerService,
+		appRepository: appRepository,
+		loggerService: loggerService,
 	}
 }
 
@@ -71,9 +71,9 @@ func (an *AppNotificationsService) SendNotifications(ctx context.Context, appsSt
 		return nil
 	}
 
-	an.LoggerService.Info("Started sending Notifications to users")
+	an.loggerService.Info("Started sending Notifications to users")
 
-	notificationsInfo, err := an.AppRepository.GetUsersToSendNotifications(ctx, appsStatuses)
+	notificationsInfo, err := an.appRepository.GetUsersToSendNotifications(ctx, appsStatuses)
 	if err != nil {
 		return err
 	}
@@ -92,13 +92,13 @@ func (an *AppNotificationsService) SendNotifications(ctx context.Context, appsSt
 			return err
 		}
 
-		responseStatusCode, _, err := utils.DoHttpRequest(ctx, webhookURL, "", "POST", body, an.LoggerService)
+		responseStatusCode, _, err := utils.DoHttpRequest(ctx, webhookURL, "", "POST", body, an.loggerService)
 		if err != nil {
 			return err
 		}
 
 		if responseStatusCode >= 300 {
-			an.LoggerService.Warn("Webhook returned non-success status", "status", responseStatusCode)
+			an.loggerService.Warn("Webhook returned non-success status", "status", responseStatusCode)
 		}
 	}
 
@@ -113,13 +113,13 @@ func (an *AppNotificationsService) SendNotifications(ctx context.Context, appsSt
 			return err
 		}
 
-		responseStatusCode, _, err := utils.DoHttpRequest(ctx, webhookURL, "", "POST", body, an.LoggerService)
+		responseStatusCode, _, err := utils.DoHttpRequest(ctx, webhookURL, "", "POST", body, an.loggerService)
 		if err != nil {
 			return err
 		}
 
 		if responseStatusCode >= 300 {
-			an.LoggerService.Warn("Webhook returned non-success status", "status", responseStatusCode)
+			an.loggerService.Warn("Webhook returned non-success status", "status", responseStatusCode)
 		}
 	}
 	return nil

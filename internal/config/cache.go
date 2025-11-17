@@ -8,7 +8,7 @@ import (
 )
 
 type CacheService struct {
-	Client *redis.Client
+	client *redis.Client
 }
 
 func NewCacheService(cacheLink string) (*CacheService, error) {
@@ -17,12 +17,12 @@ func NewCacheService(cacheLink string) (*CacheService, error) {
 		return &CacheService{}, err
 	}
 	return &CacheService{
-		Client: redis.NewClient(opt),
+		client: redis.NewClient(opt),
 	}, nil
 }
 
 func (c *CacheService) SetData(ctx context.Context, key string, data string, ttl time.Duration) error {
-	err := c.Client.Set(ctx, key, string(data), ttl).Err()
+	err := c.client.Set(ctx, key, data, ttl).Err()
 	if err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func (c *CacheService) SetData(ctx context.Context, key string, data string, ttl
 }
 
 func (c *CacheService) GetData(ctx context.Context, key string) (string, error) {
-	res, err := c.Client.Get(ctx, key).Result()
+	res, err := c.client.Get(ctx, key).Result()
 	if err != nil {
 		return "", err
 	}
@@ -38,7 +38,7 @@ func (c *CacheService) GetData(ctx context.Context, key string) (string, error) 
 }
 
 func (c *CacheService) ExistsData(ctx context.Context, key string) (int64, error) {
-	res, err := c.Client.Exists(ctx, key).Result()
+	res, err := c.client.Exists(ctx, key).Result()
 	if err != nil {
 		return 0, err
 	}
@@ -46,7 +46,7 @@ func (c *CacheService) ExistsData(ctx context.Context, key string) (int64, error
 }
 
 func (c *CacheService) DeleteData(ctx context.Context, key string) error {
-	err := c.Client.Del(ctx, key).Err()
+	err := c.client.Del(ctx, key).Err()
 	if err != nil {
 		return err
 	}

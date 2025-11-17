@@ -13,21 +13,21 @@ import (
 )
 
 type UserService struct {
-	LoggerService  *utils.Logger
-	CacheService   interfaces.CacheService
-	UserRepository interfaces.UserRepository
+	loggerService  utils.LoggerService
+	cacheService   interfaces.CacheService
+	userRepository interfaces.UserRepository
 }
 
-func NewUserService(loggerService *utils.Logger, userRepository interfaces.UserRepository,
+func NewUserService(loggerService utils.LoggerService, userRepository interfaces.UserRepository,
 	cacheService interfaces.CacheService) *UserService {
 	return &UserService{
-		LoggerService:  loggerService,
-		UserRepository: userRepository,
-		CacheService:   cacheService,
+		loggerService:  loggerService,
+		userRepository: userRepository,
+		cacheService:   cacheService,
 	}
 }
 func (u *UserService) readUserFromCache(ctx context.Context, cacheKey string) (models.User, error) {
-	userJson, err := u.CacheService.GetData(ctx, cacheKey)
+	userJson, err := u.cacheService.GetData(ctx, cacheKey)
 	if err != nil {
 		return models.User{}, err
 	}
@@ -40,7 +40,7 @@ func (u *UserService) readUserFromCache(ctx context.Context, cacheKey string) (m
 }
 func (u *UserService) callFindUserByIdAndSaveToCache(ctx context.Context, userId int, cacheKey string) (models.User,
 	error) {
-	user, err := u.UserRepository.FindUserById(ctx, userId)
+	user, err := u.userRepository.FindUserById(ctx, userId)
 	if err != nil {
 		return models.User{}, err
 	}
@@ -48,7 +48,7 @@ func (u *UserService) callFindUserByIdAndSaveToCache(ctx context.Context, userId
 	if err != nil {
 		return models.User{}, err
 	}
-	err = u.CacheService.SetData(ctx, cacheKey, string(userJson), time.Minute)
+	err = u.cacheService.SetData(ctx, cacheKey, string(userJson), time.Minute)
 	if err != nil {
 		return models.User{}, err
 	}
@@ -56,7 +56,7 @@ func (u *UserService) callFindUserByIdAndSaveToCache(ctx context.Context, userId
 }
 func (u *UserService) GetUser(ctx context.Context, userId int) (models.User, error) {
 	cacheKey := fmt.Sprintf("users-%d", userId)
-	doesUserExists, err := u.CacheService.ExistsData(ctx, cacheKey)
+	doesUserExists, err := u.cacheService.ExistsData(ctx, cacheKey)
 	if err != nil {
 		return models.User{}, err
 	}
@@ -67,12 +67,12 @@ func (u *UserService) GetUser(ctx context.Context, userId int) (models.User, err
 		}
 		return user, nil
 	}
-	user, err := u.UserRepository.FindUserById(ctx, userId)
+	user, err := u.userRepository.FindUserById(ctx, userId)
 	userJson, err := utils.MarshalData(user)
 	if err != nil {
 		return models.User{}, err
 	}
-	err = u.CacheService.SetData(ctx, cacheKey, string(userJson), time.Minute)
+	err = u.cacheService.SetData(ctx, cacheKey, string(userJson), time.Minute)
 	if err != nil {
 		return models.User{}, err
 	}
@@ -80,25 +80,25 @@ func (u *UserService) GetUser(ctx context.Context, userId int) (models.User, err
 }
 
 func (u *UserService) InsertUserToDb(ctx context.Context, user DTO.CreateUser, password string) error {
-	doesUserExists, err := u.UserRepository.FindUserByEmail(ctx, user.Email)
+	doesUserExists, err := u.userRepository.FindUserByEmail(ctx, user.Email)
 	if err != nil {
 		if err.Error() == "User not found" {
-			u.LoggerService.Info("User not found", user.Email)
+			u.loggerService.Info("User not found", user.Email)
 			return models.NewError(400, "NotFound", "User not found")
 		}
 		return models.NewError(500, "InternalError", err.Error())
 	}
 	if doesUserExists.ID > 0 {
-		u.LoggerService.Info("User with this email already exists", user.Email)
+		u.loggerService.Info("User with this email already exists", user.Email)
 		return models.NewError(400, "Verification", "User with this email already exists")
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		u.LoggerService.Info("failed to generate password", err)
+		u.loggerService.Info("failed to generate password", err)
 		return err
 	}
-	err = u.UserRepository.InsertUserToDb(ctx, user, string(hashedPassword))
+	err = u.userRepository.InsertUserToDb(ctx, user, string(hashedPassword))
 	if err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func (u *UserService) InsertUserToDb(ctx context.Context, user DTO.CreateUser, p
 }
 
 func (u *UserService) UpdateUser(ctx context.Context, user DTO.CreateUser, userId int) error {
-	err := u.UserRepository.UpdateUser(ctx, user, userId)
+	err := u.userRepository.UpdateUser(ctx, user, userId)
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func (u *UserService) UpdateUser(ctx context.Context, user DTO.CreateUser, userI
 func (u *UserService) UpdateUserNotifications(ctx context.Context, userId int,
 	userNotifications DTO.UpdateUserNotificationsSettings,
 ) error {
-	err := u.UserRepository.UpdateUserNotifications(ctx, userId, userNotifications)
+	err := u.userRepository.UpdateUserNotifications(ctx, userId, userNotifications)
 	if err != nil {
 		return err
 	}
@@ -125,7 +125,7 @@ func (u *UserService) UpdateUserNotifications(ctx context.Context, userId int,
 
 func (u *UserService) DeleteUser(ctx context.Context, userId int, password string) error {
 	cacheKey := fmt.Sprintf("users-%d", userId)
-	doesUserExists, err := u.CacheService.ExistsData(ctx, cacheKey)
+	doesUserExists, err := u.cacheService.ExistsData(ctx, cacheKey)
 	var user models.User
 	if err != nil {
 		return err
@@ -143,19 +143,19 @@ func (u *UserService) DeleteUser(ctx context.Context, userId int, password strin
 	}
 
 	if user.ID == 0 {
-		u.LoggerService.Info("User with this id does not exist", userId)
+		u.loggerService.Info("User with this id does not exist", userId)
 		return models.NewError(400, "Verification", "User with this id does not exist")
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		u.LoggerService.Info("Wrong password provided", userId)
+		u.loggerService.Info("Wrong password provided", userId)
 		return models.NewError(401, "Authorization", "Wrong password provided")
 	}
-	err = u.UserRepository.DeleteUser(ctx, password, userId)
+	err = u.userRepository.DeleteUser(ctx, password, userId)
 	if err != nil {
 		return err
 	}
-	err = u.CacheService.DeleteData(ctx, cacheKey)
+	err = u.cacheService.DeleteData(ctx, cacheKey)
 	if err != nil {
 		return err
 	}
@@ -164,7 +164,7 @@ func (u *UserService) DeleteUser(ctx context.Context, userId int, password strin
 
 func (u *UserService) ChangeUserPassword(ctx context.Context, userId int, currentPassword string, newPassword string) error {
 	cacheKey := fmt.Sprintf("users-%d", userId)
-	doesUserExists, err := u.CacheService.ExistsData(ctx, cacheKey)
+	doesUserExists, err := u.cacheService.ExistsData(ctx, cacheKey)
 	var user models.User
 	if err != nil {
 		return err
@@ -181,24 +181,24 @@ func (u *UserService) ChangeUserPassword(ctx context.Context, userId int, curren
 		}
 	}
 	if user.ID == 0 {
-		u.LoggerService.Info("User with this id does not exist", userId)
+		u.loggerService.Info("User with this id does not exist", userId)
 		return models.NewError(400, "Verification", "User with this id does not exist")
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(currentPassword))
 	if err != nil {
-		u.LoggerService.Info("Wrong current password provided", userId)
+		u.loggerService.Info("Wrong current password provided", userId)
 		return models.NewError(401, "Authorization", "Wrong current password provided")
 	}
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
-		u.LoggerService.Info("failed to generate password", err)
+		u.loggerService.Info("failed to generate password", err)
 		return err
 	}
-	err = u.UserRepository.ChangeUserPassword(ctx, userId, string(hashedPassword))
+	err = u.userRepository.ChangeUserPassword(ctx, userId, string(hashedPassword))
 	if err != nil {
 		return err
 	}
-	err = u.CacheService.DeleteData(ctx, cacheKey)
+	err = u.cacheService.DeleteData(ctx, cacheKey)
 	if err != nil {
 		return err
 	}

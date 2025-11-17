@@ -47,6 +47,7 @@ func main() {
 	}
 	rateLimiter := middleware.NewRateLimiter(5, 1*time.Minute, 5*time.Minute, 10*time.Minute, loggerService)
 	jwt := middleware.NewJWT(cfg.JWTSecret, loggerService, cacheService)
+
 	// User
 	userRepository := repository.NewUserRepository(db.DbConnection, loggerService)
 	userService := user.NewUserService(loggerService, userRepository, cacheService)
@@ -58,7 +59,7 @@ func main() {
 	routeController := controllers.NewRouteController(routeService, loggerService)
 	// App
 	appRepository := repository.NewAppRepository(db.DbConnection, loggerService)
-	appStatusService := servicesApp.NewAppStatusService(appRepository, cacheService, *loggerService, cfg.DockerHost)
+	appStatusService := servicesApp.NewAppStatusService(appRepository, cacheService, loggerService, cfg.DockerHost)
 	appNotificationsService := servicesApp.NewAppNotificationsService(appRepository, loggerService)
 	appService := servicesApp.NewAppService(appRepository, loggerService, appStatusService, appNotificationsService, routeStatusService)
 	appController := controllers.NewAppController(appService, loggerService)
