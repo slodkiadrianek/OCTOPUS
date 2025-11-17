@@ -8,7 +8,7 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
-type DockerService interface {
+type dockerService interface {
 	PauseContainer(ctx context.Context, appId string) error
 	RestartContainer(ctx context.Context, appId string) error
 	StartContainer(ctx context.Context, appId string) error
@@ -18,11 +18,11 @@ type DockerService interface {
 }
 
 type DockerController struct {
-	dockerService DockerService
+	dockerService dockerService
 	loggerService utils.LoggerService
 }
 
-func NewDockerController(service DockerService, loggerService utils.LoggerService) *DockerController {
+func NewDockerController(service dockerService, loggerService utils.LoggerService) *DockerController {
 	return &DockerController{
 		dockerService: service,
 		loggerService: loggerService,
