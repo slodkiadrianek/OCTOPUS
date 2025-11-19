@@ -49,7 +49,7 @@ func validateHandler[dataFromRequestType any, validationSchemaType *zog.StructSc
 		case "body":
 			bodyBytes, err := io.ReadAll(r.Body)
 			if err != nil {
-				utils.SendResponse(w, http.StatusBadRequest, "Invalid request body")
+				utils.SetError(w, r, err)
 				return
 			}
 
@@ -57,7 +57,7 @@ func validateHandler[dataFromRequestType any, validationSchemaType *zog.StructSc
 			var dataFromRequest *dataFromRequestType
 			dataFromRequest, err = utils.UnmarshalData[dataFromRequestType](bodyBytes)
 			if err != nil {
-				utils.SendResponse(w, http.StatusBadRequest, "Invalid request body")
+				utils.SetError(w, r, err)
 				return
 			}
 
@@ -70,13 +70,13 @@ func validateHandler[dataFromRequestType any, validationSchemaType *zog.StructSc
 		case "params":
 			paramsMap, err := utils.ReadAllParams(r)
 			if err != nil {
-				utils.SendResponse(w, http.StatusBadRequest, "Invalid request parameters")
+				utils.SetError(w, r, err)
 				return
 			}
 
 			paramBytes, err := utils.MarshalData(paramsMap)
 			if err != nil {
-				utils.SendResponse(w, http.StatusBadRequest, "Invalid request parameters")
+				utils.SetError(w, r, err)
 				return
 			}
 

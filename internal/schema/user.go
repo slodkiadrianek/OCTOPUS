@@ -7,9 +7,9 @@ import (
 )
 
 var CreateUserSchema = z.Struct(z.Shape{
-	"name":    z.String().Required(),
-	"surname": z.String().Required(),
-	"email": z.String().Email().Required().Transform(func(val *string, ctx z.Ctx) error {
+	"name":    z.String().Required().Max(64),
+	"surname": z.String().Required().Max(64),
+	"email": z.String().Email().Required().Max(64).Transform(func(val *string, ctx z.Ctx) error {
 		*val = strings.ToLower(*val)
 		*val = strings.TrimSpace(*val)
 		return nil
@@ -22,13 +22,13 @@ var LoginUserSchema = z.Struct(z.Shape{
 		*val = strings.ToLower(*val)
 		*val = strings.TrimSpace(*val)
 		return nil
-	}),
+	}).Max(64),
 	"password": z.String().Required(),
 })
 
 var UpdateUserSchema = z.Struct(z.Shape{
-	"name":    z.String().Required(),
-	"surname": z.String().Required(),
+	"name":    z.String().Required().Max(64),
+	"surname": z.String().Required().Max(64),
 	"email": z.String().Email().Required().Transform(func(val *string, ctx z.Ctx) error {
 		*val = strings.ToLower(*val)
 		*val = strings.TrimSpace(*val)
@@ -41,13 +41,13 @@ var UserIdSchema = z.Struct(z.Shape{
 })
 
 var ChangeUserPasswordSchema = z.Struct(z.Shape{
-	"newPassword":     z.String().Required(),
-	"confirmPassword": z.String().Required(),
-	"currentPassword": z.String().Required(),
+	"newPassword":     z.String().Min(8).Max(32).ContainsSpecial().ContainsUpper().ContainsDigit().Required(),
+	"confirmPassword": z.String().Required().Max(32),
+	"currentPassword": z.String().Required().Max(32),
 })
 
 var DeleteUserSchema = z.Struct(z.Shape{
-	"password": z.String().Required(),
+	"password": z.String().Required().Max(32),
 })
 
 var UpdateUserNotificationsSchema = z.Struct(z.Shape{

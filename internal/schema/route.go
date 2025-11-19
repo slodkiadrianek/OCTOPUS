@@ -7,7 +7,7 @@ import (
 var CreateRouteSchema = z.Struct(z.Shape{
 	"name": z.String().Required(),
 	"routes": z.Slice(z.Struct(z.Shape{
-		"path":                 z.String().Required(),
+		"path":                 z.String().Required().Max(256),
 		"method":               z.String().OneOf([]string{"POST", "GET", "PUT", "PATCH", "DELETE"}),
 		"requestAuthorization": z.String().Optional(),
 		"requestQuery": z.CustomFunc[map[string]string](func(val *map[string]string, ctx z.Ctx) bool {

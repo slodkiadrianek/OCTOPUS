@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
@@ -23,13 +24,14 @@ func NewAppRepository(db *sql.DB, loggerService utils.LoggerService) *AppReposit
 }
 
 func (a *AppRepository) InsertApp(ctx context.Context, app []DTO.App) error {
-	preparedValues := ""
+	placeholders := []string{}
 	args := make([]any, 0)
 	for i := range app {
-		preparedValues += fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d),", i*6+1, i*6+2, i*6+3, i*6+4, i*6+5, i*6+6)
+		preparedValues := fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d),", i*6+1, i*6+2, i*6+3, i*6+4, i*6+5, i*6+6)
 		args = append(args, app[i].ID, app[i].Name, app[i].IsDocker, app[i].OwnerID, app[i].IpAddress, app[i].Port)
+		placeholders = append(placeholders, preparedValues)
 	}
-	preparedValues = preparedValues[:len(preparedValues)-1]
+
 	query := fmt.Sprintf(`INSERT INTO apps (
 		id,
 		name,
@@ -37,7 +39,8 @@ func (a *AppRepository) InsertApp(ctx context.Context, app []DTO.App) error {
 		owner_id,
 		ip_address,
 		port
-	)  VALUES %s`, preparedValues)
+	)  VALUES %s`, strings.Join(placeholders, ","))
+
 	stmt, err := a.db.PrepareContext(ctx, query)
 	if err != nil {
 		a.loggerService.Error(failedToPrepareQuery, map[string]any{
@@ -47,6 +50,7 @@ func (a *AppRepository) InsertApp(ctx context.Context, app []DTO.App) error {
 		})
 		return models.NewError(500, "Database", "Failed to add new app to the database")
 	}
+
 	_, err = stmt.ExecContext(ctx, args...)
 	if err != nil {
 		a.loggerService.Error(failedToExecuteInsertQuery, map[string]any{
@@ -250,7 +254,7 @@ func (a *AppRepository) UpdateApp(ctx context.Context, appId string, app DTO.Upd
 			"query": query,
 			"err":   err.Error(),
 		})
-		return models.NewError(500, "Database", "Failed to update data in the database")
+		return models.NewError(500, "Database", "Failed to update app settings")
 	}
 	_, err = stmt.ExecContext(ctx, app.Name, app.Description, app.IpAddress, app.Port, app.DiscordWebhookUrl,
 		app.SlackWebhookUrl, appId, ownerId)
@@ -263,20 +267,20 @@ func (a *AppRepository) UpdateApp(ctx context.Context, appId string, app DTO.Upd
 			},
 			"err": err.Error(),
 		})
-		return models.NewError(500, "Database", "Failed to update data in the database")
+		return models.NewError(500, "Database", "Failed to update app settings")
 	}
 	return nil
 }
 
 func (a *AppRepository) InsertAppStatuses(ctx context.Context, appsStatuses []DTO.AppStatus) error {
-	preparedValues := ""
+	placeholders := []string{}
 	args := make([]any, 0)
 	for i := range appsStatuses {
-		preparedValues += fmt.Sprintf("($%d,$%d,$%d,$%d),", i*4+1, i*4+2, i*4+3, i*4+4)
+		preparedValues := fmt.Sprintf("($%d,$%d,$%d,$%d)", i*4+1, i*4+2, i*4+3, i*4+4)
 		args = append(args, appsStatuses[i].AppID, appsStatuses[i].Status, appsStatuses[i].ChangedAt,
 			appsStatuses[i].Duration)
+		placeholders = append(placeholders, preparedValues)
 	}
-	preparedValues = preparedValues[:len(preparedValues)-1]
 
 	query := fmt.Sprintf(`
     INSERT INTO apps_statuses(
@@ -290,7 +294,7 @@ func (a *AppRepository) InsertAppStatuses(ctx context.Context, appsStatuses []DT
         status = EXCLUDED.status,
         changed_at = EXCLUDED.changed_at,
         duration = EXCLUDED.duration
-`, preparedValues)
+`, strings.Join(placeholders, ","))
 
 	stmt, err := a.db.PrepareContext(ctx, query)
 	if err != nil {
@@ -314,14 +318,12 @@ func (a *AppRepository) InsertAppStatuses(ctx context.Context, appsStatuses []DT
 }
 
 func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsStatuses []DTO.AppStatus) ([]models.NotificationInfo, error) {
-	preparedValues := ""
+	placeholders := []string{}
 	args := make([]any, 0)
 	for i := range appsStatuses {
-		preparedValues += fmt.Sprintf("$%d,", i+1)
+		preparedValues := fmt.Sprintf("$%d,", i+1)
 		args = append(args, appsStatuses[i].AppID)
-	}
-	if len(preparedValues) > 0 {
-		preparedValues = preparedValues[:len(preparedValues)-1]
+		placeholders = append(placeholders, preparedValues)
 	}
 	query := fmt.Sprintf(`
 	SELECT
@@ -337,7 +339,7 @@ func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsSta
 	FROM apps a
 		INNER JOIN apps_statuses aps ON aps.app_id = a.id
 		INNER JOIN users u ON u.id = a.owner_id
-	WHERE a.id IN (%s)`, preparedValues)
+	WHERE a.id IN (%s)`, strings.Join(placeholders, ","))
 	stmt, err := a.db.PrepareContext(ctx, query)
 	if err != nil {
 		a.loggerService.Error(failedToPrepareQuery, map[string]any{
