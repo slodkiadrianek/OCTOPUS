@@ -31,14 +31,16 @@ func (s *ServerController) GetServerInfo(w http.ResponseWriter, r *http.Request)
 		utils.SetError(w, r, err)
 		return
 	}
+
 	utils.SendResponse(w, 200, serverInfo)
 }
 
 func (s *ServerController) GetServerMetrics(w http.ResponseWriter, r *http.Request) {
 	serverMetrics, err := s.serverService.GetServerMetrics(r.Context())
 	if err != nil {
-		err := models.NewError(500, "Server", "Internal server error")
 		utils.SetError(w, r, err)
+		return
 	}
+
 	utils.SendResponse(w, 200, serverMetrics)
 }

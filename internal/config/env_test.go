@@ -15,14 +15,14 @@ func TestReadFile(t *testing.T) {
 		name          string
 		pathToFile    string
 		expectedError *string
-		expectedData  *map[string]string
+		expectedData  map[string]string
 	}
 	testCases := []args{
 		{
 			name:          "Test with proper data",
-			pathToFile:    ".env.test",
+			pathToFile:    "../../.env.test",
 			expectedError: nil,
-			expectedData: &map[string]string{
+			expectedData: map[string]string{
 				"Port":         "3009",
 				"JWTSecret":    "jf3420f98234f",
 				"DbLink":       "postgres://adrian:zaqwerfvbgtyhn@192.168.0.100:5433/octopus?sslmode=disable",
@@ -35,21 +35,21 @@ func TestReadFile(t *testing.T) {
 		},
 		{
 			name:          "Read file which does not exist",
-			pathToFile:    ".env.test2",
-			expectedError: String("failed to open file .env.test2: open .env.test2: no such file or directory"),
-			expectedData:  &map[string]string{},
+			pathToFile:    "../../.env.test2",
+			expectedError: String("failed to open file ../../.env.test2: open ../../.env.test2: no such file or directory"),
+			expectedData:  map[string]string{},
 		},
 		{
 			name:          "Too big file",
-			pathToFile:    "./test.env",
+			pathToFile:    "../../.test.env",
 			expectedError: String("failed to scan a file"),
-			expectedData:  &map[string]string{},
+			expectedData:  map[string]string{},
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			res, err := ReadFile(testCase.pathToFile)
+			res, err := readFile(testCase.pathToFile)
 			if testCase.expectedError == nil {
 				assert.Nil(t, testCase.expectedError, err)
 			} else {

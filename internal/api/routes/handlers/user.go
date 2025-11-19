@@ -22,13 +22,16 @@ func NewUserHandler(userController interfaces.UserController, jwt *middleware.JW
 
 func (u *UserHandlers) SetupUserHandlers(router routes.Router) {
 	groupRouter := router.Group("/api/v1/users")
+
 	groupRouter.GET("/:userId", u.jwt.VerifyToken, middleware.ValidateMiddleware[DTO.UserID]("params",
 		schema.UserIdSchema), u.userController.GetUserInfo)
+
 	groupRouter.PUT("/:userId", u.jwt.VerifyToken, middleware.ValidateMiddleware[DTO.UpdateUser]("body",
 		schema.UpdateUserSchema), u.userController.UpdateUser)
 	groupRouter.PUT("/:userId/notifications", u.jwt.VerifyToken, middleware.ValidateMiddleware[DTO.UserID]("params",
 		schema.UserIdSchema), middleware.ValidateMiddleware[DTO.UpdateUserNotificationsSettings]("body",
 		schema.UpdateUserNotificationsSchema), u.userController.UpdateUserNotifications)
+
 	groupRouter.PATCH("/:userId", u.jwt.VerifyToken, middleware.ValidateMiddleware[DTO.UserID]("params",
 		schema.UserIdSchema), middleware.ValidateMiddleware[DTO.ChangeUserPassword]("body",
 		schema.ChangeUserPasswordSchema), u.userController.ChangeUserPassword)

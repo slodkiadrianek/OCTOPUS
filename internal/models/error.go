@@ -12,7 +12,7 @@ type ErrorBucket struct {
 	Err error
 }
 
-func NewError(statusCode int, category string, description string) *Error {
+func NewError(statusCode int, category, description string) *Error {
 	return &Error{
 		StatusCode:  statusCode,
 		Category:    category,

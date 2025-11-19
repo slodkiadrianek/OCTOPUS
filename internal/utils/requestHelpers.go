@@ -12,27 +12,21 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/models"
 )
 
-func ReadUserIdFromToken(w http.ResponseWriter, r *http.Request, logger LoggerService) int {
+func ReadUserIdFromToken(r *http.Request) (int, error) {
 	userId, ok := r.Context().Value("id").(int)
 	if !ok || userId == 0 {
-		logger.Error("Failed to read user id from context", r.URL.Path)
 		err := models.NewError(500, "Server", "Internal server error")
-		SetError(w, r, err)
-		return 0
+		return 0, err
 	}
-	return userId
+	return userId, nil
 }
 
-func ValidateUsersIds(w http.ResponseWriter, r *http.Request, logger LoggerService, userId int, userIdToken int) {
+func ValidateUsersIds(userId, userIdToken int) error {
 	if userIdToken != userId {
-		logger.Error("You are not allowed to do this action", map[string]any{
-			"path":        r.URL.Path,
-			"userIdToken": userIdToken,
-		})
 		err := models.NewError(500, "Server", "Internal server error")
-		SetError(w, r, err)
-		return
+		return err
 	}
+	return nil
 }
 
 func ReadBody[T any](r *http.Request) (*T, error) {

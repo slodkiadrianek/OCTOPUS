@@ -79,10 +79,11 @@ func main() {
 	dependenciesConfig := api.NewDependencyConfig(cfg.Port, userController, appController, dockerController,
 		authController, jwt, serverController, wsController, rateLimiter, routeController)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	apiCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	httpServer := api.NewServer(dependenciesConfig)
-
-	go rateLimiter.CleanWorker(ctx)
+	rateLimiterCtx, rateLimiterCancel := context.WithCancel(context.Background())
+	defer rateLimiterCancel()
+	go rateLimiter.CleanWorker(rateLimiterCtx)
 	go func() {
 		loggerService.Info("Starting API server on port: " + cfg.Port)
 		if err := httpServer.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -95,7 +96,7 @@ func main() {
 	<-quit
 	defer cancel()
 
-	if err := httpServer.Shutdown(ctx); err != nil {
+	if err := httpServer.Shutdown(apiCtx); err != nil {
 		loggerService.Error("Server forced to shutdown:", err)
 	}
 

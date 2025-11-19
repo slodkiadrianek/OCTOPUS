@@ -20,6 +20,7 @@ func NewServerHandlers(serverController interfaces.ServerController, jwt *middle
 
 func (s ServerHandlers) SetupServerHandlers(router routes.Router) {
 	serverGroup := router.Group("/api/v1/server")
+
 	serverGroup.GET("", s.jwt.VerifyToken, s.serverController.GetServerInfo)
 	serverGroup.GET("/metrics", s.jwt.VerifyToken, s.serverController.GetServerMetrics)
 }

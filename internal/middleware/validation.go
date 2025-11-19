@@ -2,84 +2,93 @@ package middleware
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"net/http"
 	"reflect"
 
 	"github.com/Oudwins/zog"
+	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
-func ValidateMiddleware[T any, Y *zog.StructSchema | *zog.SliceSchema](validationType string, validationSchema Y) func(http.Handler) http.Handler {
+func ValidateMiddleware[dataFromRequestType any, validationSchemaType *zog.StructSchema | *zog.SliceSchema](
+	validationType string, validationSchema validationSchemaType) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return validateHandler[T](next, validationType, validationSchema)
+		return validateHandler[dataFromRequestType](next, validationType, validationSchema)
 	}
 }
 
-func validateHandler[T any, Y *zog.StructSchema | *zog.SliceSchema](next http.Handler, validationType string, validationSchema Y) http.Handler {
+func validateDataFromRequest[dataFromRequestType any, validationSchemaType *zog.StructSchema | *zog.SliceSchema](
+	dataFromRequest dataFromRequestType, validationSchema validationSchemaType) error {
+	typeOfDataFromRequest := reflect.TypeOf(dataFromRequest)
+	var errMap zog.ZogIssueMap
+	if typeOfDataFromRequest.Kind() == reflect.Slice {
+		schema, _ := any(validationSchema).(*zog.SliceSchema)
+		errMap = utils.ValidateInputSlice(schema, dataFromRequest)
+	} else {
+		schema, _ := any(validationSchema).(*zog.StructSchema)
+		errMap = utils.ValidateInputStruct(schema, dataFromRequest)
+	}
+
+	if errMap != nil {
+		parsedError, err := utils.MarshalData(errMap["$first"])
+		if err != nil {
+			return err
+		}
+		return models.NewError(422, "Validation", string(parsedError))
+	}
+
+	return nil
+}
+
+func validateHandler[dataFromRequestType any, validationSchemaType *zog.StructSchema | *zog.SliceSchema](next http.Handler,
+	validationType string,
+	validationSchema validationSchemaType) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch validationType {
 		case "body":
 			bodyBytes, err := io.ReadAll(r.Body)
 			if err != nil {
 				utils.SendResponse(w, http.StatusBadRequest, "Invalid request body")
+				return
 			}
+
 			defer r.Body.Close()
-			var data *T
-			data, err = utils.UnmarshalData[T](bodyBytes)
-			fmt.Println(err)
+			var dataFromRequest *dataFromRequestType
+			dataFromRequest, err = utils.UnmarshalData[dataFromRequestType](bodyBytes)
 			if err != nil {
 				utils.SendResponse(w, http.StatusBadRequest, "Invalid request body")
 				return
 			}
-			var t T
-			typeOfT := reflect.TypeOf(t)
-			var errMap zog.ZogIssueMap
-			if typeOfT.Kind() == reflect.Slice {
-				schema, _ := any(validationSchema).(*zog.SliceSchema)
-				errMap = utils.ValidateInputSlice(schema, data)
-			} else {
-				schema, _ := any(validationSchema).(*zog.StructSchema)
-				errMap = utils.ValidateInputStruct(schema, data)
-			}
-			if errMap != nil {
-				utils.SendResponse(w, 422, errMap["$first"])
+
+			err = validateDataFromRequest[dataFromRequestType, validationSchemaType](*dataFromRequest, validationSchema)
+			if err != nil {
+				utils.SetError(w, r, err)
 				return
 			}
 			r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 		case "params":
 			paramsMap, err := utils.ReadAllParams(r)
 			if err != nil {
-				utils.SendResponse(w, http.StatusBadRequest, "Invalid request body")
+				utils.SendResponse(w, http.StatusBadRequest, "Invalid request parameters")
 				return
 			}
+
 			paramBytes, err := utils.MarshalData(paramsMap)
 			if err != nil {
 				utils.SendResponse(w, http.StatusBadRequest, "Invalid request parameters")
 				return
 			}
 
-			param, err := utils.UnmarshalData[T](paramBytes)
+			var dataFromRequest *dataFromRequestType
+			dataFromRequest, err = utils.UnmarshalData[dataFromRequestType](paramBytes)
+			err = validateDataFromRequest[dataFromRequestType, validationSchemaType](*dataFromRequest, validationSchema)
 			if err != nil {
-				utils.SendResponse(w, http.StatusBadRequest, err)
-				return
-			}
-			var t T
-			typeOfT := reflect.TypeOf(t)
-			var errMap zog.ZogIssueMap
-			if typeOfT.Kind() == reflect.Slice {
-				schema, _ := any(validationSchema).(*zog.SliceSchema)
-				errMap = utils.ValidateInputSlice(schema, param)
-			} else {
-				schema, _ := any(validationSchema).(*zog.StructSchema)
-				errMap = utils.ValidateInputStruct(schema, param)
-			}
-			if errMap != nil {
-				utils.SendResponse(w, 422, errMap["$first"])
+				utils.SetError(w, r, err)
 				return
 			}
 		}
+
 		next.ServeHTTP(w, r)
 	})
 }

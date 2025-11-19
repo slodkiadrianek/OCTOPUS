@@ -43,8 +43,8 @@ func (a *AppService) CreateApp(ctx context.Context, app DTO.CreateApp, ownerId i
 	return nil
 }
 
-func (a *AppService) GetApp(ctx context.Context, id string, ownerId int) (*models.App, error) {
-	app, err := a.appRepository.GetApp(ctx, id, ownerId)
+func (a *AppService) GetApp(ctx context.Context, appId string, ownerId int) (*models.App, error) {
+	app, err := a.appRepository.GetApp(ctx, appId, ownerId)
 	if err != nil {
 		return nil, err
 	}

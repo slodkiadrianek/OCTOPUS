@@ -45,11 +45,13 @@ func (j JWT) GenerateToken(user DTO.LoggedUser) (string, error) {
 		"surname": user.Surname,
 		"exp":     time.Now().Add(2 * time.Hour).Unix(),
 	})
+
 	tokenString, err := tokenWithData.SignedString([]byte(j.token))
 	if err != nil {
 		j.loggerService.Error("Failed to sign token properly", err)
 		return "", models.NewError(401, "Authorization", "Failed to login the user")
 	}
+
 	j.loggerService.Info("Successfully signed a new token")
 	return tokenString, nil
 }
@@ -66,6 +68,7 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 				return
 			}
 		}
+
 		tokenString := strings.Split(authHeader, " ")[1]
 		result, err := j.cacheService.ExistsData(r.Context(), "blacklist-"+tokenString)
 		if err != nil {
@@ -77,6 +80,7 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 				return
 			}
 		}
+
 		if result > 0 {
 			j.loggerService.Info("Token is blacklisted", tokenString)
 			err := models.NewError(401, "Authorization", "Token is blacklisted")
@@ -86,6 +90,7 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 				return
 			}
 		}
+
 		var user userClaims
 		token, err := jwt.ParseWithClaims(tokenString, &user, func(token *jwt.Token) (any, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -93,6 +98,7 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 			}
 			return []byte(j.token), nil
 		})
+
 		if err != nil {
 			j.loggerService.Info("Failed to read data properly", err)
 			err := models.NewError(401, "Authorization", "Provided token is invalid")
@@ -102,6 +108,7 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 				return
 			}
 		}
+
 		if !token.Valid {
 			j.loggerService.Info("Provided token is invalid", err)
 			err := models.NewError(401, "Authorization", "Provided token is invalid")
@@ -111,6 +118,7 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 				return
 			}
 		}
+
 		r = utils.SetContext(r, "id", user.Id)
 
 		r = utils.SetContext(r, "email", user.Email)
@@ -130,6 +138,7 @@ func (j JWT) BlacklistUser(next http.Handler) http.Handler {
 				return
 			}
 		}
+
 		tokenString := strings.Split(authHeader, " ")[1]
 		result, err := j.cacheService.ExistsData(r.Context(), "blacklist-"+tokenString)
 		if err != nil {
@@ -141,6 +150,7 @@ func (j JWT) BlacklistUser(next http.Handler) http.Handler {
 				return
 			}
 		}
+
 		if result > 0 {
 			j.loggerService.Info("Token is blacklisted", tokenString)
 			err := models.NewError(401, "Authorization", "Token is blacklisted")
@@ -150,6 +160,7 @@ func (j JWT) BlacklistUser(next http.Handler) http.Handler {
 				return
 			}
 		}
+
 		var user userClaims
 		tokenWithData, err := jwt.ParseWithClaims(tokenString, &user, func(tokenInJwt *jwt.Token) (any, error) {
 			if _, ok := tokenInJwt.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -157,6 +168,7 @@ func (j JWT) BlacklistUser(next http.Handler) http.Handler {
 			}
 			return []byte(j.token), nil
 		})
+
 		if err != nil {
 			j.loggerService.Info("Failed to read data properly", tokenString)
 			err := models.NewError(401, "Authorization", "Failed to read token")
@@ -166,6 +178,7 @@ func (j JWT) BlacklistUser(next http.Handler) http.Handler {
 				return
 			}
 		}
+
 		if !tokenWithData.Valid {
 			j.loggerService.Info("Provided token is invalid", tokenString)
 			err := models.NewError(401, "Authorization", "Provided token is invalid")
@@ -175,6 +188,7 @@ func (j JWT) BlacklistUser(next http.Handler) http.Handler {
 				return
 			}
 		}
+
 		expirationTime := time.Until(user.ExpiresAt.Time)
 		err = j.cacheService.SetData(r.Context(), "blacklist-"+tokenString, "true", expirationTime)
 		if err != nil {
@@ -186,6 +200,7 @@ func (j JWT) BlacklistUser(next http.Handler) http.Handler {
 				return
 			}
 		}
+
 		next.ServeHTTP(w, r)
 	})
 }

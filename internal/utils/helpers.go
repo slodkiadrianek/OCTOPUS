@@ -21,7 +21,7 @@ func GenerateID() (string, error) {
 	return hex.EncodeToString(bytes), nil
 }
 
-func SetContext(r *http.Request, key any, data any) *http.Request {
+func SetContext(r *http.Request, key, data any) *http.Request {
 	ctx := context.WithValue(r.Context(), key, data)
 	return r.WithContext(ctx)
 }

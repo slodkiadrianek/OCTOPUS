@@ -20,6 +20,7 @@ func NewWebsocketHandler(wsController interfaces.WsController, jwt *middleware.J
 
 func (ws *WebSocketHandlers) SetupWebsocketHandlers(router routes.Router) {
 	groupRouter := router.Group("/ws/v1/apps")
+
 	groupRouter.GET("/:appId/logs", ws.wsController.Logs)
-	//groupRouter.GET("/:appId/console", ws.jwt.VerifyToken)
+	// groupRouter.GET("/:appId/console", ws.jwt.VerifyToken)
 }

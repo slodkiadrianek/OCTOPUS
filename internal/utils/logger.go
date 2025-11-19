@@ -15,10 +15,10 @@ type LoggerService interface {
 }
 
 const (
-	RED    = "\x1b[31m"
-	GREEN  = "\x1b[32m"
-	YELLOW = "\x1b[33m"
-	RESET  = "\x1b[0m"
+	red    = "\x1b[31m"
+	green  = "\x1b[32m"
+	yellow = "\x1b[33m"
+	reset  = "\x1b[0m"
 )
 
 type Logger struct {
@@ -62,7 +62,7 @@ func (l *Logger) InitializeLogger() {
 
 	l.file = file
 
-	fmt.Println(GREEN + "[INFO: " + actualDate.Format(l.dateFormat) + "] Logger created successfully" + RESET)
+	fmt.Println(green + "[INFO: " + actualDate.Format(l.dateFormat) + "] Logger created successfully" + reset)
 
 	fileRes := fmt.Sprintf("date:%s,type:success,message:Successfully created a logger,data:%v\n", logTime,
 		map[string]any{})
@@ -80,7 +80,7 @@ func (l *Logger) Info(msg string, data ...any) {
 	fileName := actualDate.Format(l.dateFormat)
 	logTime := actualDate.Format("2006-01-02 15:04:05")
 
-	fmt.Println(GREEN + "[INFO: " + logTime + "] " + msg)
+	fmt.Println(green + "[INFO: " + logTime + "] " + msg)
 
 	if len(data) > 0 {
 		fmt.Print(" ")
@@ -89,7 +89,7 @@ func (l *Logger) Info(msg string, data ...any) {
 		}
 	}
 
-	fmt.Println(RESET)
+	fmt.Println(reset)
 
 	fileRes := fmt.Sprintf("date:%s,type:info,message:%s,data:%v\n", fileName, msg, data)
 
@@ -105,7 +105,7 @@ func (l *Logger) Warn(msg string, data ...any) {
 	actualDate := time.Now()
 	fileName := actualDate.Format(l.dateFormat)
 
-	fmt.Print(YELLOW + "[WARN: " + fileName + "] " + msg)
+	fmt.Print(yellow + "[WARN: " + fileName + "] " + msg)
 
 	if len(data) > 0 {
 		fmt.Print(" ")
@@ -114,7 +114,7 @@ func (l *Logger) Warn(msg string, data ...any) {
 		}
 	}
 
-	fmt.Println(RESET)
+	fmt.Println(reset)
 
 	fileRes := fmt.Sprintf("date:%s,type:warn,message:%s,data:%v\n", fileName, msg, data)
 
@@ -130,7 +130,7 @@ func (l *Logger) Error(msg string, data ...any) {
 	actualDate := time.Now()
 	fileName := actualDate.Format(l.dateFormat)
 
-	fmt.Print(RED + "[ERROR: " + fileName + "] " + msg)
+	fmt.Print(red + "[ERROR: " + fileName + "] " + msg)
 
 	if len(data) > 0 {
 		fmt.Print(" ")
@@ -139,7 +139,7 @@ func (l *Logger) Error(msg string, data ...any) {
 		}
 	}
 
-	fmt.Println(RESET)
+	fmt.Println(reset)
 
 	fileRes := fmt.Sprintf("date:%s,type:error,message:%s,data:%v\n", fileName, msg, data)
 

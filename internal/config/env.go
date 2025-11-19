@@ -16,7 +16,7 @@ type Env struct {
 	DockerHost string
 }
 
-func ReadFile(filepath string) (map[string]string, error) {
+func readFile(filepath string) (map[string]string, error) {
 	file, err := os.OpenFile(filepath, os.O_RDONLY, 0o644)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file %s: %w", filepath, err)
@@ -65,7 +65,7 @@ func (e *Env) Validate() error {
 }
 
 func SetConfig(filepath string) (*Env, error) {
-	envVariables, err := ReadFile(filepath)
+	envVariables, err := readFile(filepath)
 	if err != nil {
 		return &Env{}, err
 	}

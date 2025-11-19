@@ -27,6 +27,7 @@ func NewAuthHandler(userController interfaces.UserController, authController int
 
 func (a *AuthHandlers) SetupAuthHandlers(router routes.Router) {
 	groupRouter := router.Group("/api/v1/auth")
+
 	groupRouter.POST("/register", middleware.RateLimiterMiddleware(*a.rateLimiter),
 		middleware.ValidateMiddleware[DTO.CreateUser](
 			"body",
@@ -34,6 +35,7 @@ func (a *AuthHandlers) SetupAuthHandlers(router routes.Router) {
 		a.userController.InsertUser)
 	groupRouter.POST("/login", middleware.ValidateMiddleware[DTO.LoginUser]("body", schema.LoginUserSchema),
 		a.authController.LoginUser)
+
 	groupRouter.GET("/check", a.jwt.VerifyToken, a.authController.VerifyUser)
 	groupRouter.DELETE("/logout", a.jwt.VerifyToken, a.jwt.BlacklistUser, a.authController.LogoutUser)
 }

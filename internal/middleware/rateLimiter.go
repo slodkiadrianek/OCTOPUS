@@ -27,7 +27,7 @@ func NewRateLimiterUser(token int, lastRefill time.Time, blockUntil time.Time) *
 }
 
 type RateLimiter struct {
-	Users           map[string]*RateLimiterUser
+	users           map[string]*RateLimiterUser
 	loggerService   utils.LoggerService
 	maxTokens       int
 	refillRate      time.Duration
@@ -48,8 +48,8 @@ func RateLimiterHandler(next http.Handler, rateLimiter RateLimiter) http.Handler
 		if !isExternal {
 			ipAddress = strings.Split(ipAddress, ":")[0]
 		}
-		if _, exists := rateLimiter.Users[ipAddress]; exists {
-			res := rateLimiter.Allow(ipAddress)
+		if _, exists := rateLimiter.users[ipAddress]; exists {
+			res := rateLimiter.allow(ipAddress)
 			if res {
 				next.ServeHTTP(w, r)
 				return
@@ -60,15 +60,15 @@ func RateLimiterHandler(next http.Handler, rateLimiter RateLimiter) http.Handler
 			}
 		}
 		newUser := NewRateLimiterUser(rateLimiter.maxTokens, time.Now(), time.Unix(0, 0))
-		rateLimiter.Users[ipAddress] = newUser
-		rateLimiter.Allow(ipAddress)
+		rateLimiter.users[ipAddress] = newUser
+		rateLimiter.allow(ipAddress)
 		next.ServeHTTP(w, r)
 	})
 }
 
 func NewRateLimiter(maxTokens int, refillRate time.Duration, blockDuration time.Duration, inactiveTimeout time.Duration, loggerService utils.LoggerService) *RateLimiter {
 	return &RateLimiter{
-		Users:           map[string]*RateLimiterUser{},
+		users:           map[string]*RateLimiterUser{},
 		loggerService:   loggerService,
 		maxTokens:       maxTokens,
 		refillRate:      refillRate,
@@ -86,7 +86,7 @@ func (ra *RateLimiter) CleanWorker(ctx context.Context) {
 		select {
 		case <-ticker.C:
 			ra.loggerService.Info("Started cleaning users in rate limiter")
-			ra.Cleanup()
+			ra.cleanup()
 		case <-ctx.Done():
 			ra.loggerService.Info("Ended cleaning rate limiter")
 			return
@@ -94,22 +94,22 @@ func (ra *RateLimiter) CleanWorker(ctx context.Context) {
 	}
 }
 
-func (ra *RateLimiter) Cleanup() {
+func (ra *RateLimiter) cleanup() {
 	now := time.Now()
 	removeTime := now.Add(ra.inactiveTimeout)
 	removed := 0
-	for ipAddress, user := range ra.Users {
+	for ipAddress, user := range ra.users {
 		if removeTime.Before(user.lastRefill) {
-			delete(ra.Users, ipAddress)
+			delete(ra.users, ipAddress)
 			removed++
 		}
 	}
 	ra.loggerService.Info("Removed users from rate limiter", removed)
 }
 
-func (ra *RateLimiter) Allow(ipAddress string) bool {
+func (ra *RateLimiter) allow(ipAddress string) bool {
 	now := time.Now()
-	user := ra.Users[ipAddress]
+	user := ra.users[ipAddress]
 	if now.Before(user.blockUntil) {
 		return false
 	}

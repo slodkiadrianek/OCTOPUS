@@ -44,7 +44,7 @@ func (r *RouteRepository) UpdateWorkingRoutesStatuses(ctx context.Context, route
 	`, strings.Join(placeholders, ","))
 	_, err := r.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		r.loggerService.Error("Failed to to update routes statuses", map[string]any{
+		r.loggerService.Error(failedToExecuteUpdateQuery, map[string]any{
 			"query": query,
 			"err":   err.Error(),
 		})
@@ -86,19 +86,19 @@ WHERE aps.status = 'running'
 	`
 	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
-		r.loggerService.Error("Failed to prepare statement", map[string]any{
+		r.loggerService.Error(failedToPrepareQuery, map[string]any{
 			"query": query,
 			"err":   err.Error(),
 		})
-		return []models.RouteToTest{}, models.NewError(500, "Database", "Failed to get data from database")
+		return []models.RouteToTest{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
 	rows, err := stmt.QueryContext(ctx)
 	if err != nil {
-		r.loggerService.Error("Failed to execute query", map[string]any{
+		r.loggerService.Error(failedToExecuteSelectQuery, map[string]any{
 			"query": query,
 			"err":   err.Error(),
 		})
-		return []models.RouteToTest{}, models.NewError(500, "Database", "Failed to get data from database")
+		return []models.RouteToTest{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
 	var routesToTest []models.RouteToTest
 	for rows.Next() {
@@ -109,11 +109,11 @@ WHERE aps.status = 'running'
 			&routeToTest.Path,
 			&routeToTest.Method, &routeToTest.RequestAuthorization, &routeToTest.RequestQuery, &routeToTest.RequestParams, &routeToTest.RequestBody, &routeToTest.NextRouteBody, &routeToTest.NextRouteParams, &routeToTest.NextRouteQuery, &routeToTest.NextAuthorizationHeader, &routeToTest.ResponseStatusCode, &routeToTest.ResponseBody)
 		if err != nil {
-			r.loggerService.Error("Failed to scan row", map[string]any{
+			r.loggerService.Error(failedToScanRow, map[string]any{
 				"query": query,
 				"err":   err.Error(),
 			})
-			return []models.RouteToTest{}, models.NewError(500, "Database", "Failed to get data from database")
+			return []models.RouteToTest{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 		}
 		routesToTest = append(routesToTest, routeToTest)
 	}
@@ -139,31 +139,31 @@ func (r *RouteRepository) InsertRoutesInfo(ctx context.Context, routesInfo []*DT
 	Returning id`, strings.Join(placeholders, ","))
 	stmt, err := r.db.PrepareContext(ctx, insertQuery)
 	if err != nil {
-		r.loggerService.Error("Failed to prepare statement", map[string]any{
+		r.loggerService.Error(failedToPrepareQuery, map[string]any{
 			"query": insertQuery,
 			"err":   err.Error(),
 		})
-		return []int{}, models.NewError(500, "Database", "Failed to get data from database")
+		return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
 	defer stmt.Close()
 	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
-		r.loggerService.Error("Failed to prepare statement", map[string]any{
+		r.loggerService.Error(failedToExecuteInsertQuery, map[string]any{
 			"query": insertQuery,
 			"err":   err.Error(),
 		})
-		return []int{}, models.NewError(500, "Database", "Failed to get data from database")
+		return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
 	var routesInfoIds []int
 	for rows.Next() {
 		var routeInfoId int
 		err := rows.Scan(&routeInfoId)
 		if err != nil {
-			r.loggerService.Error("Failed to scan row", map[string]any{
+			r.loggerService.Error(failedToScanRow, map[string]any{
 				"query": insertQuery,
 				"err":   err.Error(),
 			})
-			return []int{}, models.NewError(500, "Database", "Failed to get data from database")
+			return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 		}
 		routesInfoIds = append(routesInfoIds, routeInfoId)
 	}
@@ -199,31 +199,31 @@ func (r *RouteRepository) InsertRoutesRequests(ctx context.Context,
 	Returning id`, strings.Join(placeholders, ","))
 	stmt, err := r.db.PrepareContext(ctx, insertQuery)
 	if err != nil {
-		r.loggerService.Error("Failed to prepare statement", map[string]any{
+		r.loggerService.Error(failedToPrepareQuery, map[string]any{
 			"query": insertQuery,
 			"err":   err.Error(),
 		})
-		return []int{}, models.NewError(500, "Database", "Failed to get data from database")
+		return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
 	defer stmt.Close()
 	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
-		r.loggerService.Error("Failed to prepare statement", map[string]any{
+		r.loggerService.Error(failedToExecuteInsertQuery, map[string]any{
 			"query": insertQuery,
 			"err":   err.Error(),
 		})
-		return []int{}, models.NewError(500, "Database", "Failed to get data from database")
+		return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
 	var routesRequestsIds []int
 	for rows.Next() {
 		var routeRequestId int
 		err := rows.Scan(&routeRequestId)
 		if err != nil {
-			r.loggerService.Error("Failed to scan row", map[string]any{
+			r.loggerService.Error(failedToScanRow, map[string]any{
 				"query": insertQuery,
 				"err":   err.Error(),
 			})
-			return []int{}, models.NewError(500, "Database", "Failed to get data from database")
+			return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 		}
 		routesRequestsIds = append(routesRequestsIds, routeRequestId)
 	}
@@ -255,31 +255,31 @@ func (r *RouteRepository) InsertRoutesResponses(ctx context.Context,
 	Returning id`, strings.Join(placeholders, ","))
 	stmt, err := r.db.PrepareContext(ctx, insertQuery)
 	if err != nil {
-		r.loggerService.Error("Failed to prepare statement", map[string]any{
+		r.loggerService.Error(failedToPrepareQuery, map[string]any{
 			"query": insertQuery,
 			"err":   err.Error(),
 		})
-		return []int{}, models.NewError(500, "Database", "Failed to get data from database")
+		return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
 	defer stmt.Close()
 	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
-		r.loggerService.Error("Failed to prepare statement", map[string]any{
+		r.loggerService.Error(failedToExecuteInsertQuery, map[string]any{
 			"query": insertQuery,
 			"err":   err.Error(),
 		})
-		return []int{}, models.NewError(500, "Database", "Failed to get data from database")
+		return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
 	var routesResponsesIds []int
 	for rows.Next() {
 		var routeResponseId int
 		err := rows.Scan(&routeResponseId)
 		if err != nil {
-			r.loggerService.Error("Failed to scan row", map[string]any{
+			r.loggerService.Error(failedToScanRow, map[string]any{
 				"query": insertQuery,
 				"err":   err.Error(),
 			})
-			return []int{}, models.NewError(500, "Database", "Failed to get data from database")
+			return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 		}
 		routesResponsesIds = append(routesResponsesIds, routeResponseId)
 	}
@@ -320,31 +320,31 @@ JOIN upserted u USING (body,params,query,authorization_header);
 	`, strings.Join(placeholders, ","))
 	stmt, err := r.db.PrepareContext(ctx, insertQuery)
 	if err != nil {
-		r.loggerService.Error("Failed to prepare statement", map[string]any{
+		r.loggerService.Error(failedToPrepareQuery, map[string]any{
 			"query": insertQuery,
 			"err":   err.Error(),
 		})
-		return []int{}, models.NewError(500, "Database", "Failed to get data from database")
+		return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
 	defer stmt.Close()
 	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
-		r.loggerService.Error("Failed to prepare statement", map[string]any{
+		r.loggerService.Error(failedToExecuteInsertQuery, map[string]any{
 			"query": insertQuery,
 			"err":   err.Error(),
 		})
-		return []int{}, models.NewError(500, "Database", "Failed to get data from database")
+		return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
 	var NextRoutesDataIds []int
 	for rows.Next() {
 		var nextRouteDataId int
 		err := rows.Scan(&nextRouteDataId)
 		if err != nil {
-			r.loggerService.Error("Failed to scan row", map[string]any{
+			r.loggerService.Error(failedToScanRow, map[string]any{
 				"query": insertQuery,
 				"err":   err.Error(),
 			})
-			return []int{}, models.NewError(500, "Database", "Failed to get data from database")
+			return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 		}
 		NextRoutesDataIds = append(NextRoutesDataIds, nextRouteDataId)
 	}
@@ -378,7 +378,7 @@ DO UPDATE SET
 RETURNING id`
 	stmt, err := r.db.PrepareContext(ctx, insertQuery)
 	if err != nil {
-		r.loggerService.Error("Failed to prepare statement", map[string]any{
+		r.loggerService.Error(failedToPrepareQuery, map[string]any{
 			"query": insertQuery,
 			"err":   err.Error(),
 		})
@@ -388,12 +388,12 @@ RETURNING id`
 	err = stmt.QueryRowContext(ctx, workingRoute.Name, workingRoute.AppId, workingRoute.ParentID, workingRoute.RouteID,
 		workingRoute.RequestID, workingRoute.ResponseID, workingRoute.NextRouteDataId, workingRoute.Status).Scan(&id)
 	if err != nil {
-		r.loggerService.Error("Failed to prepare statement", map[string]any{
+		r.loggerService.Error(failedToExecuteInsertQuery, map[string]any{
 			"query": insertQuery,
 			"err":   err.Error(),
 			"data":  workingRoute,
 		})
-		return 0, models.NewError(500, "Database", "Failed to get data from database")
+		return 0, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
 	return id, nil
 }

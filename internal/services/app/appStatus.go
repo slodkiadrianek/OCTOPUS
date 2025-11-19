@@ -160,8 +160,8 @@ func (as *AppStatusService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatu
 	return appsToSendNotification, nil
 }
 
-func (as *AppStatusService) GetAppStatus(ctx context.Context, id string, ownerId int) (DTO.AppStatus, error) {
-	cacheKey := fmt.Sprintf("status-%s", id)
+func (as *AppStatusService) GetAppStatus(ctx context.Context, appId string, ownerId int) (DTO.AppStatus, error) {
+	cacheKey := fmt.Sprintf("status-%s", appId)
 
 	doesAppStatusExists, err := as.cacheService.ExistsData(ctx, cacheKey)
 	if err != nil {
@@ -176,7 +176,7 @@ func (as *AppStatusService) GetAppStatus(ctx context.Context, id string, ownerId
 		return appStatus, nil
 	}
 
-	appStatus, err := as.appRepository.GetAppStatus(ctx, id, ownerId)
+	appStatus, err := as.appRepository.GetAppStatus(ctx, appId, ownerId)
 	if err != nil {
 		return DTO.AppStatus{}, err
 	}

@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
-	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
@@ -28,36 +27,27 @@ func NewAuthController(authService authService, loggerService utils.LoggerServic
 func (a AuthController) LoginUser(w http.ResponseWriter, r *http.Request) {
 	userBody, err := utils.ReadBody[DTO.LoginUser](r)
 	if err != nil {
-		errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
-		if ok {
-			errBucket.Err = err
-			return
-		}
-		utils.SendResponse(w, 500, map[string]string{
-			"errorCategory":    "Server",
-			"errorDescription": "Internal server error",
-		})
+		a.loggerService.Error(failedToReadBodyFromRequest, err)
+		utils.SetError(w, r, err)
+		return
 	}
+
 	tokenString, err := a.authService.LoginUser(r.Context(), *userBody)
 	if err != nil {
-		errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
-		if ok {
-			errBucket.Err = err
-			return
-		}
-		utils.SendResponse(w, 500, map[string]string{
-			"errorCategory":    "Server",
-			"errorDescription": "Internal server error",
-		})
+		utils.SetError(w, r, err)
+		return
 	}
 	utils.SendResponse(w, 200, map[string]string{"token": tokenString})
 }
 
 func (a AuthController) VerifyUser(w http.ResponseWriter, r *http.Request) {
-	userId := utils.ReadUserIdFromToken(w, r, a.loggerService)
-	if userId == 0 {
+	userId, err := utils.ReadUserIdFromToken(r)
+	if err != nil {
+		a.loggerService.Error(failedToReadDataFromToken)
+		utils.SetError(w, r, err)
 		return
 	}
+
 	utils.SendResponse(w, 204, map[string]int{
 		"userId": userId,
 	})

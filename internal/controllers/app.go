@@ -33,15 +33,19 @@ func NewAppController(appService appService, loggerService utils.LoggerService) 
 }
 
 func (a *AppController) GetInfoAboutApps(w http.ResponseWriter, r *http.Request) {
-	ownerId := utils.ReadUserIdFromToken(w, r, a.loggerService)
-	if ownerId == 0 {
+	ownerId, err := utils.ReadUserIdFromToken(r)
+	if err != nil {
+		a.loggerService.Error(failedToReadDataFromToken)
+		utils.SetError(w, r, err)
 		return
 	}
+
 	apps, err := a.appService.GetApps(r.Context(), ownerId)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
 	}
+
 	utils.SendResponse(w, 200, apps)
 }
 
@@ -51,96 +55,123 @@ func (a *AppController) GetInfoAboutApp(w http.ResponseWriter, r *http.Request) 
 		utils.SetError(w, r, err)
 		return
 	}
-	ownerId := utils.ReadUserIdFromToken(w, r, a.loggerService)
-	if ownerId == 0 {
+
+	ownerId, err := utils.ReadUserIdFromToken(r)
+	if err != nil {
+		a.loggerService.Error(failedToReadDataFromToken)
+		utils.SetError(w, r, err)
 		return
 	}
+
 	app, err := a.appService.GetApp(r.Context(), appId, ownerId)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
 	}
+
 	utils.SendResponse(w, 200, app)
 }
 
 func (a *AppController) CreateApp(w http.ResponseWriter, r *http.Request) {
 	appBody, err := utils.ReadBody[DTO.CreateApp](r)
 	if err != nil {
+		a.loggerService.Error(failedToReadBodyFromRequest, err)
 		utils.SetError(w, r, err)
 		return
 	}
-	ownerId := utils.ReadUserIdFromToken(w, r, a.loggerService)
-	if ownerId == 0 {
+
+	ownerId, err := utils.ReadUserIdFromToken(r)
+	if err != nil {
+		a.loggerService.Error(failedToReadDataFromToken)
+		utils.SetError(w, r, err)
 		return
 	}
+
 	err = a.appService.CreateApp(r.Context(), *appBody, ownerId)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
 	}
+
 	utils.SendResponse(w, 201, map[string]string{})
 }
 
 func (a *AppController) UpdateApp(w http.ResponseWriter, r *http.Request) {
 	app, err := utils.ReadBody[DTO.UpdateApp](r)
 	if err != nil {
+		a.loggerService.Error(failedToReadBodyFromRequest, err)
 		utils.SetError(w, r, err)
 		return
 	}
+
 	appId, err := utils.ReadParam(r, "appId")
 	if err != nil {
+		a.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
 		utils.SetError(w, r, err)
 		return
 	}
-	ownerId := utils.ReadUserIdFromToken(w, r, a.loggerService)
-	if ownerId == 0 {
+
+	ownerId, err := utils.ReadUserIdFromToken(r)
+	if err != nil {
+		a.loggerService.Error(failedToReadDataFromToken)
+		utils.SetError(w, r, err)
 		return
 	}
+
 	err = a.appService.UpdateApp(r.Context(), appId, *app, ownerId)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
 	}
+
 	utils.SendResponse(w, 204, map[string]string{})
 }
 
 func (a *AppController) DeleteApp(w http.ResponseWriter, r *http.Request) {
 	appId, err := utils.ReadParam(r, "appId")
 	if err != nil {
-		a.loggerService.Error("Failed to read app id from params", r.URL.Path)
-		err := models.NewError(500, "Server", "Internal server error")
+		a.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
 		utils.SetError(w, r, err)
 		return
 	}
-	ownerId := utils.ReadUserIdFromToken(w, r, a.loggerService)
-	if ownerId == 0 {
+
+	ownerId, err := utils.ReadUserIdFromToken(r)
+	if err != nil {
+		a.loggerService.Error(failedToReadDataFromToken)
+		utils.SetError(w, r, err)
 		return
 	}
+
 	err = a.appService.DeleteApp(r.Context(), appId, ownerId)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
 	}
+
 	utils.SendResponse(w, 204, map[string]string{})
 }
 
 func (a *AppController) GetAppStatus(w http.ResponseWriter, r *http.Request) {
 	appId, err := utils.ReadParam(r, "appId")
 	if err != nil {
-		a.loggerService.Error("Failed to read app id from params", r.URL.Path)
-		err := models.NewError(500, "Server", "Internal server error")
+		a.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
 		utils.SetError(w, r, err)
 		return
 	}
-	ownerId := utils.ReadUserIdFromToken(w, r, a.loggerService)
-	if ownerId == 0 {
+
+	ownerId, err := utils.ReadUserIdFromToken(r)
+	if err != nil {
+		a.loggerService.Error(failedToReadDataFromToken)
+		utils.SetError(w, r, err)
 		return
 	}
+
 	appStatus, err := a.appService.GetAppStatus(r.Context(), appId, ownerId)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
 	}
+
 	utils.SendResponse(w, 200, map[string]DTO.AppStatus{
 		"data": appStatus,
 	})

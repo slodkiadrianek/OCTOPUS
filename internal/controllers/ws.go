@@ -36,15 +36,17 @@ func (ws *WsController) Logs(w http.ResponseWriter, r *http.Request) {
 		ws.loggerService.Error("Failed to upgrade connection", err)
 		return
 	}
+
 	appId, err := utils.ReadParam(r, "appId")
 	if err != nil {
-		ws.loggerService.Error("Failed to read param", appId)
+		ws.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
 		err := conn.WriteMessage(websocket.TextMessage, []byte("Failed to read appId"))
 		if err != nil {
 			return
 		}
 		return
 	}
+
 	ctx := context.Background()
 	ws.wsService.Logs(ctx, appId, conn)
 }

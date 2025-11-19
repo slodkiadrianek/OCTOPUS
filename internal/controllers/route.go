@@ -27,14 +27,17 @@ func NewRouteController(routeService routeService, loggerService utils.LoggerSer
 func (rc *RouteController) AddWorkingRoutes(w http.ResponseWriter, r *http.Request) {
 	appId, err := utils.ReadParam(r, "appId")
 	if err != nil {
+		rc.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
 		utils.SetError(w, r, err)
 		return
 	}
+
 	body, err := utils.ReadBody[DTO.CreateRouteData](r)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
 	}
+
 	routes := body.Routes
 	for i := 0; i < len(routes); i++ {
 		if i < len(routes)-1 {
@@ -92,12 +95,15 @@ func (rc *RouteController) AddWorkingRoutes(w http.ResponseWriter, r *http.Reque
 			utils.SetError(w, r, err)
 			return
 		}
+
 		routes[i].ParentId = i
 	}
+
 	err = rc.routeService.AddWorkingRoutes(r.Context(), &routes, appId, body.Name)
 	if err != nil {
 		utils.SetError(w, r, err)
 		return
 	}
+
 	utils.SendResponse(w, 201, map[string]string{})
 }

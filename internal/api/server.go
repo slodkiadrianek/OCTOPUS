@@ -2,9 +2,10 @@ package api
 
 import (
 	"context"
-	"github.com/slodkiadrianek/octopus/internal/api/interfaces"
 	"net/http"
 	"time"
+
+	"github.com/slodkiadrianek/octopus/internal/api/interfaces"
 
 	"github.com/slodkiadrianek/octopus/internal/api/routes"
 	"github.com/slodkiadrianek/octopus/internal/api/routes/handlers"

@@ -191,7 +191,7 @@ func (rs *RouteService) saveWorkingRoutes(ctx context.Context, routes *[]DTO.Cre
 	}
 	return nil
 }
-func (rs *RouteService) AddWorkingRoutes(ctx context.Context, routes *[]DTO.CreateRoute, appId string,
+func (rs *RouteService) AddWorkingRoutes(ctx context.Context, routes *[]DTO.CreateRoute, appId,
 	name string) error {
 	nextRoutes, requestRoutes, responseRoutes, routesInfo, err := rs.prepareDataAboutRouteToInsertToDb(routes)
 	if err != nil {
