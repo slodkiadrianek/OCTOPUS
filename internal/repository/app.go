@@ -339,7 +339,13 @@ func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsSta
 	FROM apps a
 		INNER JOIN apps_statuses aps ON aps.app_id = a.id
 		INNER JOIN users u ON u.id = a.owner_id
-	WHERE a.id IN (%s)`, strings.Join(placeholders, ","))
+	WHERE a.id IN (%s)
+	AND (
+            (u.discord_notifications_settings = true AND a.discord_webhook_url  != '')
+            OR (u.email_notifications_settings = true )
+            OR (u.slack_notifications_settings = true AND a.slack_webhook_url != '')
+        )
+	`, strings.Join(placeholders, ","))
 	stmt, err := a.db.PrepareContext(ctx, query)
 	if err != nil {
 		a.loggerService.Error(failedToPrepareQuery, map[string]any{

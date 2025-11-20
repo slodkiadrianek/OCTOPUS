@@ -24,7 +24,7 @@ func NewAppNotificationsService(appRepository interfaces.AppRepository, loggerSe
 }
 
 func (an *AppNotificationsService) assignNotificationToProperSendService(notificationsInfo []models.NotificationInfo) map[string][]models.
-	NotificationInfo {
+NotificationInfo {
 	sortedNotificationsToSend := map[string][]models.NotificationInfo{
 		"Discord": {},
 		"Slack":   {},
@@ -32,10 +32,10 @@ func (an *AppNotificationsService) assignNotificationToProperSendService(notific
 	}
 
 	for _, notificationInfo := range notificationsInfo {
-		if notificationInfo.DiscordNotificationsSettings {
+		if notificationInfo.DiscordNotificationsSettings && notificationInfo.DiscordWebhookUrl != "" {
 			sortedNotificationsToSend["Discord"] = append(sortedNotificationsToSend["Discord"], notificationInfo)
 		}
-		if notificationInfo.SlackNotificationsSettings {
+		if notificationInfo.SlackNotificationsSettings && notificationInfo.SlackWebhookUrl != "" {
 			sortedNotificationsToSend["Slack"] = append(sortedNotificationsToSend["Slack"], notificationInfo)
 		}
 		if notificationInfo.EmailNotificationsSettings {
@@ -47,7 +47,7 @@ func (an *AppNotificationsService) assignNotificationToProperSendService(notific
 
 // Send to information is, for example, email, discord webhook url or slack webhook url
 func (an *AppNotificationsService) sortNotificationsBySendToInformation(sortedNotificationsToSend map[string][]models.
-	NotificationInfo) (
+NotificationInfo) (
 	map[string]string,
 	map[string]string,
 ) {
