@@ -161,7 +161,18 @@ func (rs *RouteStatusService) CheckRoutesStatus(ctx context.Context) error {
 				return err
 			}
 
-			responseStatusCode, responseBody, err := utils.DoHttpRequest(ctx, url, authorizationHeader, route.Method, body, rs.loggerService)
+			responseStatusCode, responseBody, err := utils.DoHttpRequest(ctx, url, authorizationHeader, route.Method,
+				body, true)
+			if err != nil {
+				rs.loggerService.Info("Failed to check route", map[string]any{
+					"url":    url,
+					"method": route.Method,
+					"body":   body,
+				})
+				routeStatus = "Failed;To check route"
+				routesStatuses[route.ID] = routeStatus
+				break
+			}
 			if len(responseBody) != len(route.ResponseBody) {
 				routeStatus = "Failed;Different body"
 				routesStatuses[route.ID] = routeStatus

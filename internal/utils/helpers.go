@@ -56,13 +56,12 @@ func InsertionSortForRoutes[T DTO.RoutesParentID](data []T) []T {
 	return data
 }
 
-func DoHttpRequest(ctx context.Context, url, authorizationHeader, method string, body []byte, loggerService LoggerService) (int,
+func DoHttpRequest(ctx context.Context, url, authorizationHeader, method string, body []byte, readBody bool) (int,
 	map[string]any, error,
 ) {
 	httpClient := &http.Client{}
 	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(body))
 	if err != nil {
-		loggerService.Error("Failed to create webhook request", err)
 		return 0, map[string]any{}, err
 	}
 	if authorizationHeader != "" {
@@ -72,17 +71,16 @@ func DoHttpRequest(ctx context.Context, url, authorizationHeader, method string,
 
 	response, err := httpClient.Do(req)
 	if err != nil {
-		loggerService.Error("Failed to send webhook request", err)
 		return 0, map[string]any{}, err
 	}
-	//defer response.Body.Close()
-	//
-	//var bodyFromResponse map[string]any
-	//
-	//err = json.NewDecoder(response.Body).Decode(&bodyFromResponse)
-	//if err != nil {
-	//	return 0, map[string]any{}, err
-	//}
+	defer response.Body.Close()
 
-	return response.StatusCode, map[string]any{}, nil
+	var bodyFromResponse map[string]any
+	if readBody {
+		err = json.NewDecoder(response.Body).Decode(&bodyFromResponse)
+		if err != nil {
+			return 0, map[string]any{}, err
+		}
+	}
+	return response.StatusCode, bodyFromResponse, nil
 }

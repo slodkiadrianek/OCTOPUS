@@ -90,13 +90,13 @@ func (rs *RouteService) prepareDataAboutRouteToInsertToDb(routes *[]DTO.CreateRo
 	for _, route := range *routes {
 		jobs <- route
 	}
-	close(jobs)
 	wg.Wait()
+	close(jobs)
 	close(nextRoutesChan)
 	close(requestRoutesChan)
 	close(responseRoutesChan)
 	close(routesInfoChan)
-
+	close(errorChan)
 	select {
 	case err := <-errorChan:
 		return []*DTO.NextRoute{}, []*DTO.RouteRequest{}, []*DTO.RouteResponse{}, []*DTO.RouteInfo{}, err

@@ -84,14 +84,14 @@ func (an *AppNotificationsService) sendWebhook(ctx context.Context, notification
 		go func() {
 			defer wg.Done()
 			for job := range jobs {
-				var payload map[string]interface{}
+				var payload map[string]any
 				if strings.Contains(job.url, "slack") {
-					payload = map[string]interface{}{
+					payload = map[string]any{
 						"text":     job.message,
 						"username": "OctopusBot",
 					}
 				} else {
-					payload = map[string]interface{}{
+					payload = map[string]any{
 						"content":  job.message,
 						"username": "OctopusBot",
 					}
@@ -103,10 +103,10 @@ func (an *AppNotificationsService) sendWebhook(ctx context.Context, notification
 					errorChan <- err
 					continue
 				}
-				fmt.Println(job.message, job.url)
-				responseStatusCode, _, err := utils.DoHttpRequest(ctx, job.url, "", "POST", body, an.loggerService)
+
+				responseStatusCode, _, err := utils.DoHttpRequest(ctx, job.url, "", "POST", body, false)
 				if err != nil {
-					an.loggerService.Info("Failed to send a webhook", err.Error())
+					an.loggerService.Info("Failed to send a webhook", err)
 					errorChan <- err
 					continue
 				}
@@ -121,9 +121,12 @@ func (an *AppNotificationsService) sendWebhook(ctx context.Context, notification
 	for webhookURL, message := range notifications {
 		jobs <- WebhookJob{url: webhookURL, message: message}
 	}
+
 	close(jobs)
 	wg.Wait()
 	close(notificationsChan)
+	close(errorChan)
+
 	select {
 	case err := <-errorChan:
 		return err
@@ -148,7 +151,8 @@ func (an *AppNotificationsService) SendNotifications(ctx context.Context, appsSt
 	discordNotifications, slackNotifications := an.sortNotificationsBySendToInformation(sortedNotificationsToSend)
 	var discordWebhookError, slackWebhookError error
 	var wg sync.WaitGroup
-	wg.Add(3)
+	wg.Add(2)
+
 	go func() {
 		defer wg.Done()
 		discordWebhookError = an.sendWebhook(ctx, discordNotifications)
@@ -157,6 +161,7 @@ func (an *AppNotificationsService) SendNotifications(ctx context.Context, appsSt
 		defer wg.Done()
 		slackWebhookError = an.sendWebhook(ctx, slackNotifications)
 	}()
+
 	wg.Wait()
 	if discordWebhookError != nil {
 		return discordWebhookError
