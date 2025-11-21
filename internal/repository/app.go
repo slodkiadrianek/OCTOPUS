@@ -321,7 +321,7 @@ func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsSta
 	placeholders := []string{}
 	args := make([]any, 0)
 	for i := range appsStatuses {
-		preparedValues := fmt.Sprintf("$%d,", i+1)
+		preparedValues := fmt.Sprintf("$%d", i+1)
 		args = append(args, appsStatuses[i].AppID)
 		placeholders = append(placeholders, preparedValues)
 	}

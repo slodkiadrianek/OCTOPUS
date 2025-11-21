@@ -65,8 +65,9 @@ func DoHttpRequest(ctx context.Context, url, authorizationHeader, method string,
 		loggerService.Error("Failed to create webhook request", err)
 		return 0, map[string]any{}, err
 	}
-
-	req.Header.Add("Authorization", authorizationHeader)
+	if authorizationHeader != "" {
+		req.Header.Add("Authorization", authorizationHeader)
+	}
 	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
 
 	response, err := httpClient.Do(req)
@@ -74,14 +75,14 @@ func DoHttpRequest(ctx context.Context, url, authorizationHeader, method string,
 		loggerService.Error("Failed to send webhook request", err)
 		return 0, map[string]any{}, err
 	}
-	defer response.Body.Close()
+	//defer response.Body.Close()
+	//
+	//var bodyFromResponse map[string]any
+	//
+	//err = json.NewDecoder(response.Body).Decode(&bodyFromResponse)
+	//if err != nil {
+	//	return 0, map[string]any{}, err
+	//}
 
-	var bodyFromResponse map[string]any
-
-	err = json.NewDecoder(response.Body).Decode(&bodyFromResponse)
-	if err != nil {
-		return 0, map[string]any{}, err
-	}
-
-	return response.StatusCode, bodyFromResponse, nil
+	return response.StatusCode, map[string]any{}, nil
 }

@@ -3,6 +3,9 @@ package servicesApp
 import (
 	"context"
 	"fmt"
+	"runtime"
+	"strings"
+	"sync"
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
@@ -24,7 +27,7 @@ func NewAppNotificationsService(appRepository interfaces.AppRepository, loggerSe
 }
 
 func (an *AppNotificationsService) assignNotificationToProperSendService(notificationsInfo []models.NotificationInfo) map[string][]models.
-NotificationInfo {
+	NotificationInfo {
 	sortedNotificationsToSend := map[string][]models.NotificationInfo{
 		"Discord": {},
 		"Slack":   {},
@@ -47,7 +50,7 @@ NotificationInfo {
 
 // Send to information is, for example, email, discord webhook url or slack webhook url
 func (an *AppNotificationsService) sortNotificationsBySendToInformation(sortedNotificationsToSend map[string][]models.
-NotificationInfo) (
+	NotificationInfo) (
 	map[string]string,
 	map[string]string,
 ) {
@@ -66,12 +69,75 @@ NotificationInfo) (
 	return discordNotifications, slackNotifications
 }
 
+func (an *AppNotificationsService) sendWebhook(ctx context.Context, notifications map[string]string) error {
+	var wg sync.WaitGroup
+	notificationsChan := make(chan map[string]string, len(notifications))
+	type WebhookJob struct {
+		url     string
+		message string
+	}
+	jobs := make(chan WebhookJob, len(notifications))
+	workerCount := runtime.NumCPU()
+	errorChan := make(chan error)
+	for i := 0; i < workerCount; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for job := range jobs {
+				var payload map[string]interface{}
+				if strings.Contains(job.url, "slack") {
+					payload = map[string]interface{}{
+						"text":     job.message,
+						"username": "OctopusBot",
+					}
+				} else {
+					payload = map[string]interface{}{
+						"content":  job.message,
+						"username": "OctopusBot",
+					}
+				}
+
+				body, err := utils.MarshalData(payload)
+				if err != nil {
+					an.loggerService.Error("Failed to unmarshal a data", err)
+					errorChan <- err
+					continue
+				}
+				fmt.Println(job.message, job.url)
+				responseStatusCode, _, err := utils.DoHttpRequest(ctx, job.url, "", "POST", body, an.loggerService)
+				if err != nil {
+					an.loggerService.Info("Failed to send a webhook", err.Error())
+					errorChan <- err
+					continue
+				}
+
+				if responseStatusCode >= 300 {
+					an.loggerService.Info("Webhook returned non-success status", "status", responseStatusCode)
+					continue
+				}
+			}
+		}()
+	}
+	for webhookURL, message := range notifications {
+		jobs <- WebhookJob{url: webhookURL, message: message}
+	}
+	close(jobs)
+	wg.Wait()
+	close(notificationsChan)
+	select {
+	case err := <-errorChan:
+		return err
+	default:
+		return nil
+	}
+}
+
 func (an *AppNotificationsService) SendNotifications(ctx context.Context, appsStatuses []DTO.AppStatus) error {
 	if len(appsStatuses) == 0 {
 		return nil
 	}
 
-	an.loggerService.Info("Started sending Notifications to users")
+	an.loggerService.Info("Started sending notifications to users")
 
 	notificationsInfo, err := an.appRepository.GetUsersToSendNotifications(ctx, appsStatuses)
 	if err != nil {
@@ -80,47 +146,24 @@ func (an *AppNotificationsService) SendNotifications(ctx context.Context, appsSt
 
 	sortedNotificationsToSend := an.assignNotificationToProperSendService(notificationsInfo)
 	discordNotifications, slackNotifications := an.sortNotificationsBySendToInformation(sortedNotificationsToSend)
-
-	for webhookURL, message := range discordNotifications {
-		payload := map[string]interface{}{
-			"content":  message,
-			"username": "OctopusBot",
-		}
-
-		body, err := utils.MarshalData(payload)
-		if err != nil {
-			return err
-		}
-
-		responseStatusCode, _, err := utils.DoHttpRequest(ctx, webhookURL, "", "POST", body, an.loggerService)
-		if err != nil {
-			return err
-		}
-
-		if responseStatusCode >= 300 {
-			an.loggerService.Warn("Webhook returned non-success status", "status", responseStatusCode)
-		}
+	var discordWebhookError, slackWebhookError error
+	var wg sync.WaitGroup
+	wg.Add(3)
+	go func() {
+		defer wg.Done()
+		discordWebhookError = an.sendWebhook(ctx, discordNotifications)
+	}()
+	go func() {
+		defer wg.Done()
+		slackWebhookError = an.sendWebhook(ctx, slackNotifications)
+	}()
+	wg.Wait()
+	if discordWebhookError != nil {
+		return discordWebhookError
 	}
-
-	for webhookURL, message := range slackNotifications {
-		payload := map[string]interface{}{
-			"content":  message,
-			"username": "OctopusBot",
-		}
-
-		body, err := utils.MarshalData(payload)
-		if err != nil {
-			return err
-		}
-
-		responseStatusCode, _, err := utils.DoHttpRequest(ctx, webhookURL, "", "POST", body, an.loggerService)
-		if err != nil {
-			return err
-		}
-
-		if responseStatusCode >= 300 {
-			an.loggerService.Warn("Webhook returned non-success status", "status", responseStatusCode)
-		}
+	if slackWebhookError != nil {
+		return slackWebhookError
 	}
+	an.loggerService.Info("Successfully sent notifications to user")
 	return nil
 }

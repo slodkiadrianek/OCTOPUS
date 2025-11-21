@@ -54,7 +54,7 @@ func main() {
 }
 
 func ticker(ctx context.Context, appService *servicesApp.AppService, serverService *server.ServerService, logger *utils.Logger) {
-	period := 65 * time.Second
+	period := 5 * time.Second
 	ticker := time.NewTicker(period)
 	defer ticker.Stop()
 	for {
