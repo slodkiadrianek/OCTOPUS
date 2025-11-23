@@ -53,7 +53,8 @@ func (m *MockAppRepository) InsertAppStatuses(ctx context.Context, appsStatuses 
 }
 
 func (m *MockAppRepository) GetUsersToSendNotifications(ctx context.Context,
-	appsStatuses []DTO.AppStatus) ([]models.NotificationInfo, error) {
+	appsStatuses []DTO.AppStatus,
+) ([]models.NotificationInfo, error) {
 	args := m.Called(ctx, appsStatuses)
 	return args.Get(0).([]models.NotificationInfo), args.Error(1)
 }

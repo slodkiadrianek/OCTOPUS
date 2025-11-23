@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"testing"
-
+	
 	z "github.com/Oudwins/zog"
 	"github.com/stretchr/testify/assert"
 )
@@ -49,7 +49,7 @@ func TestValidateSchema(t *testing.T) {
 		val           ValidateSchemaTestData
 		expectedError any
 	}
-
+	
 	testCases := []args{
 		{
 			name: "Proper data",
@@ -95,7 +95,7 @@ func TestValidateSchema(t *testing.T) {
 			},
 		},
 	}
-
+	
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
 			err := ValidateInputStruct(&test.schema, &test.val)
@@ -167,9 +167,9 @@ func TestRemoveLastCharacterFromUrl(t *testing.T) {
 		urlPath:      "/url/",
 		expectedData: "/url",
 	}
-
+	
 	t.Run(test.name, func(t *testing.T) {
-		res := RemoveLatCharacterFromUrl(test.urlPath)
+		res := RemoveLastCharacterFromUrl(test.urlPath)
 		assert.Equal(t, test.expectedData, res)
 	})
 }
@@ -217,7 +217,7 @@ func TestReadParam(t *testing.T) {
 			expectedData:  "",
 		},
 	}
-
+	
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var r http.Request
@@ -243,7 +243,7 @@ func TestMatchRoutes(t *testing.T) {
 		urlPath      string
 		expectedData bool
 	}
-
+	
 	tests := []args{
 		{
 			name:         "Test same urls",
@@ -276,7 +276,7 @@ func TestMatchRoutes(t *testing.T) {
 			expectedData: true,
 		},
 	}
-
+	
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			res := MatchRoute(test.routeKeyUrl, test.urlPath)

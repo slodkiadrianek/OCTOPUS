@@ -95,7 +95,49 @@ func TestServerService_InsertServerMetrics(t *testing.T) {
 			},
 		},
 		{
-			name:          "Proper data with data saved in cache",
+			name:          "Proper data with more than 40 records of data saved in cache",
+			expectedError: nil,
+			setupMock: func() interfaces.CacheService {
+				m := new(mocks.MockCacheService)
+				m.On("ExistsData", mock.Anything, "server_metrics").
+					Return(int64(1), nil)
+				m.On("GetData", mock.Anything, "server_metrics").
+					Return(`[{"CPU": 50, "Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50,
+"Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,
+"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50,
+"Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,
+"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50,
+"Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,
+"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50,
+"Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,
+"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50,
+"Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,
+"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50,
+"Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,
+"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50,
+"Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,
+"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50,
+"Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,
+"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50,
+"Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,
+"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50,
+"Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,
+"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50,
+"Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,
+"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50,
+"Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,
+"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50,
+"Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,
+"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50,
+"Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,
+"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"},{"CPU": 50, "Memory": 1024, "Disk":30,"Date": "2023-05-12T10:30:00Z"}]`, nil)
+				m.On("SetData", mock.Anything, "server_metrics", mock.Anything, mock.Anything).
+					Return(nil)
+				return m
+			},
+		},
+		{
+			name:          "Proper data with data not saved in cache",
 			expectedError: nil,
 			setupMock: func() interfaces.CacheService {
 				m := new(mocks.MockCacheService)

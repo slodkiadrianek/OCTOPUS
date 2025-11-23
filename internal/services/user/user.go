@@ -44,6 +44,9 @@ func (u *UserService) callFindUserByIdAndSaveToCache(ctx context.Context, userId
 	if err != nil {
 		return models.User{}, err
 	}
+	if user.ID == 0 {
+		return user, nil
+	}
 	userJson, err := utils.MarshalData(user)
 	if err != nil {
 		return models.User{}, err
@@ -126,10 +129,11 @@ func (u *UserService) UpdateUserNotifications(ctx context.Context, userId int,
 func (u *UserService) DeleteUser(ctx context.Context, userId int, password string) error {
 	cacheKey := fmt.Sprintf("users-%d", userId)
 	doesUserExists, err := u.cacheService.ExistsData(ctx, cacheKey)
-	var user models.User
 	if err != nil {
 		return err
 	}
+	var user models.User
+
 	if doesUserExists > 0 {
 		user, err = u.readUserFromCache(ctx, cacheKey)
 		if err != nil {
@@ -141,7 +145,6 @@ func (u *UserService) DeleteUser(ctx context.Context, userId int, password strin
 			return err
 		}
 	}
-
 	if user.ID == 0 {
 		u.loggerService.Info("User with this id does not exist", userId)
 		return models.NewError(400, "Verification", "User with this id does not exist")
@@ -165,10 +168,11 @@ func (u *UserService) DeleteUser(ctx context.Context, userId int, password strin
 func (u *UserService) ChangeUserPassword(ctx context.Context, userId int, currentPassword string, newPassword string) error {
 	cacheKey := fmt.Sprintf("users-%d", userId)
 	doesUserExists, err := u.cacheService.ExistsData(ctx, cacheKey)
-	var user models.User
 	if err != nil {
 		return err
 	}
+	var user models.User
+
 	if doesUserExists > 0 {
 		user, err = u.readUserFromCache(ctx, cacheKey)
 		if err != nil {
@@ -176,6 +180,7 @@ func (u *UserService) ChangeUserPassword(ctx context.Context, userId int, curren
 		}
 	} else {
 		user, err = u.callFindUserByIdAndSaveToCache(ctx, userId, cacheKey)
+		fmt.Println(err)
 		if err != nil {
 			return err
 		}

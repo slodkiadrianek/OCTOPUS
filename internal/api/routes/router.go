@@ -3,7 +3,7 @@ package routes
 import (
 	"context"
 	"net/http"
-
+	
 	"github.com/slodkiadrianek/octopus/internal/middleware"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
@@ -50,17 +50,17 @@ func (r *Router) Request(route string, method string, fns ...any) {
 		handler = middlewares[i](handler)
 	}
 	chainedHandler := handler
-	route = utils.RemoveLatCharacterFromUrl(route)
+	route = utils.RemoveLastCharacterFromUrl(route)
 	r.routes[routeKey{method: method, path: route}] = chainedHandler
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	req.URL.Path = utils.RemoveLatCharacterFromUrl(req.URL.Path)
+	req.URL.Path = utils.RemoveLastCharacterFromUrl(req.URL.Path)
 	for routeKey, handler := range r.routes {
 		if routeKey.method != req.Method {
 			continue
 		}
-
+		
 		if utils.MatchRoute(routeKey.path, req.URL.Path) {
 			ctx := context.WithValue(req.Context(), "routeKeyPath", routeKey.path)
 			req = req.WithContext(ctx)

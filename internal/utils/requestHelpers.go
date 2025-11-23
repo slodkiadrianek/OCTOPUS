@@ -5,9 +5,9 @@ import (
 	"errors"
 	"net/http"
 	"strings"
-
+	
 	"github.com/slodkiadrianek/octopus/internal/DTO"
-
+	
 	z "github.com/Oudwins/zog"
 	"github.com/slodkiadrianek/octopus/internal/models"
 )
@@ -49,11 +49,11 @@ func ReadQueryParam(r *http.Request, QueryName string) string {
 func MatchRoute(routeUrl, urlPath string) bool {
 	splittedRouteUrl := strings.Split(strings.Trim(routeUrl, "/"), "/")
 	splittedUrlPath := strings.Split(strings.Trim(urlPath, "/"), "/")
-
+	
 	if len(splittedRouteUrl) != len(splittedUrlPath) {
 		return false
 	}
-
+	
 	for i := 0; i < len(splittedRouteUrl); i++ {
 		if strings.Contains(splittedRouteUrl[i], ":") {
 			continue
@@ -74,6 +74,7 @@ func ReadParam(r *http.Request, paramToRead string) (string, error) {
 	}
 	splittedPath := strings.Split(strings.Trim(path, "/"), "/")
 	splittedRouteKeyPath := strings.Split(strings.Trim(s, "/"), "/")
+	
 	param := ""
 	for i := 0; i < len(splittedPath); i++ {
 		if strings.Contains(splittedRouteKeyPath[i], ":") && splittedRouteKeyPath[i][1:] == paramToRead {
@@ -96,12 +97,12 @@ func ReadAllParams(r *http.Request) (map[string]string, error) {
 	}
 	splittedPath := strings.Split(strings.Trim(path, "/"), "/")
 	splittedRouteKeyPath := strings.Split(strings.Trim(s, "/"), "/")
+	
 	params := make(map[string]string)
 	for i := 0; i < len(splittedPath); i++ {
 		if strings.Contains(splittedRouteKeyPath[i], ":") {
 			paramName := splittedRouteKeyPath[i][1:]
 			params[paramName] = splittedPath[i]
-
 		}
 	}
 	return params, nil
@@ -208,7 +209,7 @@ func IsDataInResponseOrRequest[T map[string]any | map[string]string](responseBod
 	return false
 }
 
-func RemoveLatCharacterFromUrl(route string) string {
+func RemoveLastCharacterFromUrl(route string) string {
 	if string(route[len(route)-1]) == "/" {
 		route = route[:len(route)-1]
 	}

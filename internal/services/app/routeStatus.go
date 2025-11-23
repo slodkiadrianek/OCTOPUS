@@ -81,7 +81,6 @@ func (rs *RouteStatusService) prepareDataForTheNextRoute(route models.RouteToTes
 	nextRouteParams := make(map[string]string)
 	nextRouteQuery := make(map[string]string)
 	nextRouteAuthorizationHeader := ""
-
 	if slices.Contains(route.NextRouteBody, key) {
 		nextRouteBody[key] = val
 	}
@@ -103,13 +102,12 @@ func (rs *RouteStatusService) prepareDataForTheNextRoute(route models.RouteToTes
 		}
 		nextRouteQuery[key] = valueConvertedToString
 	}
-
-	valueConvertedToString, ok := val.(string)
-	if !ok {
-		routeStatus = "Failed;Wrong type of the property for authorization header"
-		return map[string]any{}, map[string]string{}, map[string]string{}, "", routeStatus
-	}
-	if strings.Contains(valueConvertedToString, "eyJlbWFpbCI6IlRFU1QiLCJleHAiOjE3N") {
+	if route.NextAuthorizationHeader == key {
+		valueConvertedToString, ok := val.(string)
+		if !ok {
+			routeStatus = "Failed;Wrong type of the property for authorization header"
+			return map[string]any{}, map[string]string{}, map[string]string{}, "", routeStatus
+		}
 		nextRouteAuthorizationHeader = valueConvertedToString
 	}
 

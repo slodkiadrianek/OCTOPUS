@@ -28,7 +28,7 @@ func NewAuthService(loggerService utils.LoggerService, userRepository interfaces
 
 func (a AuthService) LoginUser(ctx context.Context, loginData DTO.LoginUser) (string, error) {
 	user, err := a.userRepository.FindUserByEmail(ctx, loginData.Email)
-	if err != nil && err.Error() != "User not found" {
+	if err != nil {
 		return "", err
 	}
 	if user.ID == 0 {

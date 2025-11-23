@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
-
+	
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/utils"
@@ -56,10 +56,10 @@ func (r *RouteRepository) UpdateWorkingRoutesStatuses(ctx context.Context, route
 func (r *RouteRepository) GetWorkingRoutesToTest(ctx context.Context) ([]models.RouteToTest, error) {
 	query := `
 SELECT
-		wr.id,
+	wr.id,
     a.ip_address,
     a.port,
-		wr.name,
+	wr.name,
     wr.app_id,
     wr.parent_id,
     wr.status,
@@ -72,7 +72,7 @@ SELECT
     nrd.body,
     nrd.params,
     nrd.query,
-		nrd.authorization_header,
+	nrd.authorization_header,
     re.status_code,
     re.body
 FROM working_routes wr
