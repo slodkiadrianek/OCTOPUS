@@ -8,8 +8,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/slodkiadrianek/octopus/internal/DTO"
-	"github.com/slodkiadrianek/octopus/internal/config"
 	"github.com/slodkiadrianek/octopus/internal/models"
+	"github.com/slodkiadrianek/octopus/internal/services/interfaces"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
@@ -25,10 +25,10 @@ type userClaims struct {
 type JWT struct {
 	token         string
 	loggerService utils.LoggerService
-	cacheService  *config.CacheService
+	cacheService  interfaces.CacheService
 }
 
-func NewJWT(token string, loggerService utils.LoggerService, cacheService *config.CacheService) *JWT {
+func NewJWT(token string, loggerService utils.LoggerService, cacheService interfaces.CacheService) *JWT {
 	return &JWT{
 		token:         token,
 		loggerService: loggerService,

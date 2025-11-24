@@ -38,7 +38,7 @@ func (a AuthService) LoginUser(ctx context.Context, loginData DTO.LoginUser) (st
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginData.Password))
 	if err != nil {
 		a.loggerService.Info("Wrong password provided", loginData)
-		return "", models.NewError(401, "Authorization", "Wrong user provided")
+		return "", models.NewError(401, "Authorization", "Wrong password provided")
 	}
 	loggedUser := DTO.NewLoggedUser(user.ID, user.Email, user.Name, user.Surname)
 	authorizationToken, err := a.jwt.GenerateToken(*loggedUser)

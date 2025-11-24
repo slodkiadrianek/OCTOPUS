@@ -203,9 +203,5 @@ func (u *UserService) ChangeUserPassword(ctx context.Context, userId int, curren
 	if err != nil {
 		return err
 	}
-	err = u.cacheService.DeleteData(ctx, cacheKey)
-	if err != nil {
-		return err
-	}
 	return nil
 }
