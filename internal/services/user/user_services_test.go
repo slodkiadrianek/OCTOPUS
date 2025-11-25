@@ -27,11 +27,11 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 			expectedError: nil,
 			password:      "fdEW4$#f4303",
 			setupMock: func() interfaces.UserRepository {
-				m := new(mocks.MockUserRepository)
-				m.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
+				mUserRepository := new(mocks.MockUserRepository)
+				mUserRepository.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
 					models.User{}, nil)
-				m.On("InsertUserToDb", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-				return m
+				mUserRepository.On("InsertUserToDb", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				return mUserRepository
 			},
 		},
 		{
@@ -39,10 +39,10 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 			expectedError: tests.Ptr("User not found"),
 			password:      "fdEW4$#f4303",
 			setupMock: func() interfaces.UserRepository {
-				m := new(mocks.MockUserRepository)
-				m.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
+				mUserRepository := new(mocks.MockUserRepository)
+				mUserRepository.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
 					models.User{}, errors.New("User not found"))
-				return m
+				return mUserRepository
 			},
 		},
 		{
@@ -50,10 +50,10 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 			expectedError: tests.Ptr("failed to execute query"),
 			password:      "fdEW4$#f4303",
 			setupMock: func() interfaces.UserRepository {
-				m := new(mocks.MockUserRepository)
-				m.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
+				mUserRepository := new(mocks.MockUserRepository)
+				mUserRepository.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
 					models.User{}, errors.New("failed to execute query"))
-				return m
+				return mUserRepository
 			},
 		},
 		{
@@ -61,12 +61,12 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 			expectedError: tests.Ptr("User with this email already exists"),
 			password:      "fdEW4$#f4303",
 			setupMock: func() interfaces.UserRepository {
-				m := new(mocks.MockUserRepository)
-				m.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
+				mUserRepository := new(mocks.MockUserRepository)
+				mUserRepository.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
 					models.User{
 						ID: 1,
 					}, nil)
-				return m
+				return mUserRepository
 			},
 		},
 		{
@@ -74,12 +74,12 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 			expectedError: tests.Ptr("bcrypt: password length exceeds 72 bytes"),
 			password:      "fdEW4$#f4303r3er236575467nfw7f9348htx0f94378xfh349fxyh349xf8@#34RFDFE42423423423",
 			setupMock: func() interfaces.UserRepository {
-				m := new(mocks.MockUserRepository)
-				m.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
+				mUserRepository := new(mocks.MockUserRepository)
+				mUserRepository.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
 					models.User{
 						ID: 0,
 					}, nil)
-				return m
+				return mUserRepository
 			},
 		},
 		{
@@ -87,15 +87,15 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 			expectedError: tests.Ptr("failed to insert user to db"),
 			password:      "fdEW4$#f4303",
 			setupMock: func() interfaces.UserRepository {
-				m := new(mocks.MockUserRepository)
-				m.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
+				mUserRepository := new(mocks.MockUserRepository)
+				mUserRepository.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
 					models.User{
 						ID: 0,
 					}, nil)
 
-				m.On("InsertUserToDb", mock.Anything, mock.Anything,
+				mUserRepository.On("InsertUserToDb", mock.Anything, mock.Anything,
 					mock.Anything).Return(errors.New("failed to insert user to db"))
-				return m
+				return mUserRepository
 			},
 		},
 	}
@@ -130,20 +130,20 @@ func TestUserService_UpdateUser(t *testing.T) {
 			name:          "Proper data",
 			expectedError: nil,
 			setupMock: func() interfaces.UserRepository {
-				m := new(mocks.MockUserRepository)
-				m.On("UpdateUser", mock.Anything, mock.Anything, mock.Anything).Return(
+				mUserRepository := new(mocks.MockUserRepository)
+				mUserRepository.On("UpdateUser", mock.Anything, mock.Anything, mock.Anything).Return(
 					nil)
-				return m
+				return mUserRepository
 			},
 		},
 		{
 			name:          "Failed to update an user",
 			expectedError: tests.Ptr("failed to update an user"),
 			setupMock: func() interfaces.UserRepository {
-				m := new(mocks.MockUserRepository)
-				m.On("UpdateUser", mock.Anything, mock.Anything, mock.Anything).Return(
+				mUserRepository := new(mocks.MockUserRepository)
+				mUserRepository.On("UpdateUser", mock.Anything, mock.Anything, mock.Anything).Return(
 					errors.New("failed to update an user"))
-				return m
+				return mUserRepository
 			},
 		},
 	}
@@ -177,20 +177,20 @@ func TestUserService_UpdateUserNotifications(t *testing.T) {
 			name:          "Proper data",
 			expectedError: nil,
 			setupMock: func() interfaces.UserRepository {
-				m := new(mocks.MockUserRepository)
-				m.On("UpdateUserNotifications", mock.Anything, mock.Anything, mock.Anything).Return(
+				mUserRepository := new(mocks.MockUserRepository)
+				mUserRepository.On("UpdateUserNotifications", mock.Anything, mock.Anything, mock.Anything).Return(
 					nil)
-				return m
+				return mUserRepository
 			},
 		},
 		{
 			name:          "Failed to update an user",
 			expectedError: tests.Ptr("failed to update an user"),
 			setupMock: func() interfaces.UserRepository {
-				m := new(mocks.MockUserRepository)
-				m.On("UpdateUserNotifications", mock.Anything, mock.Anything, mock.Anything).Return(
+				mUserRepository := new(mocks.MockUserRepository)
+				mUserRepository.On("UpdateUserNotifications", mock.Anything, mock.Anything, mock.Anything).Return(
 					errors.New("failed to update an user"))
-				return m
+				return mUserRepository
 			},
 		},
 	}

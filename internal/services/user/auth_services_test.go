@@ -63,7 +63,7 @@ func TestAuthService_LoginUser(t *testing.T) {
 		{
 			name:          "Wrong password provided",
 			password:      "ci$#fm43980faz",
-			expectedError: tests.Ptr("Wrong password provided"),
+			expectedError: tests.Ptr("Wrong password provided "),
 			setupMock: func() interfaces.UserRepository {
 				mUserRepository := new(mocks.MockUserRepository)
 				mUserRepository.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
