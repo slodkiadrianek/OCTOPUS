@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/Oudwins/zog"
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/api/interfaces"
 	"github.com/slodkiadrianek/octopus/internal/api/routes"
@@ -29,7 +30,7 @@ func (a *AuthHandlers) SetupAuthHandlers(router routes.Router) {
 	groupRouter := router.Group("/api/v1/auth")
 
 	groupRouter.POST("/register", middleware.RateLimiterMiddleware(*a.rateLimiter),
-		middleware.ValidateMiddleware[DTO.CreateUser](
+		middleware.ValidateMiddleware[DTO.CreateUser, *zog.StructSchema](
 			"body",
 			schema.CreateUserSchema),
 		a.userController.InsertUser)

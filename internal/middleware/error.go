@@ -30,7 +30,7 @@ func ErrorHandler(next http.Handler) http.Handler {
 			if customErr == nil {
 				utils.SendResponse(w, 500, map[string]string{
 					"errorCategory":    "Server",
-					"errorDescription": "Internal server error (nil custom error)",
+					"errorDescription": "Internal server error",
 				})
 				return
 			}

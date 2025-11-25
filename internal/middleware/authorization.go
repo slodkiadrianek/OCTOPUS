@@ -56,17 +56,24 @@ func (j JWT) GenerateToken(user DTO.LoggedUser) (string, error) {
 	return tokenString, nil
 }
 
+func (j JWT) parseClaimsFromToken(user *userClaims, tokenString string) (*jwt.Token, error) {
+	token, err := jwt.ParseWithClaims(tokenString, user, func(token *jwt.Token) (any, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(j.token), nil
+	})
+	return token, err
+}
+
 func (j JWT) VerifyToken(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if !strings.HasPrefix(authHeader, "Bearer ") {
 			j.loggerService.Info("token is missing", authHeader)
-			err := models.NewError(401, "Authorization", "Failed to authorize user")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
-			if ok {
-				errBucket.Err = err
-				return
-			}
+			err := models.NewError(401, "Authorization", "Failed to authorize a user")
+			utils.SetError(w, r, err)
+			return
 		}
 
 		tokenString := strings.Split(authHeader, " ")[1]
@@ -74,49 +81,36 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 		if err != nil {
 			j.loggerService.Info("Failed to check blacklist", err)
 			err := models.NewError(401, "Authorization", "Failed to check blacklist")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
-			if ok {
-				errBucket.Err = err
-				return
-			}
+			utils.SetError(w, r, err)
+			return
+
 		}
 
 		if result > 0 {
 			j.loggerService.Info("Token is blacklisted", tokenString)
 			err := models.NewError(401, "Authorization", "Token is blacklisted")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
-			if ok {
-				errBucket.Err = err
-				return
-			}
+			utils.SetError(w, r, err)
+			return
+
 		}
 
-		var user userClaims
-		token, err := jwt.ParseWithClaims(tokenString, &user, func(token *jwt.Token) (any, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			}
-			return []byte(j.token), nil
-		})
+		var user *userClaims
+		tokenWithData, err := j.parseClaimsFromToken(user, tokenString)
 
 		if err != nil {
 			j.loggerService.Info("Failed to read data properly", err)
 			err := models.NewError(401, "Authorization", "Provided token is invalid")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
-			if ok {
-				errBucket.Err = err
-				return
-			}
+			utils.SetError(w, r, err)
+			return
+
 		}
 
-		if !token.Valid {
-			j.loggerService.Info("Provided token is invalid", err)
+		if !tokenWithData.Valid {
+			j.loggerService.Info("Provided token is invalid", tokenString)
 			err := models.NewError(401, "Authorization", "Provided token is invalid")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
-			if ok {
-				errBucket.Err = err
-				return
-			}
+			utils.SetError(w, r, err)
+			return
+
 		}
 
 		r = utils.SetContext(r, "id", user.Id)
@@ -131,12 +125,9 @@ func (j JWT) BlacklistUser(next http.Handler) http.Handler {
 		authHeader := r.Header.Get("Authorization")
 		if !strings.HasPrefix(authHeader, "Bearer ") {
 			j.loggerService.Info("token is missing", authHeader)
-			err := models.NewError(401, "Authorization", "Failed to authorize user")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
-			if ok {
-				errBucket.Err = err
-				return
-			}
+			err := models.NewError(401, "Authorization", "Failed to authorize a user")
+			utils.SetError(w, r, err)
+			return
 		}
 
 		tokenString := strings.Split(authHeader, " ")[1]
@@ -144,61 +135,41 @@ func (j JWT) BlacklistUser(next http.Handler) http.Handler {
 		if err != nil {
 			j.loggerService.Info("Failed to check blacklist", err)
 			err := models.NewError(401, "Authorization", "Failed to check blacklist")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
-			if ok {
-				errBucket.Err = err
-				return
-			}
+			utils.SetError(w, r, err)
+			return
 		}
 
 		if result > 0 {
 			j.loggerService.Info("Token is blacklisted", tokenString)
 			err := models.NewError(401, "Authorization", "Token is blacklisted")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
-			if ok {
-				errBucket.Err = err
-				return
-			}
+			utils.SetError(w, r, err)
+			return
 		}
 
-		var user userClaims
-		tokenWithData, err := jwt.ParseWithClaims(tokenString, &user, func(tokenInJwt *jwt.Token) (any, error) {
-			if _, ok := tokenInJwt.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", tokenInJwt.Header["alg"])
-			}
-			return []byte(j.token), nil
-		})
+		var user *userClaims
+		tokenWithData, err := j.parseClaimsFromToken(user, tokenString)
 
 		if err != nil {
 			j.loggerService.Info("Failed to read data properly", tokenString)
 			err := models.NewError(401, "Authorization", "Failed to read token")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
-			if ok {
-				errBucket.Err = err
-				return
-			}
+			utils.SetError(w, r, err)
+			return
 		}
 
 		if !tokenWithData.Valid {
 			j.loggerService.Info("Provided token is invalid", tokenString)
 			err := models.NewError(401, "Authorization", "Provided token is invalid")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
-			if ok {
-				errBucket.Err = err
-				return
-			}
+			utils.SetError(w, r, err)
+			return
 		}
 
 		expirationTime := time.Until(user.ExpiresAt.Time)
 		err = j.cacheService.SetData(r.Context(), "blacklist-"+tokenString, "true", expirationTime)
 		if err != nil {
-			j.loggerService.Info("Failed to read data properly", tokenString)
-			err := models.NewError(401, "Authorization", "Failed to read token")
-			errBucket, ok := r.Context().Value("ErrorBucket").(*models.ErrorBucket)
-			if ok {
-				errBucket.Err = err
-				return
-			}
+			j.loggerService.Info("Failed to set data in cache", err)
+			err := models.NewError(401, "Authorization", "Failed to authorize a user")
+			utils.SetError(w, r, err)
+			return
 		}
 
 		next.ServeHTTP(w, r)

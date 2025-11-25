@@ -19,7 +19,7 @@ func ValidateMiddleware[dataFromRequestType any, validationSchemaType *zog.Struc
 }
 
 func validateDataFromRequest[dataFromRequestType any, validationSchemaType *zog.StructSchema | *zog.SliceSchema](
-	dataFromRequest dataFromRequestType, validationSchema validationSchemaType) error {
+	dataFromRequest *dataFromRequestType, validationSchema validationSchemaType) error {
 	typeOfDataFromRequest := reflect.TypeOf(dataFromRequest)
 	var errMap zog.ZogIssueMap
 	if typeOfDataFromRequest.Kind() == reflect.Slice {
@@ -52,8 +52,8 @@ func validateHandler[dataFromRequestType any, validationSchemaType *zog.StructSc
 				utils.SetError(w, r, err)
 				return
 			}
-
 			defer r.Body.Close()
+
 			var dataFromRequest *dataFromRequestType
 			dataFromRequest, err = utils.UnmarshalData[dataFromRequestType](bodyBytes)
 			if err != nil {
@@ -61,12 +61,13 @@ func validateHandler[dataFromRequestType any, validationSchemaType *zog.StructSc
 				return
 			}
 
-			err = validateDataFromRequest[dataFromRequestType, validationSchemaType](*dataFromRequest, validationSchema)
+			err = validateDataFromRequest[dataFromRequestType, validationSchemaType](dataFromRequest, validationSchema)
 			if err != nil {
 				utils.SetError(w, r, err)
 				return
 			}
 			r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
 		case "params":
 			paramsMap, err := utils.ReadAllParams(r)
 			if err != nil {
@@ -82,7 +83,7 @@ func validateHandler[dataFromRequestType any, validationSchemaType *zog.StructSc
 
 			var dataFromRequest *dataFromRequestType
 			dataFromRequest, err = utils.UnmarshalData[dataFromRequestType](paramBytes)
-			err = validateDataFromRequest[dataFromRequestType, validationSchemaType](*dataFromRequest, validationSchema)
+			err = validateDataFromRequest[dataFromRequestType, validationSchemaType](dataFromRequest, validationSchema)
 			if err != nil {
 				utils.SetError(w, r, err)
 				return
