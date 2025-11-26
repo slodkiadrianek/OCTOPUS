@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/slodkiadrianek/octopus/internal/utils"
 	"io"
 	"net/http"
 	"net/url"
@@ -261,6 +262,47 @@ func TestCheckRouteParams(t *testing.T) {
 		t.Run(testScenario.name, func(t *testing.T) {
 			res := CheckRouteParams(testScenario.actualRoute)
 			assert.Equal(t, testScenario.expectedResult, res)
+		})
+	}
+}
+
+func TestReadAllParams(t *testing.T) {
+	type args struct {
+		name          string
+		routeKeyPath  *string
+		url           string
+		expectedError error
+	}
+	testScenarios := []args{
+		//	{
+		//	name:          "Proper data provided",
+		//	routeKeyPath:  tests.Ptr("/:appId/:userId"),
+		//	url:           "/f234f3f43/3",
+		//	expectedError: nil,
+		//},
+		{
+			name:          "Wrong routeKeyPath provided",
+			routeKeyPath:  nil,
+			url:           "/f234f3f43/3",
+			expectedError: errors.New("failed to read context routeKeyPath, must be type string"),
+		},
+	}
+	for _, testScenario := range testScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
+			var r *http.Request
+			r = &http.Request{}
+			r.URL = &url.URL{}
+			r.URL.Path = testScenario.url
+			r = utils.SetContext(r, "routeKeyPath", testScenario.routeKeyPath)
+			res, err := ReadAllParams(r)
+			if testScenario.expectedError != nil {
+				assert.Equal(t, err, testScenario.expectedError)
+				assert.Nil(t, res)
+			} else {
+				assert.NotEmpty(t, res)
+				assert.Nil(t, err)
+			}
+
 		})
 	}
 }

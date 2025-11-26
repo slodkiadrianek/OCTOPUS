@@ -13,7 +13,7 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/models"
 )
 
-func DoHttpRequest(ctx context.Context, url, authorizationHeader, method string, body []byte, readBody bool) (int,
+func SendHttp(ctx context.Context, url, authorizationHeader, method string, body []byte, readBody bool) (int,
 	map[string]any, error,
 ) {
 	httpClient := &http.Client{}
