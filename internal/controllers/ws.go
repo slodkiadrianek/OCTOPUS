@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/slodkiadrianek/octopus/internal/utils"
+	"github.com/slodkiadrianek/octopus/internal/utils/request"
 )
 
 type wsService interface {
@@ -37,7 +38,7 @@ func (ws *WsController) Logs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	appId, err := utils.ReadParam(r, "appId")
+	appId, err := request.ReadParam(r, "appId")
 	if err != nil {
 		ws.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
 		err := conn.WriteMessage(websocket.TextMessage, []byte("Failed to read appId"))

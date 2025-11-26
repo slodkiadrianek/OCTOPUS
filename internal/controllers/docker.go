@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	"github.com/slodkiadrianek/octopus/internal/utils"
+	"github.com/slodkiadrianek/octopus/internal/utils/request"
+	"github.com/slodkiadrianek/octopus/internal/utils/response"
 )
 
 type dockerService interface {
@@ -29,102 +31,102 @@ func NewDockerController(service dockerService, loggerService utils.LoggerServic
 }
 
 func (dc *DockerController) PauseContainer(w http.ResponseWriter, r *http.Request) {
-	appId, err := utils.ReadParam(r, "appId")
+	appId, err := request.ReadParam(r, "appId")
 	if err != nil {
 		dc.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
-		utils.SetError(w, r, err)
+		response.SetError(w, r, err)
 		return
 	}
 
 	err = dc.dockerService.PauseContainer(r.Context(), appId)
 	if err != nil {
-		utils.SetError(w, r, err)
+		response.SetError(w, r, err)
 		return
 	}
 
-	utils.SendResponse(w, 204, map[string]any{})
+	response.SendResponse(w, 204, map[string]any{})
 }
 
 func (dc *DockerController) RestartContainer(w http.ResponseWriter, r *http.Request) {
-	appId, err := utils.ReadParam(r, "appId")
+	appId, err := request.ReadParam(r, "appId")
 	if err != nil {
 		dc.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
-		utils.SetError(w, r, err)
+		response.SetError(w, r, err)
 		return
 	}
 
 	err = dc.dockerService.RestartContainer(r.Context(), appId)
 	if err != nil {
-		utils.SetError(w, r, err)
+		response.SetError(w, r, err)
 		return
 	}
 
-	utils.SendResponse(w, 204, map[string]any{})
+	response.SendResponse(w, 204, map[string]any{})
 }
 
 func (dc *DockerController) StartContainer(w http.ResponseWriter, r *http.Request) {
-	appId, err := utils.ReadParam(r, "appId")
+	appId, err := request.ReadParam(r, "appId")
 	if err != nil {
 		dc.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
-		utils.SetError(w, r, err)
+		response.SetError(w, r, err)
 		return
 	}
 
 	err = dc.dockerService.StartContainer(r.Context(), appId)
 	if err != nil {
-		utils.SetError(w, r, err)
+		response.SetError(w, r, err)
 		return
 	}
 
-	utils.SendResponse(w, 204, map[string]any{})
+	response.SendResponse(w, 204, map[string]any{})
 }
 
 func (dc *DockerController) UnpauseContainer(w http.ResponseWriter, r *http.Request) {
-	appId, err := utils.ReadParam(r, "appId")
+	appId, err := request.ReadParam(r, "appId")
 	if err != nil {
 		dc.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
-		utils.SetError(w, r, err)
+		response.SetError(w, r, err)
 		return
 	}
 
 	err = dc.dockerService.UnpauseContainer(r.Context(), appId)
 	if err != nil {
-		utils.SetError(w, r, err)
+		response.SetError(w, r, err)
 		return
 	}
 
-	utils.SendResponse(w, 204, map[string]any{})
+	response.SendResponse(w, 204, map[string]any{})
 }
 func (dc *DockerController) StopContainer(w http.ResponseWriter, r *http.Request) {
-	appId, err := utils.ReadParam(r, "appId")
+	appId, err := request.ReadParam(r, "appId")
 	if err != nil {
 		dc.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
-		utils.SetError(w, r, err)
+		response.SetError(w, r, err)
 		return
 	}
 
 	err = dc.dockerService.StopContainer(r.Context(), appId)
 	if err != nil {
-		utils.SetError(w, r, err)
+		response.SetError(w, r, err)
 		return
 	}
 
-	utils.SendResponse(w, 204, map[string]any{})
+	response.SendResponse(w, 204, map[string]any{})
 }
 
 func (dc *DockerController) ImportDockerContainers(w http.ResponseWriter, r *http.Request) {
-	ownerId, err := utils.ReadUserIdFromToken(r)
+	ownerId, err := request.ReadUserIdFromToken(r)
 	if err != nil {
 		dc.loggerService.Error(failedToReadDataFromToken)
-		utils.SetError(w, r, err)
+		response.SetError(w, r, err)
 		return
 	}
 
 	err = dc.dockerService.ImportContainers(r.Context(), ownerId)
 	if err != nil {
-		utils.SetError(w, r, err)
+		response.SetError(w, r, err)
 		return
 	}
 
-	utils.SendResponse(w, 201, map[string]any{})
+	response.SendResponse(w, 201, map[string]any{})
 }

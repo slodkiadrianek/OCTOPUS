@@ -6,6 +6,7 @@ import (
 
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/utils"
+	"github.com/slodkiadrianek/octopus/internal/utils/response"
 )
 
 type serverService interface {
@@ -28,19 +29,19 @@ func NewServerController(loggerService utils.LoggerService, serverService server
 func (s *ServerController) GetServerInfo(w http.ResponseWriter, r *http.Request) {
 	serverInfo, err := s.serverService.GetServerInfo()
 	if err != nil {
-		utils.SetError(w, r, err)
+		response.SetError(w, r, err)
 		return
 	}
 
-	utils.SendResponse(w, 200, serverInfo)
+	response.SendResponse(w, 200, serverInfo)
 }
 
 func (s *ServerController) GetServerMetrics(w http.ResponseWriter, r *http.Request) {
 	serverMetrics, err := s.serverService.GetServerMetrics(r.Context())
 	if err != nil {
-		utils.SetError(w, r, err)
+		response.SetError(w, r, err)
 		return
 	}
 
-	utils.SendResponse(w, 200, serverMetrics)
+	response.SendResponse(w, 200, serverMetrics)
 }

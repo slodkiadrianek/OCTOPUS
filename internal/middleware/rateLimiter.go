@@ -10,6 +10,7 @@ import (
 
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/utils"
+	"github.com/slodkiadrianek/octopus/internal/utils/response"
 )
 
 type RateLimiterUser struct {
@@ -55,7 +56,7 @@ func RateLimiterHandler(next http.Handler, rateLimiter RateLimiter) http.Handler
 				return
 			} else {
 				err := models.NewError(429, "Rate limiter", "Too many requests")
-				utils.SetError(w, r, err)
+				response.SetError(w, r, err)
 				return
 			}
 		}

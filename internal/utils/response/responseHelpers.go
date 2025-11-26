@@ -1,4 +1,4 @@
-package utils
+package response
 
 import (
 	"encoding/json"
@@ -13,13 +13,13 @@ func SetError(w http.ResponseWriter, r *http.Request, err error) {
 		errBucket.Err = err
 		return
 	}
-	SendResponse(w, 500, map[string]string{
+	Send(w, 500, map[string]string{
 		"errorCategory":    "Server",
 		"errorDescription": "Internal server error",
 	})
 }
 
-func SendResponse(w http.ResponseWriter, status int, data any) {
+func Send(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if status == 204 {

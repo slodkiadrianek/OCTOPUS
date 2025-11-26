@@ -9,6 +9,8 @@ import (
 	"github.com/Oudwins/zog"
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/utils"
+	"github.com/slodkiadrianek/octopus/internal/utils/request"
+	"github.com/slodkiadrianek/octopus/internal/utils/response"
 )
 
 func ValidateMiddleware[dataFromRequestType any, validationSchemaType *zog.StructSchema | *zog.SliceSchema](
@@ -24,10 +26,10 @@ func validateDataFromRequest[dataFromRequestType any, validationSchemaType *zog.
 	var errMap zog.ZogIssueMap
 	if typeOfDataFromRequest.Kind() == reflect.Slice {
 		schema, _ := any(validationSchema).(*zog.SliceSchema)
-		errMap = utils.ValidateInputSlice(schema, dataFromRequest)
+		errMap = request.ValidateInputSlice(schema, dataFromRequest)
 	} else {
 		schema, _ := any(validationSchema).(*zog.StructSchema)
-		errMap = utils.ValidateInputStruct(schema, dataFromRequest)
+		errMap = request.ValidateInputStruct(schema, dataFromRequest)
 	}
 
 	if errMap != nil {
@@ -49,7 +51,7 @@ func validateHandler[dataFromRequestType any, validationSchemaType *zog.StructSc
 		case "body":
 			bodyBytes, err := io.ReadAll(r.Body)
 			if err != nil {
-				utils.SetError(w, r, err)
+				response.SetError(w, r, err)
 				return
 			}
 			defer r.Body.Close()
@@ -57,27 +59,27 @@ func validateHandler[dataFromRequestType any, validationSchemaType *zog.StructSc
 			var dataFromRequest *dataFromRequestType
 			dataFromRequest, err = utils.UnmarshalData[dataFromRequestType](bodyBytes)
 			if err != nil {
-				utils.SetError(w, r, err)
+				response.SetError(w, r, err)
 				return
 			}
 
 			err = validateDataFromRequest[dataFromRequestType, validationSchemaType](dataFromRequest, validationSchema)
 			if err != nil {
-				utils.SetError(w, r, err)
+				response.SetError(w, r, err)
 				return
 			}
 			r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
 		case "params":
-			paramsMap, err := utils.ReadAllParams(r)
+			paramsMap, err := request.ReadAllParams(r)
 			if err != nil {
-				utils.SetError(w, r, err)
+				response.SetError(w, r, err)
 				return
 			}
 
 			paramBytes, err := utils.MarshalData(paramsMap)
 			if err != nil {
-				utils.SetError(w, r, err)
+				response.SetError(w, r, err)
 				return
 			}
 
@@ -85,7 +87,7 @@ func validateHandler[dataFromRequestType any, validationSchemaType *zog.StructSc
 			dataFromRequest, err = utils.UnmarshalData[dataFromRequestType](paramBytes)
 			err = validateDataFromRequest[dataFromRequestType, validationSchemaType](dataFromRequest, validationSchema)
 			if err != nil {
-				utils.SetError(w, r, err)
+				response.SetError(w, r, err)
 				return
 			}
 		}

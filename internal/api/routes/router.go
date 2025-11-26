@@ -3,9 +3,10 @@ package routes
 import (
 	"context"
 	"net/http"
-	
+
 	"github.com/slodkiadrianek/octopus/internal/middleware"
-	"github.com/slodkiadrianek/octopus/internal/utils"
+	"github.com/slodkiadrianek/octopus/internal/utils/request"
+	"github.com/slodkiadrianek/octopus/internal/utils/response"
 )
 
 type (
@@ -50,25 +51,25 @@ func (r *Router) Request(route string, method string, fns ...any) {
 		handler = middlewares[i](handler)
 	}
 	chainedHandler := handler
-	route = utils.RemoveLastCharacterFromUrl(route)
+	route = request.RemoveLastCharacterFromUrl(route)
 	r.routes[routeKey{method: method, path: route}] = chainedHandler
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	req.URL.Path = utils.RemoveLastCharacterFromUrl(req.URL.Path)
+	req.URL.Path = request.RemoveLastCharacterFromUrl(req.URL.Path)
 	for routeKey, handler := range r.routes {
 		if routeKey.method != req.Method {
 			continue
 		}
-		
-		if utils.MatchRoute(routeKey.path, req.URL.Path) {
+
+		if request.MatchRoute(routeKey.path, req.URL.Path) {
 			ctx := context.WithValue(req.Context(), "routeKeyPath", routeKey.path)
 			req = req.WithContext(ctx)
 			handler.ServeHTTP(w, req)
 			return
 		}
 	}
-	utils.SendResponse(w, 404, map[string]string{"errorDescription": "Route not found"})
+	response.SendResponse(w, 404, map[string]string{"errorDescription": "Route not found"})
 }
 
 func (r *Router) Group(prefix string) *GroupRouter {

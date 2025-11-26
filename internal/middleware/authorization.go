@@ -11,6 +11,7 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/services/interfaces"
 	"github.com/slodkiadrianek/octopus/internal/utils"
+	"github.com/slodkiadrianek/octopus/internal/utils/response"
 )
 
 type userClaims struct {
@@ -76,7 +77,7 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 		if !strings.HasPrefix(authHeader, "Bearer ") {
 			j.loggerService.Info("token is missing", authHeader)
 			err := models.NewError(401, "Authorization", "Failed to authorize a user")
-			utils.SetError(w, r, err)
+			response.SetError(w, r, err)
 			return
 		}
 
@@ -85,7 +86,7 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 		if err != nil {
 			j.loggerService.Info("Failed to check blacklist", err)
 			err := models.NewError(401, "Authorization", "Failed to check blacklist")
-			utils.SetError(w, r, err)
+			response.SetError(w, r, err)
 			return
 
 		}
@@ -93,7 +94,7 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 		if result > 0 {
 			j.loggerService.Info("Token is blacklisted", tokenString)
 			err := models.NewError(401, "Authorization", "Token is blacklisted")
-			utils.SetError(w, r, err)
+			response.SetError(w, r, err)
 			return
 
 		}
@@ -103,7 +104,7 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 		if err != nil {
 			j.loggerService.Info("Failed to read data properly", err.Error())
 			err := models.NewError(401, "Authorization", "Provided token is invalid")
-			utils.SetError(w, r, err)
+			response.SetError(w, r, err)
 			return
 
 		}
@@ -111,7 +112,7 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 		if !tokenWithData.Valid {
 			j.loggerService.Info("Provided token is invalid", tokenString)
 			err := models.NewError(401, "Authorization", "Provided token is invalid")
-			utils.SetError(w, r, err)
+			response.SetError(w, r, err)
 			return
 
 		}
@@ -129,7 +130,7 @@ func (j JWT) BlacklistUser(next http.Handler) http.Handler {
 		if !strings.HasPrefix(authHeader, "Bearer ") {
 			j.loggerService.Info("token is missing", authHeader)
 			err := models.NewError(401, "Authorization", "Failed to authorize a user")
-			utils.SetError(w, r, err)
+			response.SetError(w, r, err)
 			return
 		}
 
@@ -138,14 +139,14 @@ func (j JWT) BlacklistUser(next http.Handler) http.Handler {
 		if err != nil {
 			j.loggerService.Info("Failed to check blacklist", err)
 			err := models.NewError(401, "Authorization", "Failed to check blacklist")
-			utils.SetError(w, r, err)
+			response.SetError(w, r, err)
 			return
 		}
 
 		if result > 0 {
 			j.loggerService.Info("Token is blacklisted", tokenString)
 			err := models.NewError(401, "Authorization", "Token is blacklisted")
-			utils.SetError(w, r, err)
+			response.SetError(w, r, err)
 			return
 		}
 
@@ -154,14 +155,14 @@ func (j JWT) BlacklistUser(next http.Handler) http.Handler {
 		if err != nil {
 			j.loggerService.Info("Failed to read data properly", tokenString)
 			err := models.NewError(401, "Authorization", "Failed to read token")
-			utils.SetError(w, r, err)
+			response.SetError(w, r, err)
 			return
 		}
 
 		if !tokenWithData.Valid {
 			j.loggerService.Info("Provided token is invalid", tokenString)
 			err := models.NewError(401, "Authorization", "Provided token is invalid")
-			utils.SetError(w, r, err)
+			response.SetError(w, r, err)
 			return
 		}
 
@@ -170,7 +171,7 @@ func (j JWT) BlacklistUser(next http.Handler) http.Handler {
 		if err != nil {
 			j.loggerService.Info("Failed to set data in cache", err)
 			err := models.NewError(401, "Authorization", "Failed to authorize a user")
-			utils.SetError(w, r, err)
+			response.SetError(w, r, err)
 			return
 		}
 

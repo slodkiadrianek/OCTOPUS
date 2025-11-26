@@ -1,13 +1,12 @@
 package utils
 
 import (
-	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
 	"net/http"
-
+	
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 )
 
@@ -54,33 +53,4 @@ func InsertionSortForRoutes[T DTO.RoutesParentID](data []T) []T {
 		data[j+1] = key
 	}
 	return data
-}
-
-func DoHttpRequest(ctx context.Context, url, authorizationHeader, method string, body []byte, readBody bool) (int,
-	map[string]any, error,
-) {
-	httpClient := &http.Client{}
-	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(body))
-	if err != nil {
-		return 0, map[string]any{}, err
-	}
-	if authorizationHeader != "" {
-		req.Header.Add("Authorization", authorizationHeader)
-	}
-	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
-
-	response, err := httpClient.Do(req)
-	if err != nil {
-		return 0, map[string]any{}, err
-	}
-	defer response.Body.Close()
-
-	var bodyFromResponse map[string]any
-	if readBody {
-		err = json.NewDecoder(response.Body).Decode(&bodyFromResponse)
-		if err != nil {
-			return 0, map[string]any{}, err
-		}
-	}
-	return response.StatusCode, bodyFromResponse, nil
 }

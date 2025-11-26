@@ -6,6 +6,8 @@ import (
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/utils"
+	"github.com/slodkiadrianek/octopus/internal/utils/request"
+	"github.com/slodkiadrianek/octopus/internal/utils/response"
 )
 
 type authService interface {
@@ -25,34 +27,34 @@ func NewAuthController(authService authService, loggerService utils.LoggerServic
 }
 
 func (a AuthController) LoginUser(w http.ResponseWriter, r *http.Request) {
-	userBody, err := utils.ReadBody[DTO.LoginUser](r)
+	userBody, err := request.ReadBody[DTO.LoginUser](r)
 	if err != nil {
 		a.loggerService.Error(failedToReadBodyFromRequest, err)
-		utils.SetError(w, r, err)
+		response.SetError(w, r, err)
 		return
 	}
 
 	tokenString, err := a.authService.LoginUser(r.Context(), *userBody)
 	if err != nil {
-		utils.SetError(w, r, err)
+		response.SetError(w, r, err)
 		return
 	}
-	utils.SendResponse(w, 200, map[string]string{"token": tokenString})
+	response.SendResponse(w, 200, map[string]string{"token": tokenString})
 }
 
 func (a AuthController) VerifyUser(w http.ResponseWriter, r *http.Request) {
-	userId, err := utils.ReadUserIdFromToken(r)
+	userId, err := request.ReadUserIdFromToken(r)
 	if err != nil {
 		a.loggerService.Error(failedToReadDataFromToken)
-		utils.SetError(w, r, err)
+		response.SetError(w, r, err)
 		return
 	}
 
-	utils.SendResponse(w, 204, map[string]int{
+	response.SendResponse(w, 204, map[string]int{
 		"userId": userId,
 	})
 }
 
 func (a AuthController) LogoutUser(w http.ResponseWriter, _ *http.Request) {
-	utils.SendResponse(w, 204, map[string]string{})
+	response.SendResponse(w, 204, map[string]string{})
 }
