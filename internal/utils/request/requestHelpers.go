@@ -5,12 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
-
-	"github.com/slodkiadrianek/octopus/internal/models"
 )
 
 func SendHttp(ctx context.Context, url, authorizationHeader, method string, body []byte, readBody bool) (int,
@@ -25,7 +24,6 @@ func SendHttp(ctx context.Context, url, authorizationHeader, method string, body
 		req.Header.Add("Authorization", authorizationHeader)
 	}
 	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
-
 	response, err := httpClient.Do(req)
 	if err != nil {
 		return 0, map[string]any{}, err
@@ -35,6 +33,7 @@ func SendHttp(ctx context.Context, url, authorizationHeader, method string, body
 	var bodyFromResponse map[string]any
 	if readBody {
 		err = json.NewDecoder(response.Body).Decode(&bodyFromResponse)
+		fmt.Println(err)
 		if err != nil {
 			return 0, map[string]any{}, err
 		}
@@ -45,7 +44,7 @@ func SendHttp(ctx context.Context, url, authorizationHeader, method string, body
 func ReadUserIdFromToken(r *http.Request) (int, error) {
 	userId, ok := r.Context().Value("id").(int)
 	if !ok || userId == 0 {
-		err := models.NewError(500, "Server", "Internal server error")
+		err := errors.New("Failed to read user from context")
 		return 0, err
 	}
 	return userId, nil
@@ -121,6 +120,7 @@ func ReadAllParams(r *http.Request) (map[string]string, error) {
 	if !ok {
 		return nil, errors.New("failed to read context routeKeyPath, must be type string")
 	}
+
 	splittedPath := strings.Split(strings.Trim(path, "/"), "/")
 	splittedRouteKeyPath := strings.Split(strings.Trim(s, "/"), "/")
 

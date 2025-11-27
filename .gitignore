@@ -23,7 +23,7 @@ bin/
 .gitignore
 
 # Tests
-tests/*
+
 !tests/mocks/
 !tests/mocks/**
 coverage.out

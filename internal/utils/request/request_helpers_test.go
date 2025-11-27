@@ -5,7 +5,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/slodkiadrianek/octopus/internal/utils"
+	"github.com/slodkiadrianek/octopus/tests"
+
 	"io"
 	"net/http"
 	"net/url"
@@ -232,7 +235,7 @@ func TestCheckRouteParams(t *testing.T) {
 		expectedResult bool
 	}
 
-	testScenarios := []args{
+	testsScenarios := []args{
 		{
 			name: "Proper data provided",
 			actualRoute: DTO.CreateRoute{
@@ -258,7 +261,7 @@ func TestCheckRouteParams(t *testing.T) {
 			expectedResult: false,
 		},
 	}
-	for _, testScenario := range testScenarios {
+	for _, testScenario := range testsScenarios {
 		t.Run(testScenario.name, func(t *testing.T) {
 			res := CheckRouteParams(testScenario.actualRoute)
 			assert.Equal(t, testScenario.expectedResult, res)
@@ -273,13 +276,13 @@ func TestReadAllParams(t *testing.T) {
 		url           string
 		expectedError error
 	}
-	testScenarios := []args{
-		//	{
-		//	name:          "Proper data provided",
-		//	routeKeyPath:  tests.Ptr("/:appId/:userId"),
-		//	url:           "/f234f3f43/3",
-		//	expectedError: nil,
-		//},
+	testsScenarios := []args{
+		{
+			name:          "Proper data provided",
+			routeKeyPath:  tests.Ptr("/:appId/:userId"),
+			url:           "/f234f3f43/3",
+			expectedError: nil,
+		},
 		{
 			name:          "Wrong routeKeyPath provided",
 			routeKeyPath:  nil,
@@ -287,20 +290,150 @@ func TestReadAllParams(t *testing.T) {
 			expectedError: errors.New("failed to read context routeKeyPath, must be type string"),
 		},
 	}
-	for _, testScenario := range testScenarios {
+	for _, testScenario := range testsScenarios {
 		t.Run(testScenario.name, func(t *testing.T) {
 			var r *http.Request
 			r = &http.Request{}
 			r.URL = &url.URL{}
 			r.URL.Path = testScenario.url
-			r = utils.SetContext(r, "routeKeyPath", testScenario.routeKeyPath)
+			if testScenario.routeKeyPath != nil {
+				r = utils.SetContext(r, "routeKeyPath", *testScenario.routeKeyPath)
+			} else {
+				r = utils.SetContext(r, "routeKeyPath", testScenario.routeKeyPath)
+
+			}
 			res, err := ReadAllParams(r)
+			fmt.Println(err)
 			if testScenario.expectedError != nil {
 				assert.Equal(t, err, testScenario.expectedError)
 				assert.Nil(t, res)
 			} else {
 				assert.NotEmpty(t, res)
 				assert.Nil(t, err)
+			}
+
+		})
+	}
+}
+
+func TestSendHttp(t *testing.T) {
+	type args struct {
+		name                string
+		url                 string
+		bodyFromResponse    bool
+		authorizationHeader string
+		method              string
+		body                []byte
+		expectedError       error
+	}
+	testsScenarios := []args{
+		{
+			name:                "Proper data provided with read body from response",
+			url:                 "https://jsonplaceholder.typicode.com/todos/1",
+			bodyFromResponse:    true,
+			authorizationHeader: "",
+			method:              "GET",
+			body:                []byte{},
+			expectedError:       nil,
+		},
+		{
+			name:                "Proper data provided without read body from response",
+			url:                 "https://jsonplaceholder.typicode.com/todos/1",
+			bodyFromResponse:    false,
+			authorizationHeader: "",
+			method:              "GET",
+			body:                []byte{},
+			expectedError:       nil,
+		},
+		{
+			name:                "Proper data provided with authorizationHeader",
+			url:                 "https://jsonplaceholder.typicode.com/todos/1",
+			bodyFromResponse:    false,
+			authorizationHeader: "test",
+			method:              "GET",
+			body:                []byte{},
+			expectedError:       nil,
+		},
+		{
+			name:                "Failed to read the body",
+			url:                 "https://example.com",
+			bodyFromResponse:    true,
+			authorizationHeader: "test",
+			method:              "GET",
+			body:                []byte{},
+			expectedError:       errors.New("invalid character '<' looking for beginning of value"),
+		},
+		{
+			name:                "Failed to do reuquest",
+			url:                 "",
+			bodyFromResponse:    true,
+			authorizationHeader: "test",
+			method:              "GET",
+			body:                []byte{},
+			expectedError:       errors.New("Get \"\": unsupported protocol scheme \"\""),
+		},
+		{
+			name:                "Failed to create the reuquest",
+			url:                 "://bad-url",
+			bodyFromResponse:    true,
+			authorizationHeader: "test",
+			method:              "TEST",
+			body:                []byte{},
+			expectedError:       errors.New("parse \"://bad-url\": missing protocol scheme"),
+		},
+	}
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
+			ctx := context.Background()
+			statusCode, bodyFromResponse, err := SendHttp(ctx, testScenario.url, testScenario.authorizationHeader,
+				testScenario.method, testScenario.body, testScenario.bodyFromResponse)
+			fmt.Println(err)
+			if testScenario.expectedError != nil {
+				assert.Equal(t, 0, statusCode)
+				assert.Equal(t, map[string]any{}, bodyFromResponse)
+				assert.Equal(t, err.Error(), testScenario.expectedError.Error())
+			} else {
+				fmt.Println(statusCode, bodyFromResponse)
+				assert.NotEqual(t, 0, statusCode)
+				assert.NotEqual(t, map[string]any{}, bodyFromResponse)
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
+func TestReadUserIdFromToken(t *testing.T) {
+	type args struct {
+		name          string
+		id            *int
+		expectedError error
+	}
+
+	testsScenarios := []args{
+		{
+			name:          "Proper data",
+			id:            te2,
+			expectedError: nil,
+		},
+	}
+
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
+			var r *http.Request
+			// if testScenario.routeKeyPath != nil {
+			// 	r = utils.SetContext(r, "routeKeyPath", *testScenario.routeKeyPath)
+			// } else {
+			// 	r = utils.SetContext(r, "routeKeyPath", testScenario.routeKeyPath)
+			//
+			// }
+			res, err := ReadAllParams(r)
+			fmt.Println(err)
+			if testScenario.expectedError != nil {
+				assert.Equal(t, err, testScenario.expectedError)
+				assert.Equal(t, 0, res)
+			} else {
+				assert.Nil(t, testScenario.expectedError)
+				assert.NotEqual(t, 0, res)
 			}
 
 		})
