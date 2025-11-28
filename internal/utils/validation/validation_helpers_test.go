@@ -2,8 +2,9 @@ package validation
 
 import (
 	"errors"
-	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"testing"
+
+	"github.com/slodkiadrianek/octopus/internal/DTO"
 
 	z "github.com/Oudwins/zog"
 	"github.com/slodkiadrianek/octopus/tests"
@@ -19,7 +20,7 @@ func TestValidateSchema(t *testing.T) {
 		name          string
 		schema        z.StructSchema
 		val           ValidateSchemaTestData
-		expectedError any
+		expectedError z.ZogIssueMap
 	}
 
 	testsScenarios := []args{
@@ -114,5 +115,231 @@ func TestCheckIsNextRouteBodyInTheBodyAndInTheBodyOfTheNextRoute(t *testing.T) {
 	type args struct {
 		name        string
 		actualRoute DTO.CreateRoute
+		nextRoute   DTO.CreateRoute
+		result      bool
+	}
+	testsScenarios := []args{
+		{
+			name: "Proper data",
+			actualRoute: DTO.CreateRoute{
+				NextRouteBody: []string{"id"},
+				ResponseBody: map[string]any{
+					"id": "test",
+				},
+			},
+			nextRoute: DTO.CreateRoute{
+				RequestBody: map[string]any{
+					"id": "test",
+				},
+			},
+			result: true,
+		},
+		{
+			name: "Nested proper data",
+			actualRoute: DTO.CreateRoute{
+				NextRouteBody: []string{"id"},
+				ResponseBody: map[string]any{
+					"data": map[string]any{
+						"id": "test",
+					},
+				},
+			},
+			nextRoute: DTO.CreateRoute{
+				RequestBody: map[string]any{
+					"id": "test",
+				},
+			},
+			result: true,
+		},
+		{
+			name: "Lack of id in the response body",
+			actualRoute: DTO.CreateRoute{
+				NextRouteBody: []string{"id"},
+				ResponseBody: map[string]any{
+					"name": "test",
+				},
+			},
+			nextRoute: DTO.CreateRoute{
+				RequestBody: map[string]any{
+					"id": "test",
+				},
+			},
+			result: false,
+		},
+		{
+			name: "Lack of id in the next route body",
+			actualRoute: DTO.CreateRoute{
+				NextRouteBody: []string{"id"},
+				ResponseBody: map[string]any{
+					"id": "test",
+				},
+			},
+			nextRoute: DTO.CreateRoute{
+				RequestBody: map[string]any{
+					"name": "test",
+				},
+			},
+			result: false,
+		},
+	}
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
+			res := CheckIsNextRouteBodyInTheBodyAndInTheBodyOfTheNextRoute(testScenario.actualRoute, testScenario.nextRoute)
+			assert.Equal(t, testScenario.result, res)
+		})
+	}
+}
+
+func TestCheckIsNextRouteQueryInTheBodyAndInTheQueryOfTheNextRoute(t *testing.T) {
+	type args struct {
+		name        string
+		actualRoute DTO.CreateRoute
+		nextRoute   DTO.CreateRoute
+		result      bool
+	}
+	testsScenarios := []args{
+		{
+			name: "Proper data",
+			actualRoute: DTO.CreateRoute{
+				NextRouteQuery: []string{"id"},
+				ResponseBody: map[string]any{
+					"id": "test",
+				},
+			},
+			nextRoute: DTO.CreateRoute{
+				RequestQuery: map[string]string{"id": "test"},
+			},
+			result: true,
+		},
+		{
+			name: "Nested proper data",
+			actualRoute: DTO.CreateRoute{
+				NextRouteQuery: []string{"id"},
+				ResponseBody: map[string]any{
+					"data": map[string]any{
+						"id": "test",
+					},
+				},
+			},
+			nextRoute: DTO.CreateRoute{
+				RequestQuery: map[string]string{
+					"id": "test",
+				},
+			},
+			result: true,
+		},
+		{
+			name: "Lack of id in the response body",
+			actualRoute: DTO.CreateRoute{
+				NextRouteQuery: []string{"id"},
+				ResponseBody: map[string]any{
+					"name": "test",
+				},
+			},
+			nextRoute: DTO.CreateRoute{
+				RequestQuery: map[string]string{
+					"id": "test",
+				},
+			},
+			result: false,
+		},
+		{
+			name: "Lack of id in the next route body",
+			actualRoute: DTO.CreateRoute{
+				NextRouteQuery: []string{"id"},
+				ResponseBody: map[string]any{
+					"id": "test",
+				},
+			},
+			nextRoute: DTO.CreateRoute{
+				RequestQuery: map[string]string{
+					"name": "test",
+				},
+			},
+			result: false,
+		},
+	}
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
+			res := CheckIsNextRouteQueryInTheBodyAndInTheQueryOfTheNextRoute(testScenario.actualRoute, testScenario.nextRoute)
+			assert.Equal(t, testScenario.result, res)
+		})
+	}
+}
+
+func TestCheckIsNextRouteParamsInTheBodyAndInTheParamsOfTheNextRoute(t *testing.T) {
+	type args struct {
+		name        string
+		actualRoute DTO.CreateRoute
+		nextRoute   DTO.CreateRoute
+		result      bool
+	}
+	testsScenarios := []args{
+		{
+			name: "Proper data",
+			actualRoute: DTO.CreateRoute{
+				NextRouteParams: []string{"id"},
+				ResponseBody: map[string]any{
+					"id": "test",
+				},
+			},
+			nextRoute: DTO.CreateRoute{
+				RequestParams: map[string]string{"id": "test"},
+			},
+			result: true,
+		},
+		{
+			name: "Nested proper data",
+			actualRoute: DTO.CreateRoute{
+				NextRouteParams: []string{"id"},
+				ResponseBody: map[string]any{
+					"data": map[string]any{
+						"id": "test",
+					},
+				},
+			},
+			nextRoute: DTO.CreateRoute{
+				RequestParams: map[string]string{
+					"id": "test",
+				},
+			},
+			result: true,
+		},
+		{
+			name: "Lack of id in the response body",
+			actualRoute: DTO.CreateRoute{
+				NextRouteParams: []string{"id"},
+				ResponseBody: map[string]any{
+					"name": "test",
+				},
+			},
+			nextRoute: DTO.CreateRoute{
+				RequestParams: map[string]string{
+					"id": "test",
+				},
+			},
+			result: false,
+		},
+		{
+			name: "Lack of id in the next route body",
+			actualRoute: DTO.CreateRoute{
+				NextRouteParams: []string{"id"},
+				ResponseBody: map[string]any{
+					"id": "test",
+				},
+			},
+			nextRoute: DTO.CreateRoute{
+				RequestParams: map[string]string{
+					"name": "test",
+				},
+			},
+			result: false,
+		},
+	}
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
+			res := CheckIsNextRouteParamsInTheBodyAndInTheParamsOfTheNextRoute(testScenario.actualRoute, testScenario.nextRoute)
+			assert.Equal(t, testScenario.result, res)
+		})
 	}
 }
