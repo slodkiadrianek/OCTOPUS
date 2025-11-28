@@ -1,6 +1,8 @@
 package validation
 
 import (
+	"errors"
+	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"testing"
 
 	z "github.com/Oudwins/zog"
@@ -71,5 +73,46 @@ func TestValidateSchema(t *testing.T) {
 			err := ValidateInputStruct(&test.schema, &test.val)
 			assert.Equal(t, test.expectedError, err)
 		})
+	}
+}
+
+func TestValidateUsersIds(t *testing.T) {
+	type args struct {
+		name            string
+		userId          int
+		userIdFromToken int
+		expectedError   error
+	}
+	testsScenarios := []args{
+		{
+			name:            "Different ids",
+			userId:          2,
+			userIdFromToken: 1,
+			expectedError:   errors.New("Provided user id's are different"),
+		},
+		{
+			name:            "Proper data",
+			userId:          1,
+			userIdFromToken: 1,
+			expectedError:   nil,
+		},
+	}
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
+			err := ValidateUsersIds(testScenario.userId, testScenario.userIdFromToken)
+			if testScenario.expectedError != nil {
+
+				assert.Equal(t, testScenario.expectedError.Error(), err.Error())
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
+func TestCheckIsNextRouteBodyInTheBodyAndInTheBodyOfTheNextRoute(t *testing.T) {
+	type args struct {
+		name        string
+		actualRoute DTO.CreateRoute
 	}
 }

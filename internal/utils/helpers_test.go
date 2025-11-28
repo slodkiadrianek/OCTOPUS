@@ -13,17 +13,17 @@ func TestSetContext(t *testing.T) {
 		key   string
 		value any
 	}
-	tests := []args{
+	testsScenarios := []args{
 		{
-			key:   "test",
+			key:   "testScenario",
 			value: "testValue",
 		},
 	}
-	for _, test := range tests {
+	for _, testScenario := range testsScenarios {
 		t.Run("Testing set context", func(t *testing.T) {
 			var r http.Request
-			res := SetContext(&r, test.key, test.value)
-			assert.Equal(t, test.value, res.Context().Value(test.key))
+			res := SetContext(&r, testScenario.key, testScenario.value)
+			assert.Equal(t, testScenario.value, res.Context().Value(testScenario.key))
 		})
 	}
 }
@@ -35,32 +35,32 @@ func TestUnmarshalData(t *testing.T) {
 		expectedError error
 		expectedData  any
 	}
-	tests := []args{
+	testsScenarios := []args{
 		{
 			name: "Unmarshal simple object",
 			data: []byte(`{
-			"name": "test"
+			"name": "testScenario"
 			}`),
 			expectedError: nil,
-			expectedData:  map[string]string{"name": "test"},
+			expectedData:  map[string]string{"name": "testScenario"},
 		},
 		{
 			name:          "Unmarshal json with an array",
-			data:          []byte(`[{"name":"test"}]`),
+			data:          []byte(`[{"name":"testScenario"}]`),
 			expectedError: errors.New("json: cannot unmarshal array into Go value of type map[string]string"),
 			expectedData:  nil,
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			if b, ok := test.data.([]byte); ok {
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
+			if b, ok := testScenario.data.([]byte); ok {
 				res, err := UnmarshalData[map[string]string](b)
-				if test.expectedError != nil {
-					assert.Equal(t, test.expectedError.Error(), err.Error())
-					assert.Nil(t, test.expectedData, res)
+				if testScenario.expectedError != nil {
+					assert.Equal(t, testScenario.expectedError.Error(), err.Error())
+					assert.Nil(t, testScenario.expectedData, res)
 				} else {
-					assert.Equal(t, test.expectedError, err)
-					assert.Equal(t, test.expectedData, *res)
+					assert.Equal(t, testScenario.expectedError, err)
+					assert.Equal(t, testScenario.expectedData, *res)
 				}
 			}
 		})
@@ -74,24 +74,24 @@ func TestMarshalData(t *testing.T) {
 		expectedError error
 		expectedData  any
 	}
-	tests := []args{
+	testsScenarios := []args{
 		{
 			name: "Marshal simple object",
 			data: map[string]string{
-				"name": "test",
+				"name": "testScenario",
 			},
 			expectedError: nil,
-			expectedData:  []byte(`{"name":"test"}`),
+			expectedData:  []byte(`{"name":"testScenario"}`),
 		},
 		{
 			name: "Marshal object nested in array ",
 			data: []map[string]string{
 				{
-					"name": "test",
+					"name": "testScenario",
 				},
 			},
 			expectedError: nil,
-			expectedData:  []byte(`[{"name":"test"}]`),
+			expectedData:  []byte(`[{"name":"testScenario"}]`),
 		},
 		{
 			name:          "Create error in Marshal data fn",
@@ -100,15 +100,15 @@ func TestMarshalData(t *testing.T) {
 			expectedData:  []byte{},
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			res, err := MarshalData(test.data)
-			if test.expectedError != nil {
-				assert.Equal(t, test.expectedError.Error(), err.Error())
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
+			res, err := MarshalData(testScenario.data)
+			if testScenario.expectedError != nil {
+				assert.Equal(t, testScenario.expectedError.Error(), err.Error())
 			} else {
-				assert.Equal(t, test.expectedError, err)
+				assert.Equal(t, testScenario.expectedError, err)
 			}
-			assert.Equal(t, test.expectedData, res)
+			assert.Equal(t, testScenario.expectedData, res)
 		})
 	}
 }
