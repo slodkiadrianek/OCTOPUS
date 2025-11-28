@@ -20,7 +20,7 @@ func TestValidateSchema(t *testing.T) {
 		expectedError any
 	}
 
-	testCases := []args{
+	testsScenarios := []args{
 		{
 			name: "Proper data",
 			schema: *z.Struct(z.Shape{
@@ -66,10 +66,10 @@ func TestValidateSchema(t *testing.T) {
 		},
 	}
 
-	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
-			err := ValidateInputStruct(&test.schema, &test.val)
-			assert.Equal(t, test.expectedError, err)
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
+			err := ValidateInputStruct(&testScenario.schema, &testScenario.val)
+			assert.Equal(t, testScenario.expectedError, err)
 		})
 	}
 }
