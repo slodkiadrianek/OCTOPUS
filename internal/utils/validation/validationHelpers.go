@@ -1,28 +1,20 @@
 package validation
 
 import (
+	"errors"
 	z "github.com/Oudwins/zog"
 	"github.com/slodkiadrianek/octopus/internal/DTO"
-	"github.com/slodkiadrianek/octopus/internal/models"
 )
 
-func ValidateUsersIds(userId, userIdToken int) error {
-	if userIdToken != userId {
-		err := models.NewError(500, "Server", "Internal server error")
+func ValidateUsersIds(userId, userIdFromToken int) error {
+	if userIdFromToken != userId {
+		err := errors.New("Provided user id's are different")
 		return err
 	}
 	return nil
 }
 
 func ValidateInputStruct(schema *z.StructSchema, val any) z.ZogIssueMap {
-	errMap := schema.Validate(val)
-	if errMap != nil {
-		return errMap
-	}
-	return nil
-}
-
-func ValidateInputSlice(schema *z.SliceSchema, val any) z.ZogIssueMap {
 	errMap := schema.Validate(val)
 	if errMap != nil {
 		return errMap

@@ -24,15 +24,15 @@ func TestRemoveLastCharacterFromUrl(t *testing.T) {
 		urlPath      string
 		expectedData string
 	}
-	test := args{
+	testScenario := args{
 		name:         "Testing remove last character from url",
 		urlPath:      "/url/",
 		expectedData: "/url",
 	}
 
-	t.Run(test.name, func(t *testing.T) {
-		res := RemoveLastCharacterFromUrl(test.urlPath)
-		assert.Equal(t, test.expectedData, res)
+	t.Run(testScenario.name, func(t *testing.T) {
+		res := RemoveLastCharacterFromUrl(testScenario.urlPath)
+		assert.Equal(t, testScenario.expectedData, res)
 	})
 }
 
@@ -45,7 +45,7 @@ func TestReadParam(t *testing.T) {
 		expectedError error
 		expectedData  string
 	}
-	tests := []args{
+	testsScenarios := []args{
 		{
 			name:          "Proper urlPath and expectedData with 1 param in path",
 			urlPath:       "/users/1",
@@ -80,20 +80,20 @@ func TestReadParam(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
 			var r http.Request
 			r.URL = &url.URL{}
-			r.URL.Path = test.urlPath
-			ctx := context.WithValue(r.Context(), "routeKeyPath", test.routeKeyUrl)
+			r.URL.Path = testScenario.urlPath
+			ctx := context.WithValue(r.Context(), "routeKeyPath", testScenario.routeKeyUrl)
 			r = *r.WithContext(ctx)
-			res, err := ReadParam(&r, test.paramToRead)
-			if test.expectedError != nil {
-				assert.Equal(t, test.expectedError.Error(), err.Error())
+			res, err := ReadParam(&r, testScenario.paramToRead)
+			if testScenario.expectedError != nil {
+				assert.Equal(t, testScenario.expectedError.Error(), err.Error())
 			} else {
-				assert.Equal(t, test.expectedError, nil)
+				assert.Equal(t, testScenario.expectedError, nil)
 			}
-			assert.Equal(t, test.expectedData, res)
+			assert.Equal(t, testScenario.expectedData, res)
 		})
 	}
 }
@@ -105,46 +105,46 @@ func TestReadBody(t *testing.T) {
 		expectedError error
 		expectedData  any
 	}
-	tests := []args{
+	testsScenarios := []args{
 		{
-			name:          "Test with proper data",
-			bodyData:      `{"name":"test"}`,
+			name:          "testScenario with proper data",
+			bodyData:      `{"name":"testScenario"}`,
 			expectedError: nil,
-			expectedData:  map[string]string{"name": "test"},
+			expectedData:  map[string]string{"name": "testScenario"},
 		},
 		{
-			name:          "Test with malformed json",
+			name:          "testScenario with malformed json",
 			bodyData:      `{this is invalid json}`,
 			expectedError: errors.New("invalid character 't' looking for beginning of object key string"),
 			expectedData:  nil,
 		},
 		{
-			name:          "Test without body",
+			name:          "testScenario without body",
 			bodyData:      nil,
 			expectedError: errors.New("no request body provided"),
 			expectedData:  nil,
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
 			var r http.Request
-			if test.bodyData == nil {
+			if testScenario.bodyData == nil {
 				r.Body = nil
 			} else {
-				s, ok := test.bodyData.(string)
+				s, ok := testScenario.bodyData.(string)
 				if !ok {
 					panic(ok)
 				}
 				r.Body = io.NopCloser(bytes.NewBufferString(s))
 			}
 			res, err := ReadBody[map[string]string](&r)
-			if test.expectedError != nil {
+			if testScenario.expectedError != nil {
 				fmt.Println(err.Error())
-				assert.Equal(t, test.expectedError.Error(), err.Error())
-				assert.Equal(t, test.expectedData, nil)
+				assert.Equal(t, testScenario.expectedError.Error(), err.Error())
+				assert.Equal(t, testScenario.expectedData, nil)
 			} else {
-				assert.Equal(t, test.expectedError, nil)
-				assert.Equal(t, test.expectedData, *res)
+				assert.Equal(t, testScenario.expectedError, nil)
+				assert.Equal(t, testScenario.expectedData, *res)
 			}
 		})
 	}
@@ -158,43 +158,43 @@ func TestMatchRoutes(t *testing.T) {
 		expectedData bool
 	}
 
-	tests := []args{
+	testsScenarios := []args{
 		{
-			name:         "Test same urls",
+			name:         "testScenario same urls",
 			routeKeyUrl:  "/url/v1/v1",
 			urlPath:      "/url/v1/v1",
 			expectedData: true,
 		},
 		{
-			name:         "Test different urls but with the same length",
+			name:         "testScenario different urls but with the same length",
 			routeKeyUrl:  "/ur2",
 			urlPath:      "/ur1",
 			expectedData: false,
 		},
 		{
-			name:         "Test urls with different lengths",
+			name:         "testScenario urls with different lengths",
 			routeKeyUrl:  "/url",
 			urlPath:      "/url/12232",
 			expectedData: false,
 		},
 		{
-			name:         "Test urls with different lengths",
+			name:         "testScenario urls with different lengths",
 			routeKeyUrl:  "/url1",
 			urlPath:      "/url1",
 			expectedData: true,
 		},
 		{
-			name:         "Test urls with parameters included in path",
+			name:         "testScenario urls with parameters included in path",
 			routeKeyUrl:  "/url1/:id/123",
 			urlPath:      "/url1/1/123",
 			expectedData: true,
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			res := MatchRoute(test.routeKeyUrl, test.urlPath)
-			assert.Equal(t, test.expectedData, res)
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
+			res := MatchRoute(testScenario.routeKeyUrl, testScenario.urlPath)
+			assert.Equal(t, testScenario.expectedData, res)
 		})
 	}
 }
@@ -206,24 +206,24 @@ func TestReadQueryParam(t *testing.T) {
 		expectedError error
 		expectedData  string
 	}
-	tests := []args{
+	testsScenarios := []args{
 		{
 			name:          "Read query param properly",
-			data:          []string{"name", "test"},
+			data:          []string{"name", "testScenario"},
 			expectedError: nil,
-			expectedData:  "test",
+			expectedData:  "testScenario",
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
 			var r http.Request
 			r.URL = &url.URL{}
 			q := r.URL.Query()
-			q.Add(test.data[0], test.data[1])
+			q.Add(testScenario.data[0], testScenario.data[1])
 			r.URL.RawQuery = q.Encode()
-			res := ReadQueryParam(&r, test.data[0])
-			assert.Equal(t, test.expectedError, nil)
-			assert.Equal(t, test.expectedData, res)
+			res := ReadQueryParam(&r, testScenario.data[0])
+			assert.Equal(t, testScenario.expectedError, nil)
+			assert.Equal(t, testScenario.expectedData, res)
 		})
 	}
 }
@@ -327,15 +327,7 @@ func TestSendHttp(t *testing.T) {
 		expectedError       error
 	}
 	testsScenarios := []args{
-		{
-			name:                "Proper data provided with read body from response",
-			url:                 "https://jsonplaceholder.typicode.com/todos/1",
-			bodyFromResponse:    true,
-			authorizationHeader: "",
-			method:              "GET",
-			body:                []byte{},
-			expectedError:       nil,
-		},
+
 		{
 			name:                "Proper data provided without read body from response",
 			url:                 "https://jsonplaceholder.typicode.com/todos/1",
@@ -349,7 +341,7 @@ func TestSendHttp(t *testing.T) {
 			name:                "Proper data provided with authorizationHeader",
 			url:                 "https://jsonplaceholder.typicode.com/todos/1",
 			bodyFromResponse:    false,
-			authorizationHeader: "test",
+			authorizationHeader: "testScenario",
 			method:              "GET",
 			body:                []byte{},
 			expectedError:       nil,
@@ -358,7 +350,7 @@ func TestSendHttp(t *testing.T) {
 			name:                "Failed to read the body",
 			url:                 "https://example.com",
 			bodyFromResponse:    true,
-			authorizationHeader: "test",
+			authorizationHeader: "testScenario",
 			method:              "GET",
 			body:                []byte{},
 			expectedError:       errors.New("invalid character '<' looking for beginning of value"),
@@ -367,7 +359,7 @@ func TestSendHttp(t *testing.T) {
 			name:                "Failed to do reuquest",
 			url:                 "",
 			bodyFromResponse:    true,
-			authorizationHeader: "test",
+			authorizationHeader: "testScenario",
 			method:              "GET",
 			body:                []byte{},
 			expectedError:       errors.New("Get \"\": unsupported protocol scheme \"\""),
@@ -376,10 +368,19 @@ func TestSendHttp(t *testing.T) {
 			name:                "Failed to create the reuquest",
 			url:                 "://bad-url",
 			bodyFromResponse:    true,
-			authorizationHeader: "test",
-			method:              "TEST",
+			authorizationHeader: "testScenario",
+			method:              "testScenario",
 			body:                []byte{},
 			expectedError:       errors.New("parse \"://bad-url\": missing protocol scheme"),
+		},
+		{
+			name:                "Proper data provided with read body from response",
+			url:                 "https://jsonplaceholder.typicode.com/todos/1",
+			bodyFromResponse:    true,
+			authorizationHeader: "",
+			method:              "GET",
+			body:                []byte{},
+			expectedError:       nil,
 		},
 	}
 	for _, testScenario := range testsScenarios {
@@ -411,8 +412,13 @@ func TestReadUserIdFromToken(t *testing.T) {
 
 	testsScenarios := []args{
 		{
+			name:          "Not valid id",
+			id:            nil,
+			expectedError: errors.New("Failed to read user from context"),
+		},
+		{
 			name:          "Proper data",
-			id:            te2,
+			id:            tests.Ptr(2),
 			expectedError: nil,
 		},
 	}
@@ -420,16 +426,16 @@ func TestReadUserIdFromToken(t *testing.T) {
 	for _, testScenario := range testsScenarios {
 		t.Run(testScenario.name, func(t *testing.T) {
 			var r *http.Request
-			// if testScenario.routeKeyPath != nil {
-			// 	r = utils.SetContext(r, "routeKeyPath", *testScenario.routeKeyPath)
-			// } else {
-			// 	r = utils.SetContext(r, "routeKeyPath", testScenario.routeKeyPath)
-			//
-			// }
-			res, err := ReadAllParams(r)
-			fmt.Println(err)
+			r = &http.Request{}
+			if testScenario.id != nil {
+				r = utils.SetContext(r, "id", *testScenario.id)
+			} else {
+				r = utils.SetContext(r, "id", testScenario.id)
+
+			}
+			res, err := ReadUserIdFromToken(r)
 			if testScenario.expectedError != nil {
-				assert.Equal(t, err, testScenario.expectedError)
+				assert.Equal(t, err.Error(), testScenario.expectedError.Error())
 				assert.Equal(t, 0, res)
 			} else {
 				assert.Nil(t, testScenario.expectedError)
