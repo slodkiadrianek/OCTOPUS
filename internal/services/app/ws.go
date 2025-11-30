@@ -36,6 +36,7 @@ func (ws *WsService) Logs(ctx context.Context, appId string, conn *websocket.Con
 	conn.SetPongHandler(func(string) error {
 		return nil
 	})
+
 	options := container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,

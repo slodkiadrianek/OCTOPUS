@@ -11,6 +11,7 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/services/interfaces"
 	"github.com/slodkiadrianek/octopus/internal/utils"
+	"github.com/slodkiadrianek/octopus/internal/utils/request"
 )
 
 type AppNotificationsService struct {
@@ -104,7 +105,7 @@ func (an *AppNotificationsService) sendWebhook(ctx context.Context, notification
 					continue
 				}
 
-				responseStatusCode, _, err := utils.DoHttpRequest(ctx, job.url, "", "POST", body, false)
+				responseStatusCode, _, err := request.SendHttp(ctx, job.url, "", "POST", body, false)
 				if err != nil {
 					an.loggerService.Info("Failed to send a webhook", err)
 					errorChan <- err
@@ -170,5 +171,6 @@ func (an *AppNotificationsService) SendNotifications(ctx context.Context, appsSt
 		return slackWebhookError
 	}
 	an.loggerService.Info("Successfully sent notifications to user")
+
 	return nil
 }

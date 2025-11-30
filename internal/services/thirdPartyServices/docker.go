@@ -33,8 +33,10 @@ func (dc *DockerService) PauseContainer(ctx context.Context, appId string) error
 	if err != nil {
 		return err
 	}
+
 	defer cli.Close()
 	err = cli.ContainerPause(ctx, appId)
+
 	return err
 }
 
@@ -44,8 +46,11 @@ func (dc *DockerService) RestartContainer(ctx context.Context, appId string) err
 		return err
 	}
 	defer cli.Close()
+
 	err = cli.ContainerStop(ctx, appId, containerTypes.StopOptions{})
+
 	err = cli.ContainerStart(ctx, appId, containerTypes.StartOptions{})
+
 	return err
 }
 
@@ -55,7 +60,9 @@ func (dc *DockerService) StartContainer(ctx context.Context, appId string) error
 		return err
 	}
 	defer cli.Close()
+
 	err = cli.ContainerStart(ctx, appId, containerTypes.StartOptions{})
+
 	return err
 }
 
@@ -65,7 +72,9 @@ func (dc *DockerService) UnpauseContainer(ctx context.Context, appId string) err
 		return err
 	}
 	defer cli.Close()
+
 	err = cli.ContainerUnpause(ctx, appId)
+
 	return err
 }
 
@@ -75,7 +84,9 @@ func (dc *DockerService) StopContainer(ctx context.Context, appId string) error 
 		return err
 	}
 	defer cli.Close()
+
 	err = cli.ContainerStop(ctx, appId, containerTypes.StopOptions{})
+
 	return err
 }
 func (dc *DockerService) prepareContainersDataToInert(containers []containerTypes.Summary, ownerId int) []DTO.App {
@@ -99,10 +110,11 @@ func (dc *DockerService) prepareContainersDataToInert(containers []containerType
 	}
 	wg.Wait()
 	close(jobs)
-	var appsToInsert []DTO.App
+	appsToInsert := make([]DTO.App, 0, len(containers))
 	for app := range appsChan {
 		appsToInsert = append(appsToInsert, app)
 	}
+
 	return appsToInsert
 }
 
@@ -112,12 +124,18 @@ func (dc *DockerService) ImportContainers(ctx context.Context, ownerId int) erro
 		return err
 	}
 	defer cli.Close()
+
 	containers, err := cli.ContainerList(ctx, containerTypes.ListOptions{})
 	if err != nil {
 		dc.logger.Error("Failed to list containers", err)
 		return err
 	}
+
 	appsToInsert := dc.prepareContainersDataToInert(containers, ownerId)
 	err = dc.appRepository.InsertApp(ctx, appsToInsert)
-	return err
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -29,9 +29,11 @@ func (rs *RouteService) prepareDataAboutRouteToInsertToDb(routes *[]DTO.CreateRo
 	responseRoutesChan := make(chan DTO.RouteResponse, len(*routes))
 	routesInfoChan := make(chan DTO.RouteInfo, len(*routes))
 	errorChan := make(chan error)
+
 	jobs := make(chan DTO.CreateRoute, len(*routes))
 	workerCount := runtime.NumCPU()
 	var wg sync.WaitGroup
+
 	for i := 0; i < workerCount; i++ {
 		wg.Add(1)
 		go func() {
@@ -47,38 +49,38 @@ func (rs *RouteService) prepareDataAboutRouteToInsertToDb(routes *[]DTO.CreateRo
 				requestParamsBytes, err := utils.MarshalData(job.RequestParams)
 				if err != nil {
 					errorChan <- err
-					return
+					continue
 				}
 
 				requestQueryBytes, err := utils.MarshalData(job.RequestQuery)
 				if err != nil {
 					errorChan <- err
-					return
+					continue
 				}
 
 				requestBodyBytes, err := utils.MarshalData(job.RequestBody)
 				if err != nil {
 					errorChan <- err
-					return
+					continue
 				}
 				requestRoutesChan <- *DTO.NewRouteRequest(job.RequestAuthorization, string(requestQueryBytes), string(requestParamsBytes), string(requestBodyBytes), job.ParentId)
 
 				nextRouteBodyBytes, err := utils.MarshalData(job.NextRouteBody)
 				if err != nil {
 					errorChan <- err
-					return
+					continue
 				}
 
 				nextRouteQueryBytes, err := utils.MarshalData(job.NextRouteQuery)
 				if err != nil {
 					errorChan <- err
-					return
+					continue
 				}
 
 				nextRouteParamsBytes, err := utils.MarshalData(job.NextRouteParams)
 				if err != nil {
 					errorChan <- err
-					return
+					continue
 				}
 
 				nextRoutesChan <- *DTO.NewNextRouteData(string(nextRouteBodyBytes), string(nextRouteQueryBytes),
@@ -97,16 +99,17 @@ func (rs *RouteService) prepareDataAboutRouteToInsertToDb(routes *[]DTO.CreateRo
 	close(responseRoutesChan)
 	close(routesInfoChan)
 	close(errorChan)
+
 	select {
 	case err := <-errorChan:
-		return []*DTO.NextRoute{}, []*DTO.RouteRequest{}, []*DTO.RouteResponse{}, []*DTO.RouteInfo{}, err
+		return nil, nil, nil, nil, err
 	default:
 	}
 
-	var nextRoutes []*DTO.NextRoute
-	var requestRoutes []*DTO.RouteRequest
-	var responseRoutes []*DTO.RouteResponse
-	var routesInfo []*DTO.RouteInfo
+	nextRoutes := make([]*DTO.NextRoute, 0, len(*routes))
+	requestRoutes := make([]*DTO.RouteRequest, 0, len(*routes))
+	responseRoutes := make([]*DTO.RouteResponse, 0, len(*routes))
+	routesInfo := make([]*DTO.RouteInfo, 0, len(*routes))
 
 	for nextRoute := range nextRoutesChan {
 		nextRoutes = append(nextRoutes, &nextRoute)
@@ -129,12 +132,15 @@ func (rs *RouteService) prepareDataAboutRouteToInsertToDb(routes *[]DTO.CreateRo
 func (rs *RouteService) saveRouteComponents(ctx context.Context, nextRoutes []*DTO.NextRoute,
 	requestRoutes []*DTO.RouteRequest, responseRoutes []*DTO.RouteResponse, routesInfo []*DTO.RouteInfo) ([]int, []int, []int, []int, error) {
 	var wg sync.WaitGroup
+
 	nextRoutes = utils.InsertionSortForRoutes(nextRoutes)
 	requestRoutes = utils.InsertionSortForRoutes(requestRoutes)
 	responseRoutes = utils.InsertionSortForRoutes(responseRoutes)
 	routesInfo = utils.InsertionSortForRoutes(routesInfo)
+
 	var routesInfoErr, routesRequestsErr, routesResponsesErr, nextRoutesDataErr error
 	var routesInfoIds, routesRequestsIds, routesResponsesIds, nextRoutesDataIds []int
+
 	wg.Add(4)
 	go func() {
 		defer wg.Done()
@@ -155,27 +161,29 @@ func (rs *RouteService) saveRouteComponents(ctx context.Context, nextRoutes []*D
 	wg.Wait()
 
 	if routesInfoErr != nil {
-		return []int{}, []int{}, []int{}, []int{}, routesInfoErr
+		return nil, nil, nil, nil, routesInfoErr
 	}
 	if routesRequestsErr != nil {
-		return []int{}, []int{}, []int{}, []int{}, routesRequestsErr
+		return nil, nil, nil, nil, routesRequestsErr
 	}
 	if routesResponsesErr != nil {
-		return []int{}, []int{}, []int{}, []int{}, routesResponsesErr
+		return nil, nil, nil, nil, routesResponsesErr
 	}
 	if nextRoutesDataErr != nil {
-		return []int{}, []int{}, []int{}, []int{}, nextRoutesDataErr
+		return nil, nil, nil, nil, nextRoutesDataErr
 	}
+
 	return routesInfoIds, routesRequestsIds, routesResponsesIds, nextRoutesDataIds, nil
 }
 func (rs *RouteService) saveWorkingRoutes(ctx context.Context, routes *[]DTO.CreateRoute, appId, name string,
 	nextRoutesDataIds,
 	routesRequestsIds, routesResponsesIds, routesInfoIds []int) error {
-	var workingRoutes []DTO.WorkingRoute
-	for _, val := range *routes {
-		workingRoutes = append(workingRoutes, DTO.WorkingRoute{ParentID: val.ParentId, AppId: appId, Name: name})
+	workingRoutes := make([]DTO.WorkingRoute, len(*routes))
+	for i, val := range *routes {
+		workingRoutes[i] = DTO.WorkingRoute{ParentID: val.ParentId, AppId: appId, Name: name}
 	}
 	parentId := 0
+
 	for i := 0; i < len(workingRoutes); i++ {
 		workingRoutes[i].NextRouteDataId = nextRoutesDataIds[i]
 		workingRoutes[i].RequestID = routesRequestsIds[i]
@@ -189,6 +197,7 @@ func (rs *RouteService) saveWorkingRoutes(ctx context.Context, routes *[]DTO.Cre
 		}
 		parentId = res
 	}
+
 	return nil
 }
 func (rs *RouteService) AddWorkingRoutes(ctx context.Context, routes *[]DTO.CreateRoute, appId,
@@ -197,10 +206,12 @@ func (rs *RouteService) AddWorkingRoutes(ctx context.Context, routes *[]DTO.Crea
 	if err != nil {
 		return err
 	}
+
 	nextRoutes = utils.InsertionSortForRoutes(nextRoutes)
 	requestRoutes = utils.InsertionSortForRoutes(requestRoutes)
 	responseRoutes = utils.InsertionSortForRoutes(responseRoutes)
 	routesInfo = utils.InsertionSortForRoutes(routesInfo)
+
 	routesInfoIds, routesRequestsIds, routesResponsesIds, nextRoutesDataIds, err := rs.saveRouteComponents(ctx, nextRoutes,
 		requestRoutes, responseRoutes, routesInfo)
 	if err != nil {
@@ -208,5 +219,6 @@ func (rs *RouteService) AddWorkingRoutes(ctx context.Context, routes *[]DTO.Crea
 	}
 	err = rs.saveWorkingRoutes(ctx, routes, appId, name, nextRoutesDataIds, routesRequestsIds,
 		routesResponsesIds, routesInfoIds)
+
 	return nil
 }

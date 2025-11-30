@@ -8,6 +8,7 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/services/interfaces"
 	"github.com/slodkiadrianek/octopus/internal/utils"
+	"github.com/slodkiadrianek/octopus/internal/utils/request"
 )
 
 type RouteStatusService struct {
@@ -24,7 +25,7 @@ func NewRouteStatusService(routeRepository interfaces.RouteRepository,
 }
 
 func (rs *RouteStatusService) sortRoutesToTest(routesToTest []models.RouteToTest) map[string][]models.RouteToTest {
-	sortedRoutesToTests := make(map[string][]models.RouteToTest)
+	sortedRoutesToTests := make(map[string][]models.RouteToTest, len(routesToTest))
 	for _, routeToTest := range routesToTest {
 		key := routeToTest.Name + routeToTest.AppId
 		if routeToTest.ParentID == 0 {
@@ -51,12 +52,13 @@ func (rs *RouteStatusService) addParamsToThePath(path string, params models.Json
 		}
 	}
 	pathWithParamsIncluded := strings.Join(splittedPath, "/")
+
 	return pathWithParamsIncluded
 }
 
 func (rs *RouteStatusService) prepareRouteDataForTestRequest(route models.RouteToTest) (string, string, []byte, error) {
 	authorizationHeader := "Bearer " + route.RequestAuthorization
-	var query []string
+	query := make([]string, 0, len(route.RequestQuery))
 	for key, val := range route.RequestQuery {
 		query = append(query, key+"="+val)
 	}
@@ -67,7 +69,7 @@ func (rs *RouteStatusService) prepareRouteDataForTestRequest(route models.RouteT
 	jsonData, err := utils.MarshalData(route.RequestBody)
 	if err != nil {
 		rs.loggerService.Error("Failed to marshal webhook payload", err)
-		return "", "", []byte{}, err
+		return "", "", nil, err
 	}
 
 	return authorizationHeader, url, jsonData, nil
@@ -81,6 +83,7 @@ func (rs *RouteStatusService) prepareDataForTheNextRoute(route models.RouteToTes
 	nextRouteParams := make(map[string]string)
 	nextRouteQuery := make(map[string]string)
 	nextRouteAuthorizationHeader := ""
+
 	if slices.Contains(route.NextRouteBody, key) {
 		nextRouteBody[key] = val
 	}
@@ -89,7 +92,7 @@ func (rs *RouteStatusService) prepareDataForTheNextRoute(route models.RouteToTes
 		valueConvertedToString, ok := val.(string)
 		if !ok {
 			routeStatus = "Failed;Wrong type of the property for param"
-			return map[string]any{}, map[string]string{}, map[string]string{}, "", routeStatus
+			return nil, nil, nil, "", routeStatus
 		}
 		nextRouteParams[key] = valueConvertedToString
 	}
@@ -98,7 +101,7 @@ func (rs *RouteStatusService) prepareDataForTheNextRoute(route models.RouteToTes
 		valueConvertedToString, ok := val.(string)
 		if !ok {
 			routeStatus = "Failed;Wrong type of the property for query"
-			return map[string]any{}, map[string]string{}, map[string]string{}, "", routeStatus
+			return nil, nil, nil, "", routeStatus
 		}
 		nextRouteQuery[key] = valueConvertedToString
 	}
@@ -106,7 +109,7 @@ func (rs *RouteStatusService) prepareDataForTheNextRoute(route models.RouteToTes
 		valueConvertedToString, ok := val.(string)
 		if !ok {
 			routeStatus = "Failed;Wrong type of the property for authorization header"
-			return map[string]any{}, map[string]string{}, map[string]string{}, "", routeStatus
+			return nil, nil, nil, "", routeStatus
 		}
 		nextRouteAuthorizationHeader = valueConvertedToString
 	}
@@ -159,8 +162,9 @@ func (rs *RouteStatusService) CheckRoutesStatus(ctx context.Context) error {
 				return err
 			}
 
-			responseStatusCode, responseBody, err := utils.DoHttpRequest(ctx, url, authorizationHeader, route.Method,
+			responseStatusCode, responseBody, err := request.SendHttp(ctx, url, authorizationHeader, route.Method,
 				body, true)
+
 			if err != nil {
 				rs.loggerService.Info("Failed to check route", map[string]any{
 					"url":    url,
@@ -171,11 +175,13 @@ func (rs *RouteStatusService) CheckRoutesStatus(ctx context.Context) error {
 				routesStatuses[route.ID] = routeStatus
 				break
 			}
+
 			if len(responseBody) != len(route.ResponseBody) {
 				routeStatus = "Failed;Different body"
 				routesStatuses[route.ID] = routeStatus
 				break
 			}
+
 			if responseStatusCode != route.ResponseStatusCode {
 				routeStatus = "Failed;Status Code"
 				routesStatuses[route.ID] = routeStatus
@@ -200,5 +206,6 @@ func (rs *RouteStatusService) CheckRoutesStatus(ctx context.Context) error {
 	}
 
 	rs.loggerService.Info("The route statuses have finished inserting into the database.", routesStatuses)
+
 	return nil
 }

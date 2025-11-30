@@ -125,15 +125,16 @@ func (as *AppStatusService) checkAndCompareAppStatuses(ctx context.Context, cli 
 	close(appsStatusesChan)
 	close(appsToSendNotificationChan)
 
-	var appsStatuses []DTO.AppStatus
+	appsStatuses := make([]DTO.AppStatus, 0, len(appsStatusesChan))
 	for appStatus := range appsStatusesChan {
 		appsStatuses = append(appsStatuses, appStatus)
 	}
 
-	var appsToSendNotification []DTO.AppStatus
+	appsToSendNotification := make([]DTO.AppStatus, 0, len(appsToSendNotificationChan))
 	for appToSendNotification := range appsToSendNotificationChan {
 		appsToSendNotification = append(appsToSendNotification, appToSendNotification)
 	}
+
 	return appsStatuses, appsToSendNotification
 }
 

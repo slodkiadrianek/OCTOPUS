@@ -31,10 +31,12 @@ func (u *UserService) readUserFromCache(ctx context.Context, cacheKey string) (m
 	if err != nil {
 		return models.User{}, err
 	}
+
 	userPtr, err := utils.UnmarshalData[models.User]([]byte(userJson))
 	if err != nil {
 		return models.User{}, err
 	}
+
 	user := *userPtr
 	return user, nil
 }
@@ -47,14 +49,17 @@ func (u *UserService) callFindUserByIdAndSaveToCache(ctx context.Context, userId
 	if user.ID == 0 {
 		return user, nil
 	}
+
 	userJson, err := utils.MarshalData(user)
 	if err != nil {
 		return models.User{}, err
 	}
+
 	err = u.cacheService.SetData(ctx, cacheKey, string(userJson), time.Minute)
 	if err != nil {
 		return models.User{}, err
 	}
+
 	return user, nil
 }
 func (u *UserService) GetUser(ctx context.Context, userId int) (models.User, error) {
@@ -70,15 +75,21 @@ func (u *UserService) GetUser(ctx context.Context, userId int) (models.User, err
 		}
 		return user, nil
 	}
+
 	user, err := u.userRepository.FindUserById(ctx, userId)
+	if err != nil {
+		return models.User{}, err
+	}
 	userJson, err := utils.MarshalData(user)
 	if err != nil {
 		return models.User{}, err
 	}
+
 	err = u.cacheService.SetData(ctx, cacheKey, string(userJson), time.Minute)
 	if err != nil {
 		return models.User{}, err
 	}
+
 	return user, nil
 }
 
@@ -101,10 +112,12 @@ func (u *UserService) InsertUserToDb(ctx context.Context, user DTO.CreateUser, p
 		u.loggerService.Info("failed to generate password", err)
 		return err
 	}
+
 	err = u.userRepository.InsertUserToDb(ctx, user, string(hashedPassword))
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -113,6 +126,7 @@ func (u *UserService) UpdateUser(ctx context.Context, user DTO.CreateUser, userI
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -123,6 +137,7 @@ func (u *UserService) UpdateUserNotifications(ctx context.Context, userId int,
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -145,23 +160,28 @@ func (u *UserService) DeleteUser(ctx context.Context, userId int, password strin
 			return err
 		}
 	}
+
 	if user.ID == 0 {
 		u.loggerService.Info("User with this id does not exist", userId)
 		return models.NewError(400, "Verification", "User with this id does not exist")
 	}
+
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
 		u.loggerService.Info("Wrong password provided", userId)
 		return models.NewError(401, "Authorization", "Wrong password provided")
 	}
+
 	err = u.userRepository.DeleteUser(ctx, password, userId)
 	if err != nil {
 		return err
 	}
+
 	err = u.cacheService.DeleteData(ctx, cacheKey)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 

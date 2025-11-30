@@ -35,11 +35,13 @@ func (a *AppService) CreateApp(ctx context.Context, app DTO.CreateApp, ownerId i
 	if err != nil {
 		return err
 	}
+
 	appDto := DTO.NewApp(GeneratedId, app.Name, app.Description, false, ownerId, app.IpAddress, app.Port)
 	err = a.appRepository.InsertApp(ctx, []DTO.App{*appDto})
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -48,6 +50,7 @@ func (a *AppService) GetApp(ctx context.Context, appId string, ownerId int) (*mo
 	if err != nil {
 		return nil, err
 	}
+
 	return app, nil
 }
 
@@ -56,6 +59,7 @@ func (a *AppService) GetApps(ctx context.Context, ownerId int) ([]models.App, er
 	if err != nil {
 		return nil, err
 	}
+
 	return apps, nil
 }
 
@@ -64,6 +68,7 @@ func (a *AppService) DeleteApp(ctx context.Context, appId string, ownerId int) e
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -72,6 +77,7 @@ func (a *AppService) UpdateApp(ctx context.Context, appId string, app DTO.Update
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
