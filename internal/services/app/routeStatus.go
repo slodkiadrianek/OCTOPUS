@@ -79,9 +79,9 @@ func (rs *RouteStatusService) prepareDataForTheNextRoute(route models.RouteToTes
 	val any,
 ) (map[string]any, map[string]string, map[string]string, string, string) {
 	routeStatus := "unknown"
-	nextRouteBody := make(map[string]any)
-	nextRouteParams := make(map[string]string)
-	nextRouteQuery := make(map[string]string)
+	nextRouteBody := make(map[string]any, len(route.RequestBody))
+	nextRouteParams := make(map[string]string, len(route.RequestBody))
+	nextRouteQuery := make(map[string]string, len(route.RequestBody))
 	nextRouteAuthorizationHeader := ""
 
 	if slices.Contains(route.NextRouteBody, key) {

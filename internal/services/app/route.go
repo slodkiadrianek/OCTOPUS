@@ -42,7 +42,7 @@ func (rs *RouteService) prepareDataAboutRouteToInsertToDb(routes *[]DTO.CreateRo
 				responseBodyBytes, err := utils.MarshalData(job.ResponseBody)
 				if err != nil {
 					errorChan <- err
-					return
+					continue
 				}
 				responseRoutesChan <- *DTO.NewRouteResponse(job.ResponseStatusCode, job.ParentId, string(responseBodyBytes))
 
