@@ -384,25 +384,154 @@ func TestRouteStatusService_CheckRoutesStatus(t *testing.T) {
 				mRouteRepository := new(mocks.MockRouteRepository)
 				mRouteRepository.On("GetWorkingRoutesToTest", mock.Anything).Return([]models.RouteToTest{
 					{
-						IpAddress: "jsonplaceholder.typicode.com",
-						Port:      "80",
-						Path:      "/posts/{postId}",
-						Method:    "GET",
+						IpAddress:          "192.168.0.100",
+						Port:               "3040",
+						Path:               "/api/v1/auth/login",
+						Method:             "POST",
+						ResponseStatusCode: 200,
+						ParentID:           0,
+						RequestBody: map[string]any{
+							"email":    "adikurek121@gmail.com",
+							"password": "a32lam#Fak#@ota",
+						},
+						ID: 72,
+						ResponseBody: map[string]any{
+							"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6IlRFU1QiLCJleHAiOjE3NjE2NDM0OTYsImlkIjoxNywibmFtZSI6IlRFU1QiLCJzdXJuYW1lIjoiYWRpa3VyZWsxMjFAZ21haWwuY29tIn0.IYj7cAsrk6BeFUvHPNFOTtlG4MZqDWOXhlxRIOjJDUo",
+						},
+						NextAuthorizationHeader: "token",
+					},
+					{
+						ParentID:           72,
+						ID:                 73,
+						IpAddress:          "192.168.0.100",
+						Port:               "3040",
+						Path:               "/api/v1/users/{userId}",
+						Method:             "GET",
+						ResponseStatusCode: 200,
 						RequestParams: map[string]string{
-							"postId": "1",
+							"userId": "17",
 						},
 						ResponseBody: map[string]any{
-							"id":     1,
-							"body":   "quia et suscipit suscipit recusandae consequuntur expedita et cum reprehenderit molestiae ut ut quas totam nostrum rerum est autem sunt rem eveniet architecto",
-							"title":  "sunt aut facere repellat provident occaecati excepturi optio reprehenderit",
-							"userId": 1,
+							"id":                   "17",
+							"name":                 "TEST",
+							"email":                "TEST",
+							"surname":              "adikurek121@gmail.com",
+							"password":             "$2a$10$KU6TxypBZARLVhn9ydOrDeqVGW4YnOFwuPpZF1iM/y8x4IWjleBCW",
+							"createdAt":            "2025-09-30T13:11:28.430708Z",
+							"updatedAt":            "2025-09-30T13:11:28.430708Z",
+							"emailNotifications":   false,
+							"slackNotifications":   true,
+							"discordNotifications": true,
 						},
 					},
 				}, nil)
-				mRouteRepository.On("UpdateWorkingRoutesStatuses", mock.Anything, mock.Anything).Return(errors.New("Failed to update working route status"))
+				mRouteRepository.On("UpdateWorkingRoutesStatuses", mock.Anything, mock.Anything).Return(nil)
 				return mRouteRepository
 			},
-			expectedError: errors.New("Failed to update working route status"),
+			expectedError: nil,
+		},
+		{
+			name: "Wrong response status code",
+			setupMock: func() interfaces.RouteRepository {
+				mRouteRepository := new(mocks.MockRouteRepository)
+				mRouteRepository.On("GetWorkingRoutesToTest", mock.Anything).Return([]models.RouteToTest{
+					{
+						IpAddress:          "192.168.0.100",
+						Port:               "3040",
+						Path:               "/api/v1/auth/login",
+						Method:             "POST",
+						ResponseStatusCode: 300,
+						ParentID:           0,
+						RequestBody: map[string]any{
+							"email":    "adikurek121@gmail.com",
+							"password": "a32lam#Fak#@ota",
+						},
+						ID: 72,
+						ResponseBody: map[string]any{
+							"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6IlRFU1QiLCJleHAiOjE3NjE2NDM0OTYsImlkIjoxNywibmFtZSI6IlRFU1QiLCJzdXJuYW1lIjoiYWRpa3VyZWsxMjFAZ21haWwuY29tIn0.IYj7cAsrk6BeFUvHPNFOTtlG4MZqDWOXhlxRIOjJDUo",
+						},
+						NextAuthorizationHeader: "token",
+					},
+					{
+						ParentID:           72,
+						ID:                 73,
+						IpAddress:          "192.168.0.100",
+						Port:               "3040",
+						Path:               "/api/v1/users/{userId}",
+						Method:             "GET",
+						ResponseStatusCode: 200,
+						RequestParams: map[string]string{
+							"userId": "17",
+						},
+						ResponseBody: map[string]any{
+							"id":                   "17",
+							"name":                 "TEST",
+							"email":                "TEST",
+							"surname":              "adikurek121@gmail.com",
+							"password":             "$2a$10$KU6TxypBZARLVhn9ydOrDeqVGW4YnOFwuPpZF1iM/y8x4IWjleBCW",
+							"createdAt":            "2025-09-30T13:11:28.430708Z",
+							"updatedAt":            "2025-09-30T13:11:28.430708Z",
+							"emailNotifications":   false,
+							"slackNotifications":   true,
+							"discordNotifications": true,
+						},
+					},
+				}, nil)
+				mRouteRepository.On("UpdateWorkingRoutesStatuses", mock.Anything, mock.Anything).Return(nil)
+				return mRouteRepository
+			},
+			expectedError: nil,
+		},
+		{
+			name: "Wrong response body",
+			setupMock: func() interfaces.RouteRepository {
+				mRouteRepository := new(mocks.MockRouteRepository)
+				mRouteRepository.On("GetWorkingRoutesToTest", mock.Anything).Return([]models.RouteToTest{
+					{
+						IpAddress:          "192.168.0.100",
+						Port:               "3040",
+						Path:               "/api/v1/auth/login",
+						Method:             "POST",
+						ResponseStatusCode: 200,
+						ParentID:           0,
+						RequestBody: map[string]any{
+							"email":    "adikurek121@gmail.com",
+							"password": "a32lam#Fak#@ota",
+						},
+						ID: 72,
+						ResponseBody: map[string]any{
+							"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6IlRFU1QiLCJleHAiOjE3NjE2NDM0OTYsImlkIjoxNywibmFtZSI6IlRFU1QiLCJzdXJuYW1lIjoiYWRpa3VyZWsxMjFAZ21haWwuY29tIn0.IYj7cAsrk6BeFUvHPNFOTtlG4MZqDWOXhlxRIOjJDUo",
+						},
+						NextAuthorizationHeader: "token",
+					},
+					{
+						ParentID:           72,
+						ID:                 73,
+						IpAddress:          "192.168.0.100",
+						Port:               "3040",
+						Path:               "/api/v1/users/{userId}",
+						Method:             "GET",
+						ResponseStatusCode: 200,
+						RequestParams: map[string]string{
+							"userId": "17",
+						},
+						ResponseBody: map[string]any{
+							"id":                   "17",
+							"email":                "TEST",
+							"surname":              "adikurek121@gmail.com",
+							"password":             "$2a$10$KU6TxypBZARLVhn9ydOrDeqVGW4YnOFwuPpZF1iM/y8x4IWjleBCW",
+							"createdAt":            "2025-09-30T13:11:28.430708Z",
+							"updatedAt":            "2025-09-30T13:11:28.430708Z",
+							"emailNotifications":   false,
+							"slackNotifications":   true,
+							"discordNotifications": true,
+						},
+					},
+				}, nil)
+				mRouteRepository.On("UpdateWorkingRoutesStatuses", mock.Anything, mock.Anything).Return(nil)
+				return mRouteRepository
+			},
+			expectedError: nil,
 		},
 	}
 
