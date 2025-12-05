@@ -28,7 +28,7 @@ func (rs *RouteService) prepareDataAboutRouteToInsertToDb(routes *[]DTO.CreateRo
 	requestRoutesChan := make(chan DTO.RouteRequest, len(*routes))
 	responseRoutesChan := make(chan DTO.RouteResponse, len(*routes))
 	routesInfoChan := make(chan DTO.RouteInfo, len(*routes))
-	errorChan := make(chan error)
+	errorChan := make(chan error, len(*routes))
 
 	jobs := make(chan DTO.CreateRoute, len(*routes))
 	workerCount := runtime.NumCPU()

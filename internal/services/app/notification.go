@@ -68,15 +68,15 @@ func (an *AppNotificationsService) sortNotificationsBySendToInformation(sortedNo
 }
 
 func (an *AppNotificationsService) sendWebhook(ctx context.Context, notifications map[string]string) error {
-	var wg sync.WaitGroup
-	notificationsChan := make(chan map[string]string, len(notifications))
 	type WebhookJob struct {
 		url     string
 		message string
 	}
 	jobs := make(chan WebhookJob, len(notifications))
 	workerCount := runtime.NumCPU()
-	errorChan := make(chan error)
+	errorChan := make(chan error, len(notifications))
+	var wg sync.WaitGroup
+
 	for i := 0; i < workerCount; i++ {
 		wg.Add(1)
 		go func() {
@@ -122,15 +122,11 @@ func (an *AppNotificationsService) sendWebhook(ctx context.Context, notification
 
 	close(jobs)
 	wg.Wait()
-	close(notificationsChan)
 	close(errorChan)
-
-	select {
-	case err := <-errorChan:
-		return err
-	default:
-		return nil
+	if len(errorChan) > 0 {
+		return <-errorChan
 	}
+	return nil
 }
 
 func (an *AppNotificationsService) SendNotifications(ctx context.Context, appsStatuses []DTO.AppStatus) error {
