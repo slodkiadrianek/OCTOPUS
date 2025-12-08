@@ -3,6 +3,9 @@ package servicesApp
 import (
 	"context"
 	"errors"
+	"testing"
+	"time"
+
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/services/interfaces"
@@ -10,9 +13,6 @@ import (
 	"github.com/slodkiadrianek/octopus/tests/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"net/url"
-	"testing"
-	"time"
 )
 
 func TestAppNotificationsService_assignNotificationToProperSendService(t *testing.T) {
@@ -136,12 +136,12 @@ func TestAppNotificationsService_sendWebhook(t *testing.T) {
 	type args struct {
 		name                string
 		notificationsToSend map[string]string
-		expectedError       url.Error
+		expectedError       error
 		setupMock           func() interfaces.AppRepository
 	}
 	testsScenarios := []args{
 		{
-			name: "Send webhook successfully",
+			name: "Failed to send discord notification",
 			notificationsToSend: map[string]string{
 				"https://webhook.example.discord.com": "Discord - Discord - stopped\n",
 			},
@@ -149,9 +149,18 @@ func TestAppNotificationsService_sendWebhook(t *testing.T) {
 				mApp := new(mocks.MockAppRepository)
 				return mApp
 			},
-			expectedError: url.Error{
-				"Post \"https://webhook.example.discord.com\": dial tcp: lookup webhook.example.discord.com: no such host",
+			expectedError: errors.New("Post \"https://webhook.example.discord.com\": dial tcp: lookup webhook.example.discord.com: no such host"),
+		},
+		{
+			name: "Failed to send slack notification",
+			notificationsToSend: map[string]string{
+				"https://webhook.example.slack.com": "Slack - Slack - stopped\n",
 			},
+			setupMock: func() interfaces.AppRepository {
+				mApp := new(mocks.MockAppRepository)
+				return mApp
+			},
+			expectedError: errors.New("Post \"https://webhook.example.slack.com\": tls: failed to verify certificate: x509: certificate is valid for *.slack.com, slack.com, not webhook.example.slack.com"),
 		},
 	}
 	for _, testScenario := range testsScenarios {
@@ -161,7 +170,7 @@ func TestAppNotificationsService_sendWebhook(t *testing.T) {
 			appRepository := testScenario.setupMock()
 			appNotificationsService := NewAppNotificationsService(appRepository, loggerService)
 			err := appNotificationsService.sendWebhook(ctx, testScenario.notificationsToSend)
-			assert.Equal(t, testScenario.expectedError, err)
+			assert.Equal(t, testScenario.expectedError.Error(), err.Error())
 		})
 	}
 }
@@ -169,7 +178,7 @@ func TestAppNotificationsService_sendWebhook(t *testing.T) {
 func TestAppNotificationsService_SendNotifications(t *testing.T) {
 	type args struct {
 		name          string
-		expectedError *string
+		expectedError error
 		appsStatuses  []DTO.AppStatus
 		setupMock     func() interfaces.AppRepository
 	}
@@ -185,7 +194,7 @@ func TestAppNotificationsService_SendNotifications(t *testing.T) {
 		},
 		{
 			name:          "failed to get users to send notifications",
-			expectedError: tests.Ptr("failed to get users to send notifications"),
+			expectedError: errors.New("failed to get users to send notifications"),
 			appsStatuses:  []DTO.AppStatus{{AppID: "32"}},
 			setupMock: func() interfaces.AppRepository {
 				mApp := new(mocks.MockAppRepository)
@@ -196,7 +205,7 @@ func TestAppNotificationsService_SendNotifications(t *testing.T) {
 		},
 		{
 			name:          "Proper data",
-			expectedError: nil,
+			expectedError: errors.New("Post \"https://webhook.example.slack.com\": tls: failed to verify certificate: x509: certificate is valid for *.slack.com, slack.com, not webhook.example.slack.com"),
 			appsStatuses:  []DTO.AppStatus{{AppID: "32", Status: "running"}},
 			setupMock: func() interfaces.AppRepository {
 				mApp := new(mocks.MockAppRepository)
@@ -207,7 +216,7 @@ func TestAppNotificationsService_SendNotifications(t *testing.T) {
 						SlackNotificationsSettings:   true,
 						DiscordNotificationsSettings: true,
 						DiscordWebhookUrl:            "",
-						SlackWebhookUrl:              "https://hooks.slack.com/services/T026/B09AY4T/zunu2tPqHARDJ",
+						SlackWebhookUrl:              "https://webhook.example.slack.com",
 					},
 				}, nil)
 				return mApp
@@ -227,7 +236,7 @@ func TestAppNotificationsService_SendNotifications(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), *testScenario.expectedError)
+				assert.Contains(t, err.Error(), testScenario.expectedError.Error())
 			}
 		})
 	}

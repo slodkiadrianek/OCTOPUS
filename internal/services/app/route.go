@@ -92,8 +92,8 @@ func (rs *RouteService) prepareDataAboutRouteToInsertToDb(routes *[]DTO.CreateRo
 	for _, route := range *routes {
 		jobs <- route
 	}
-	wg.Wait()
 	close(jobs)
+	wg.Wait()
 	close(nextRoutesChan)
 	close(requestRoutesChan)
 	close(responseRoutesChan)

@@ -16,7 +16,7 @@ import (
 	"testing"
 )
 
-func TestSortRoutesToTest(t *testing.T) {
+func TestRouteStatusService_sortRoutesToTest(t *testing.T) {
 	type args struct {
 		name         string
 		routeToTest  []models.RouteToTest
@@ -85,7 +85,7 @@ func TestSortRoutesToTest(t *testing.T) {
 	}
 }
 
-func TestAddParamsToThePath(t *testing.T) {
+func TestRouteStatusService_addParamsToThePath(t *testing.T) {
 	type args struct {
 		name         string
 		path         string
