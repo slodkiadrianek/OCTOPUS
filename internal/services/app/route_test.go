@@ -46,26 +46,10 @@ func TestRouteService_prepareDataAboutRouteToInsertToDb(t *testing.T) {
 					Method:                  "GET",
 				},
 			},
-			expectedNextRoutes: []*DTO.NextRoute{
-				{
-					Body:                "",
-					Params:              "",
-					Query:               "",
-					AuthorizationHeader: "",
-				},
-			},
-			expectedRouteRequest: []*DTO.RouteRequest{
-				{
-					AuthorizationHeader: "",
-					Query:               "",
-					Params:              "",
-				},
-			},
-			expectedRouteResponse: []*DTO.RouteResponse{
-				{
-					Body: "",
-				},
-			}
+			expectedNextRoutes:    nil,
+			expectedRouteRequest:  nil,
+			expectedRouteResponse: nil,
+			expectedRouteInfo:     nil,
 		},
 	}
 	for _, testScenario := range testsScenarios {
@@ -73,11 +57,11 @@ func TestRouteService_prepareDataAboutRouteToInsertToDb(t *testing.T) {
 			loggerService := tests.CreateLogger()
 			routeRepository := new(mocks.MockRouteRepository)
 			routeService := NewRouteService(loggerService, routeRepository)
-			nextRoutes, requestRoutes, responseRoutes, routesInfo, err := routeService.prepareDataAboutRouteToInsertToDb(testScenario.routes)
+			nextRoutes, requestRoutes, responseRoutes, routeInfo, err := routeService.prepareDataAboutRouteToInsertToDb(testScenario.routes)
 			assert.Equal(t, testScenario.expectedNextRoutes, nextRoutes)
 			assert.Equal(t, testScenario.expectedRouteRequest, requestRoutes)
 			assert.Equal(t, testScenario.expectedRouteResponse, responseRoutes)
-			as
+			assert.Equal(t, testScenario.expectedRouteInfo, routeInfo)
 			assert.Equal(t, testScenario.expectedError, err)
 		})
 	}
