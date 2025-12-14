@@ -103,7 +103,9 @@ func (rs *RouteService) prepareDataAboutRouteToInsertToDb(routes *[]DTO.CreateRo
 
 	select {
 	case err := <-errorChan:
-		return nil, nil, nil, nil, err
+		if err != nil {
+			return nil, nil, nil, nil, err
+		}
 	default:
 	}
 
@@ -131,7 +133,8 @@ func (rs *RouteService) prepareDataAboutRouteToInsertToDb(routes *[]DTO.CreateRo
 }
 
 func (rs *RouteService) saveRouteComponents(ctx context.Context, nextRoutes []*DTO.NextRoute,
-	requestRoutes []*DTO.RouteRequest, responseRoutes []*DTO.RouteResponse, routesInfo []*DTO.RouteInfo) ([]int, []int, []int, []int, error) {
+	requestRoutes []*DTO.RouteRequest, responseRoutes []*DTO.RouteResponse, routesInfo []*DTO.RouteInfo) (routesInfoIds, routesRequestsIds, routesResponsesIds, nextRoutesDataIds []int, err error) {
+
 	var wg sync.WaitGroup
 
 	nextRoutes = utils.InsertionSortForRoutes(nextRoutes)
@@ -140,7 +143,6 @@ func (rs *RouteService) saveRouteComponents(ctx context.Context, nextRoutes []*D
 	routesInfo = utils.InsertionSortForRoutes(routesInfo)
 
 	var routesInfoErr, routesRequestsErr, routesResponsesErr, nextRoutesDataErr error
-	var routesInfoIds, routesRequestsIds, routesResponsesIds, nextRoutesDataIds []int
 
 	wg.Add(4)
 	go func() {
@@ -161,7 +163,7 @@ func (rs *RouteService) saveRouteComponents(ctx context.Context, nextRoutes []*D
 	}()
 	wg.Wait()
 
-	if routesInfoErr != nil {
+	if  routesInfoErr != nil {
 		return nil, nil, nil, nil, routesInfoErr
 	}
 	if routesRequestsErr != nil {

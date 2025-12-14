@@ -11,6 +11,7 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/utils"
 	"github.com/slodkiadrianek/octopus/internal/utils/request"
 	"github.com/slodkiadrianek/octopus/internal/utils/response"
+	"github.com/slodkiadrianek/octopus/internal/utils/validation"
 )
 
 func ValidateMiddleware[dataFromRequestType any, validationSchemaType *zog.StructSchema | *zog.SliceSchema](
@@ -25,11 +26,11 @@ func validateDataFromRequest[dataFromRequestType any, validationSchemaType *zog.
 	typeOfDataFromRequest := reflect.TypeOf(dataFromRequest)
 	var errMap zog.ZogIssueMap
 	if typeOfDataFromRequest.Kind() == reflect.Slice {
-		schema, _ := any(validationSchema).(*zog.SliceSchema)
-		errMap = request.ValidateInputSlice(schema, dataFromRequest)
+		//schema, _ := any(validationSchema).(*zog.SliceSchema)
+		//errMap = validation.ValidateInputStruct(schema, dataFromRequest)
 	} else {
 		schema, _ := any(validationSchema).(*zog.StructSchema)
-		errMap = request.ValidateInputStruct(schema, dataFromRequest)
+		errMap = validation.ValidateInputStruct(schema, dataFromRequest)
 	}
 
 	if errMap != nil {

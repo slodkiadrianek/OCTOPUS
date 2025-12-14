@@ -15,6 +15,8 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
+const EnvFileLocationForServices = "../../../.env"
+
 func CreateCacheService(loggerService *utils.Logger) interfaces.CacheService {
 
 	cfg, err := config.SetConfig("../../../.env")

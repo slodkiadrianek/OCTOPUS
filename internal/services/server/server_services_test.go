@@ -17,7 +17,7 @@ func TestServerService_GetServerMetrics(t *testing.T) {
 	loggerService := tests.CreateLogger()
 	type args struct {
 		name          string
-		expectedError *string
+		expectedError error
 		setupMock     func() interfaces.CacheService
 	}
 
@@ -34,7 +34,7 @@ func TestServerService_GetServerMetrics(t *testing.T) {
 		},
 		{
 			name:          "Error in cache service",
-			expectedError: tests.Ptr("failed to get data"),
+			expectedError: errors.New("failed to get data"),
 			setupMock: func() interfaces.CacheService {
 				m := new(mocks.MockCacheService)
 				m.On("GetData", mock.Anything, "server_metrics").
@@ -44,7 +44,7 @@ func TestServerService_GetServerMetrics(t *testing.T) {
 		},
 		{
 			name:          "Error in unmarshal",
-			expectedError: tests.Ptr("invalid"), // or "invalid character"
+			expectedError: errors.New("invalid"),
 			setupMock: func() interfaces.CacheService {
 				m := new(mocks.MockCacheService)
 				m.On("GetData", mock.Anything, "server_metrics").
@@ -66,7 +66,7 @@ func TestServerService_GetServerMetrics(t *testing.T) {
 			} else {
 				assert.Empty(t, res)
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), *testScenario.expectedError)
+				assert.Contains(t, err.Error(), testScenario.expectedError.Error())
 			}
 		})
 	}
@@ -76,7 +76,7 @@ func TestServerService_InsertServerMetrics(t *testing.T) {
 	loggerService := tests.CreateLogger()
 	type args struct {
 		name          string
-		expectedError *string
+		expectedError error
 		setupMock     func() interfaces.CacheService
 	}
 	testsScenarios := []args{
@@ -150,7 +150,7 @@ func TestServerService_InsertServerMetrics(t *testing.T) {
 		},
 		{
 			name:          "Problem with ExistsData",
-			expectedError: tests.Ptr("issue with cache service"),
+			expectedError: errors.New("issue with cache service"),
 			setupMock: func() interfaces.CacheService {
 				m := new(mocks.MockCacheService)
 				m.On("ExistsData", mock.Anything, "server_metrics").
@@ -160,7 +160,7 @@ func TestServerService_InsertServerMetrics(t *testing.T) {
 		},
 		{
 			name:          "Problem with GetData",
-			expectedError: tests.Ptr("issue with cache service"),
+			expectedError: errors.New("issue with cache service"),
 			setupMock: func() interfaces.CacheService {
 				m := new(mocks.MockCacheService)
 				m.On("ExistsData", mock.Anything, "server_metrics").
@@ -172,7 +172,7 @@ func TestServerService_InsertServerMetrics(t *testing.T) {
 		},
 		{
 			name:          "Problem with GetData",
-			expectedError: tests.Ptr("issue with cache service"),
+			expectedError: errors.New("issue with cache service"),
 			setupMock: func() interfaces.CacheService {
 				m := new(mocks.MockCacheService)
 				m.On("ExistsData", mock.Anything, "server_metrics").
@@ -195,7 +195,7 @@ func TestServerService_InsertServerMetrics(t *testing.T) {
 				assert.Nil(t, err)
 			}
 			if err != nil {
-				assert.Equal(t, *testScenario.expectedError, err.Error())
+				assert.Equal(t, testScenario.expectedError.Error(), err.Error())
 			}
 		})
 	}

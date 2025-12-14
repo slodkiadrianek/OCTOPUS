@@ -20,8 +20,13 @@ func TestAuthService_LoginUser(t *testing.T) {
 	type args struct {
 		name          string
 		password      string
-		expectedError *string
+		expectedError error
 		setupMock     func() interfaces.UserRepository
+	}
+	env, err := config.SetConfig(tests.EnvFileLocationForServices)
+
+	if err != nil {
+		panic(err)
 	}
 	testsScenarios := []args{
 		{
@@ -41,7 +46,7 @@ func TestAuthService_LoginUser(t *testing.T) {
 		{
 			name:          "Failed to find user by email",
 			password:      "ci$#fm43980faz",
-			expectedError: tests.Ptr("failed to find user by email"),
+			expectedError: errors.New("failed to find user by email"),
 			setupMock: func() interfaces.UserRepository {
 				mUserRepository := new(mocks.MockUserRepository)
 				mUserRepository.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
@@ -52,7 +57,7 @@ func TestAuthService_LoginUser(t *testing.T) {
 		{
 			name:          "User with this email does not exist",
 			password:      "ci$#fm43980faz",
-			expectedError: tests.Ptr("User with this email does not exist"),
+			expectedError: errors.New("User with this email does not exist"),
 			setupMock: func() interfaces.UserRepository {
 				mUserRepository := new(mocks.MockUserRepository)
 				mUserRepository.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
@@ -63,7 +68,7 @@ func TestAuthService_LoginUser(t *testing.T) {
 		{
 			name:          "Wrong password provided",
 			password:      "ci$#fm43980faz",
-			expectedError: tests.Ptr("Wrong password provided "),
+			expectedError: errors.New("Wrong password provided"),
 			setupMock: func() interfaces.UserRepository {
 				mUserRepository := new(mocks.MockUserRepository)
 				mUserRepository.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
@@ -81,10 +86,6 @@ func TestAuthService_LoginUser(t *testing.T) {
 			loggerService := tests.CreateLogger()
 			cacheService := tests.CreateCacheService(loggerService)
 			userRepository := testScenario.setupMock()
-			env, err := config.SetConfig("../../../.env")
-			if err != nil {
-				panic(err)
-			}
 			jwt := middleware.NewJWT(env.JWTSecret, loggerService, cacheService)
 			loginData := DTO.LoginUser{Email: "asdfjsdf8932@gmail.com", Password: testScenario.password}
 			authService := NewAuthService(loggerService, userRepository, jwt)
@@ -95,7 +96,7 @@ func TestAuthService_LoginUser(t *testing.T) {
 			} else {
 				assert.Error(t, err)
 				assert.Empty(t, token)
-				assert.Contains(t, err.Error(), *testScenario.expectedError)
+				assert.Contains(t, err.Error(), testScenario.expectedError.Error())
 			}
 		})
 	}

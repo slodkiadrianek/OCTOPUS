@@ -22,6 +22,10 @@ func TestRouteStatusService_sortRoutesToTest(t *testing.T) {
 		routeToTest  []models.RouteToTest
 		expectedData map[string][]models.RouteToTest
 	}
+	env, err := config.SetConfig(tests.EnvFileLocationForServices)
+	if err != nil {
+		panic(err)
+	}
 	testsScenarios := []args{
 		{
 			name: "Properly sorted routes",
@@ -69,10 +73,6 @@ func TestRouteStatusService_sortRoutesToTest(t *testing.T) {
 	for _, testScenario := range testsScenarios {
 		t.Run(testScenario.name, func(t *testing.T) {
 			loggerService := tests.CreateLogger()
-			env, err := config.SetConfig("../../../.env")
-			if err != nil {
-				panic(err)
-			}
 			db, err := config.NewDb(env.DbLink, "postgres")
 			if err != nil {
 				panic(err)
@@ -92,6 +92,10 @@ func TestRouteStatusService_addParamsToThePath(t *testing.T) {
 		params       models.JsonMapStringString
 		expectedData string
 	}
+	env, err := config.SetConfig(tests.EnvFileLocationForServices)
+	if err != nil {
+		panic(err)
+	}
 	testsScenarios := []args{
 		{
 			name: "Properly added params to the path",
@@ -105,10 +109,6 @@ func TestRouteStatusService_addParamsToThePath(t *testing.T) {
 	for _, testScenario := range testsScenarios {
 		t.Run(testScenario.name, func(t *testing.T) {
 			loggerService := tests.CreateLogger()
-			env, err := config.SetConfig("../../../.env")
-			if err != nil {
-				panic(err)
-			}
 			db, err := config.NewDb(env.DbLink, "postgres")
 			if err != nil {
 				panic(err)
@@ -129,6 +129,10 @@ func TestRouteStatusService_prepareDataForTestRequest(t *testing.T) {
 		expectedUrl                 string
 		expectedJsonData            []byte
 		expectedError               error
+	}
+	env, err := config.SetConfig(tests.EnvFileLocationForServices)
+	if err != nil {
+		panic(err)
 	}
 	testsScenarios := []args{
 		{
@@ -153,10 +157,6 @@ func TestRouteStatusService_prepareDataForTestRequest(t *testing.T) {
 	for _, testScenario := range testsScenarios {
 		t.Run(testScenario.name, func(t *testing.T) {
 			loggerService := tests.CreateLogger()
-			env, err := config.SetConfig("../../../.env")
-			if err != nil {
-				panic(err)
-			}
 			db, err := config.NewDb(env.DbLink, "postgres")
 			if err != nil {
 				panic(err)
@@ -183,6 +183,10 @@ func TestRouteStatusService_prepareRouteDataForTheNextRoute(t *testing.T) {
 		expectedRouteQuery               map[string]string
 		expectedRouteAuthorizationHeader string
 		expectedRouteStatus              string
+	}
+	env, err := config.SetConfig(tests.EnvFileLocationForServices)
+	if err != nil {
+		panic(err)
 	}
 	testsScenarios := []args{
 		{
@@ -281,10 +285,6 @@ func TestRouteStatusService_prepareRouteDataForTheNextRoute(t *testing.T) {
 		t.Run(testScenario.name, func(t *testing.T) {
 
 			loggerService := tests.CreateLogger()
-			env, err := config.SetConfig("../../../.env")
-			if err != nil {
-				panic(err)
-			}
 			db, err := config.NewDb(env.DbLink, "postgres")
 			if err != nil {
 				panic(err)

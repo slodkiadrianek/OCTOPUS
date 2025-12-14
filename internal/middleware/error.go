@@ -27,20 +27,20 @@ func ErrorHandler(next http.Handler) http.Handler {
 		isCustomErr := errors.As(err, &customErr)
 		if isCustomErr {
 			if customErr == nil {
-				response.SendResponse(w, 500, map[string]string{
+				response.Send(w, 500, map[string]string{
 					"errorCategory":    "Server",
 					"errorDescription": "Internal server error",
 				})
 				return
 			}
-			response.SendResponse(w, customErr.StatusCode, map[string]string{
+			response.Send(w, customErr.StatusCode, map[string]string{
 				"errorCategory":    customErr.Category,
 				"errorDescription": customErr.Description,
 			})
 			return
 		}
 
-		response.SendResponse(w, 500, map[string]string{
+		response.Send(w, 500, map[string]string{
 			"errorCategory":    "Server",
 			"errorDescription": "Internal server error",
 		})

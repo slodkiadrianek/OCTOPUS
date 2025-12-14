@@ -15,7 +15,7 @@ func MethodCheckMiddleware(method string) func(http.Handler) http.Handler {
 func methodCheckHandler(next http.Handler, method string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if method != r.Method {
-			response.SendResponse(w, 405, map[string]string{"error": "Not found"})
+			response.Send(w, 405, map[string]string{"error": "Not found"})
 			return
 		}
 		next.ServeHTTP(w, r)

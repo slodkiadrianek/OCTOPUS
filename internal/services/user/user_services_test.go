@@ -17,7 +17,7 @@ import (
 func TestUserService_InsertUserToDb(t *testing.T) {
 	type args struct {
 		name          string
-		expectedError *string
+		expectedError error
 		password      string
 		setupMock     func() interfaces.UserRepository
 	}
@@ -36,7 +36,7 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 		},
 		{
 			name:          "User not found",
-			expectedError: tests.Ptr("User not found"),
+			expectedError: errors.New("User not found"),
 			password:      "fdEW4$#f4303",
 			setupMock: func() interfaces.UserRepository {
 				mUserRepository := new(mocks.MockUserRepository)
@@ -47,7 +47,7 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 		},
 		{
 			name:          "Failed to find user by email",
-			expectedError: tests.Ptr("failed to execute query"),
+			expectedError: errors.New("failed to execute query"),
 			password:      "fdEW4$#f4303",
 			setupMock: func() interfaces.UserRepository {
 				mUserRepository := new(mocks.MockUserRepository)
@@ -58,7 +58,7 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 		},
 		{
 			name:          "User already exists",
-			expectedError: tests.Ptr("User with this email already exists"),
+			expectedError: errors.New("User with this email already exists"),
 			password:      "fdEW4$#f4303",
 			setupMock: func() interfaces.UserRepository {
 				mUserRepository := new(mocks.MockUserRepository)
@@ -71,7 +71,7 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 		},
 		{
 			name:          "Failed to hash password",
-			expectedError: tests.Ptr("bcrypt: password length exceeds 72 bytes"),
+			expectedError: errors.New("bcrypt: password length exceeds 72 bytes"),
 			password:      "fdEW4$#f4303r3er236575467nfw7f9348htx0f94378xfh349fxyh349xf8@#34RFDFE42423423423",
 			setupMock: func() interfaces.UserRepository {
 				mUserRepository := new(mocks.MockUserRepository)
@@ -84,7 +84,7 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 		},
 		{
 			name:          "Failed to insert user to db",
-			expectedError: tests.Ptr("failed to insert user to db"),
+			expectedError: errors.New("failed to insert user to db"),
 			password:      "fdEW4$#f4303",
 			setupMock: func() interfaces.UserRepository {
 				mUserRepository := new(mocks.MockUserRepository)
@@ -113,7 +113,7 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), *testScenario.expectedError)
+				assert.Contains(t, err.Error(), testScenario.expectedError.Error())
 			}
 		})
 	}
@@ -122,7 +122,7 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 func TestUserService_UpdateUser(t *testing.T) {
 	type args struct {
 		name          string
-		expectedError *string
+		expectedError error
 		setupMock     func() interfaces.UserRepository
 	}
 	testsScenarios := []args{
@@ -138,7 +138,7 @@ func TestUserService_UpdateUser(t *testing.T) {
 		},
 		{
 			name:          "Failed to update an user",
-			expectedError: tests.Ptr("failed to update an user"),
+			expectedError: errors.New("failed to update an user"),
 			setupMock: func() interfaces.UserRepository {
 				mUserRepository := new(mocks.MockUserRepository)
 				mUserRepository.On("UpdateUser", mock.Anything, mock.Anything, mock.Anything).Return(
@@ -160,7 +160,7 @@ func TestUserService_UpdateUser(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), *testScenario.expectedError)
+				assert.Contains(t, err.Error(), testScenario.expectedError.Error())
 			}
 		})
 	}
@@ -169,7 +169,7 @@ func TestUserService_UpdateUser(t *testing.T) {
 func TestUserService_UpdateUserNotifications(t *testing.T) {
 	type args struct {
 		name          string
-		expectedError *string
+		expectedError error
 		setupMock     func() interfaces.UserRepository
 	}
 	testsScenarios := []args{
@@ -185,7 +185,7 @@ func TestUserService_UpdateUserNotifications(t *testing.T) {
 		},
 		{
 			name:          "Failed to update an user",
-			expectedError: tests.Ptr("failed to update an user"),
+			expectedError: errors.New("failed to update an user"),
 			setupMock: func() interfaces.UserRepository {
 				mUserRepository := new(mocks.MockUserRepository)
 				mUserRepository.On("UpdateUserNotifications", mock.Anything, mock.Anything, mock.Anything).Return(
@@ -212,7 +212,7 @@ func TestUserService_UpdateUserNotifications(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), *testScenario.expectedError)
+				assert.Contains(t, err.Error(), testScenario.expectedError.Error())
 			}
 		})
 	}
@@ -221,7 +221,7 @@ func TestUserService_UpdateUserNotifications(t *testing.T) {
 func TestUserService_GetUser(t *testing.T) {
 	type args struct {
 		name          string
-		expectedError *string
+		expectedError error
 		setupMock     func() (interfaces.UserRepository, interfaces.CacheService)
 	}
 	testsScenarios := []args{
@@ -266,7 +266,7 @@ func TestUserService_GetUser(t *testing.T) {
 		},
 		{
 			name:          "Failed to read user from cache",
-			expectedError: tests.Ptr("failed to read data from cache"),
+			expectedError: errors.New("failed to read data from cache"),
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
 				mUserRepository.On("FindUserById", mock.Anything, mock.Anything).Return(
@@ -281,7 +281,7 @@ func TestUserService_GetUser(t *testing.T) {
 		},
 		{
 			name:          "ExistsData failed",
-			expectedError: tests.Ptr("failed to check exists data"),
+			expectedError: errors.New("failed to check exists data"),
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
 				mCacheService := new(mocks.MockCacheService)
@@ -291,7 +291,7 @@ func TestUserService_GetUser(t *testing.T) {
 		},
 		{
 			name:          "Failed to set data in cache",
-			expectedError: tests.Ptr("failed to set data in cache"),
+			expectedError: errors.New("failed to set data in cache"),
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
 				mUserRepository.On("FindUserById", mock.Anything, mock.Anything).Return(
@@ -317,7 +317,7 @@ func TestUserService_GetUser(t *testing.T) {
 			} else {
 				assert.Error(t, err)
 				assert.Empty(t, user)
-				assert.Contains(t, err.Error(), *testScenario.expectedError)
+				assert.Contains(t, err.Error(), testScenario.expectedError.Error())
 			}
 		})
 	}
@@ -327,7 +327,7 @@ func TestUserService_GetUser(t *testing.T) {
 func TestUserService_DeleteUser(t *testing.T) {
 	type args struct {
 		name          string
-		expectedError *string
+		expectedError error
 		password      string
 		setupMock     func() (interfaces.UserRepository, interfaces.CacheService)
 	}
@@ -377,7 +377,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 		},
 		{
 			name:          "Failed to get data from cache",
-			expectedError: tests.Ptr("failed to get data from cache"),
+			expectedError: errors.New("failed to get data from cache"),
 			password:      "ci$#fm43980faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
@@ -391,7 +391,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 		},
 		{
 			name:          "ExistsData failed",
-			expectedError: tests.Ptr("failed to check exists data"),
+			expectedError: errors.New("failed to check exists data"),
 			password:      "ci$#fm43980faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
@@ -402,7 +402,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 		},
 		{
 			name:          "User does not exist",
-			expectedError: tests.Ptr("User with this id does not exist"),
+			expectedError: errors.New("User with this id does not exist"),
 			password:      "ci$#fm43980faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
@@ -415,7 +415,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 		},
 		{
 			name:          "Wrong password provided",
-			expectedError: tests.Ptr("Wrong password provided"),
+			expectedError: errors.New("Wrong password provided"),
 			password:      "ci$#fm43980faz2",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
@@ -429,7 +429,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 		},
 		{
 			name:          "Failed to find a user",
-			expectedError: tests.Ptr("failed to find a user"),
+			expectedError: errors.New("failed to find a user"),
 			password:      "ci$#fm43980faz2",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
@@ -443,7 +443,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 
 		{
 			name:          "Failed to delete a user from database",
-			expectedError: tests.Ptr("failed to delete a user from database"),
+			expectedError: errors.New("failed to delete a user from database"),
 			password:      "ci$#fm43980faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
@@ -459,7 +459,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 		},
 		{
 			name:          "Failed to delete a user from cache",
-			expectedError: tests.Ptr("failed to delete a user from cache"),
+			expectedError: errors.New("failed to delete a user from cache"),
 			password:      "ci$#fm43980faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
@@ -488,7 +488,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), *testScenario.expectedError)
+				assert.Contains(t, err.Error(), testScenario.expectedError.Error())
 			}
 		})
 	}
@@ -497,7 +497,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 func TestUserService_ChangeUserPassword(t *testing.T) {
 	type args struct {
 		name          string
-		expectedError *string
+		expectedError error
 		password      string
 		newPassword   string
 		setupMock     func() (interfaces.UserRepository, interfaces.CacheService)
@@ -524,7 +524,7 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 
 		{
 			name:          "User with this id does not exist",
-			expectedError: tests.Ptr("User with this id does not exist"),
+			expectedError: errors.New("User with this id does not exist"),
 			password:      "ci$#fm43980faz",
 			newPassword:   "ci$#fm43980faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
@@ -538,7 +538,7 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 		},
 		{
 			name:          "Wrong password provided",
-			expectedError: tests.Ptr("Wrong current password provided"),
+			expectedError: errors.New("Wrong current password provided"),
 			password:      "ci$#fm43980faz2",
 			newPassword:   "ci$#fm43980faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
@@ -553,7 +553,7 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 		},
 		{
 			name:          "Wrong password provided",
-			expectedError: tests.Ptr("bcrypt: password length exceeds 72 bytes"),
+			expectedError: errors.New("bcrypt: password length exceeds 72 bytes"),
 			password:      "ci$#fm43980faz",
 			newPassword:   "ci$#fm4398d432-89m52348-$#@rt43t43tZ#4t43t39ty4343324fn87634c8-t734tct43t430faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
@@ -568,7 +568,7 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 		},
 		{
 			name:          "Failed to find a user",
-			expectedError: tests.Ptr("failed to find a user"),
+			expectedError: errors.New("failed to find a user"),
 			password:      "ci$#fm43980faz2",
 			newPassword:   "ci$#fm43980faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
@@ -583,7 +583,7 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 		},
 		{
 			name:          "Failed to change password",
-			expectedError: tests.Ptr("failed to change password"),
+			expectedError: errors.New("failed to change password"),
 			password:      "ci$#fm43980faz",
 			newPassword:   "ci$#fm43980faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
@@ -600,7 +600,7 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 		},
 		{
 			name:          "ExistsData failed",
-			expectedError: tests.Ptr("failed to check exists data"),
+			expectedError: errors.New("failed to check exists data"),
 			password:      "ci$#fm43980faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
@@ -611,7 +611,7 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 		},
 		{
 			name:          "Failed to get data from cache",
-			expectedError: tests.Ptr("failed to get data from cache"),
+			expectedError: errors.New("failed to get data from cache"),
 			password:      "ci$#fm43980faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
@@ -636,7 +636,7 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), *testScenario.expectedError)
+				assert.Contains(t, err.Error(), testScenario.expectedError.Error())
 			}
 		})
 	}

@@ -28,7 +28,8 @@ type DependencyConfig struct {
 func NewDependencyConfig(port string, userController interfaces.UserController,
 	appController interfaces.AppController, dockerController interfaces.DockerController,
 	authController interfaces.AuthController, jwt *middleware.JWT, serverController interfaces.ServerController,
-	wsController interfaces.WsController, rateLimiter *middleware.RateLimiter, routeController interfaces.RouteController) *DependencyConfig {
+	wsController interfaces.WsController, rateLimiter *middleware.RateLimiter, routeController interfaces.RouteController,
+) *DependencyConfig {
 	return &DependencyConfig{
 		port:                port,
 		userController:      userController,
@@ -82,7 +83,6 @@ func (s *Server) SetupRoutes() {
 	serverHandler.SetupServerHandlers(*s.router)
 	userHandler.SetupUserHandlers(*s.router)
 	routeHandler.SetupRouteHandler(*s.router)
-
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
