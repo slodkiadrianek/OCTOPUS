@@ -108,8 +108,9 @@ func (dc *DockerService) prepareContainersDataToInert(containers []containerType
 	for _, container := range containers {
 		jobs <- container
 	}
-	wg.Wait()
 	close(jobs)
+	wg.Wait()
+	close(appsChan)
 	appsToInsert := make([]DTO.App, 0, len(containers))
 	for app := range appsChan {
 		appsToInsert = append(appsToInsert, app)

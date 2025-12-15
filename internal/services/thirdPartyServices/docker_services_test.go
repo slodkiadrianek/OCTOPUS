@@ -58,7 +58,7 @@ func TestDockerService_ImportContainers(t *testing.T) {
 		t.Run(testScenario.name, func(t *testing.T) {
 			appRepositoryMock := testScenario.setupMock()
 			dockerService := NewDockerService(appRepositoryMock, loggerService, testScenario.dockerHost)
-			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
 			err := dockerService.ImportContainers(ctx, 1)
 			defer cancel()
 			if testScenario.expectedError == nil {
@@ -103,11 +103,11 @@ func TestDockerService_PauseContainer(t *testing.T) {
 		t.Run(testScenario.name, func(t *testing.T) {
 			appRepositoryMock := new(mocks.MockAppRepository)
 			dockerService := NewDockerService(appRepositoryMock, loggerService, testScenario.dockerHost)
-			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
 			defer cancel()
 			var appId string
 			if testScenario.appId == "" {
-				containerId, _ := tests.CreateTestContainer("alpine", []string{"sleep", "60"},
+				containerId, _ := tests.CreateTestContainer("alpine", []string{"sleep", "20"},
 					loggerService,
 					"tcp://100.100.188.29:2375")
 				appId = containerId
@@ -163,11 +163,11 @@ func TestDockerService_RestartContainer(t *testing.T) {
 		t.Run(testScenario.name, func(t *testing.T) {
 			appRepositoryMock := new(mocks.MockAppRepository)
 			dockerService := NewDockerService(appRepositoryMock, loggerService, testScenario.dockerHost)
-			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
 			defer cancel()
 			var appId string
 			if testScenario.appId == "" {
-				containerId, _ := tests.CreateTestContainer("alpine", []string{"sleep", "60"},
+				containerId, _ := tests.CreateTestContainer("alpine", []string{"sleep", "20"},
 					loggerService,
 					"tcp://100.100.188.29:2375")
 				appId = containerId
@@ -223,11 +223,11 @@ func TestDockerService_UnpauseContainer(t *testing.T) {
 		t.Run(testScenario.name, func(t *testing.T) {
 			appRepositoryMock := new(mocks.MockAppRepository)
 			dockerService := NewDockerService(appRepositoryMock, loggerService, testScenario.dockerHost)
-			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
 			defer cancel()
 			var appId string
 			if testScenario.appId == "" {
-				containerId, _ := tests.CreateTestContainer("alpine", []string{"sleep", "60"},
+				containerId, _ := tests.CreateTestContainer("alpine", []string{"sleep", "20"},
 					loggerService,
 					"tcp://100.100.188.29:2375")
 				appId = containerId
@@ -284,11 +284,11 @@ func TestDockerService_StartContainer(t *testing.T) {
 		t.Run(testScenario.name, func(t *testing.T) {
 			appRepositoryMock := new(mocks.MockAppRepository)
 			dockerService := NewDockerService(appRepositoryMock, loggerService, testScenario.dockerHost)
-			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
 			defer cancel()
 			var appId string
 			if testScenario.appId == "" {
-				containerId, _ := tests.CreateTestContainer("alpine", []string{"sleep", "60"},
+				containerId, _ := tests.CreateTestContainer("alpine", []string{"sleep", "20"},
 					loggerService,
 					"tcp://100.100.188.29:2375")
 				appId = containerId

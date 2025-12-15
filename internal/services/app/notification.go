@@ -49,22 +49,22 @@ func (an *AppNotificationsService) assignNotificationToProperSendService(notific
 // Send to information is, for example, email, discord webhook url or slack webhook url
 func (an *AppNotificationsService) sortNotificationsBySendToInformation(sortedNotificationsToSend map[string][]models.
 	NotificationInfo) (
-	map[string]string,
-	map[string]string,
+	sortedDiscordNotifications map[string]string,
+	sortedSlackNotifications map[string]string,
 ) {
-	discordNotifications := make(map[string]string, len(sortedNotificationsToSend))
-	slackNotifications := make(map[string]string, len(sortedNotificationsToSend))
+	sortedDiscordNotifications = make(map[string]string, len(sortedNotificationsToSend))
+	sortedSlackNotifications = make(map[string]string, len(sortedNotificationsToSend))
 
 	for _, discordNotificationInfo := range sortedNotificationsToSend["Discord"] {
-		discordNotifications[discordNotificationInfo.DiscordWebhookUrl] += fmt.Sprintf("%s - %s - %s\n",
+		sortedDiscordNotifications[discordNotificationInfo.DiscordWebhookUrl] += fmt.Sprintf("%s - %s - %s\n",
 			discordNotificationInfo.ID, discordNotificationInfo.Name, discordNotificationInfo.Status)
 	}
 
 	for _, slackNotificationInfo := range sortedNotificationsToSend["Slack"] {
-		slackNotifications[slackNotificationInfo.SlackWebhookUrl] += fmt.Sprintf("%s - %s - %s\n",
+		sortedSlackNotifications[slackNotificationInfo.SlackWebhookUrl] += fmt.Sprintf("%s - %s - %s\n",
 			slackNotificationInfo.ID, slackNotificationInfo.Name, slackNotificationInfo.Status)
 	}
-	return discordNotifications, slackNotifications
+	return sortedDiscordNotifications, sortedSlackNotifications
 }
 
 func (an *AppNotificationsService) sendWebhook(ctx context.Context, notifications map[string]string) error {

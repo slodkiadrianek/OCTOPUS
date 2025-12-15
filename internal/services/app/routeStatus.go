@@ -56,33 +56,33 @@ func (rs *RouteStatusService) addParamsToThePath(path string, params models.Json
 	return pathWithParamsIncluded
 }
 
-func (rs *RouteStatusService) prepareRouteDataForTestRequest(route models.RouteToTest) (string, string, []byte, error) {
-	authorizationHeader := "Bearer " + route.RequestAuthorization
+func (rs *RouteStatusService) prepareRouteDataForTestRequest(route models.RouteToTest) (authorizationHeader string, url string, preparedBody []byte, err error) {
+	authorizationHeader = "Bearer " + route.RequestAuthorization
 	query := make([]string, 0, len(route.RequestQuery))
 	for key, val := range route.RequestQuery {
 		query = append(query, key+"="+val)
 	}
 
 	path := rs.addParamsToThePath(route.Path, route.RequestParams)
-	url := "http://" + route.IpAddress + ":" + route.Port + path + "?" + strings.Join(query, "&")
+	url = "http://" + route.IpAddress + ":" + route.Port + path + "?" + strings.Join(query, "&")
 
-	jsonData, err := utils.MarshalData(route.RequestBody)
+	preparedBody, err = utils.MarshalData(route.RequestBody)
 	if err != nil {
 		rs.loggerService.Error("Failed to marshal webhook payload", err)
 		return "", "", nil, err
 	}
 
-	return authorizationHeader, url, jsonData, nil
+	return authorizationHeader, url, preparedBody, nil
 }
 
 func (rs *RouteStatusService) prepareDataForTheNextRoute(route models.RouteToTest, key string,
 	val any,
-) (map[string]any, map[string]string, map[string]string, string, string) {
-	routeStatus := "unknown"
-	nextRouteBody := make(map[string]any, len(route.RequestBody))
-	nextRouteParams := make(map[string]string, len(route.RequestBody))
-	nextRouteQuery := make(map[string]string, len(route.RequestBody))
-	nextRouteAuthorizationHeader := ""
+) (nextRouteBody map[string]any, nextRouteParams map[string]string, nextRouteQuery map[string]string, nextRouteAuthorizationHeader string, routeStatus string) {
+	routeStatus = "unknown"
+	nextRouteBody = make(map[string]any, len(route.RequestBody))
+	nextRouteParams = make(map[string]string, len(route.RequestBody))
+	nextRouteQuery = make(map[string]string, len(route.RequestBody))
+	nextRouteAuthorizationHeader = ""
 
 	if slices.Contains(route.NextRouteBody, key) {
 		nextRouteBody[key] = val
