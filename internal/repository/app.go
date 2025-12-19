@@ -50,6 +50,11 @@ func (a *AppRepository) InsertApp(ctx context.Context, app []DTO.App) error {
 		})
 		return models.NewError(500, "Database", "Failed to add new app to the database")
 	}
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			a.loggerService.Error(failedToCloseStatement, closeErr)
+		}
+	}()
 
 	_, err = stmt.ExecContext(ctx, args...)
 	if err != nil {
@@ -89,6 +94,11 @@ func (a *AppRepository) GetApp(ctx context.Context, appId string, ownerId int) (
 		})
 		return &models.App{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			a.loggerService.Error(failedToCloseStatement, closeErr)
+		}
+	}()
 
 	var app models.App
 	row := stmt.QueryRowContext(ctx, appId, ownerId)
@@ -130,6 +140,11 @@ func (a *AppRepository) GetApps(ctx context.Context, ownerId int) ([]models.App,
 		})
 		return []models.App{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			a.loggerService.Error(failedToCloseStatement, closeErr)
+		}
+	}()
 
 	rows, err := stmt.QueryContext(ctx, ownerId)
 	if err != nil {
@@ -139,7 +154,11 @@ func (a *AppRepository) GetApps(ctx context.Context, ownerId int) ([]models.App,
 		})
 		return nil, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			a.loggerService.Error(failedToCloseRows, closeErr)
+		}
+	}()
 
 	var apps []models.App
 	for rows.Next() {
@@ -174,6 +193,11 @@ func (a *AppRepository) DeleteApp(ctx context.Context, appId string, ownerId int
 		})
 		return models.NewError(500, "Database", "Failed to delete app from the database")
 	}
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			a.loggerService.Error(failedToCloseStatement, closeErr)
+		}
+	}()
 
 	_, err = stmt.ExecContext(ctx, appId, ownerId)
 	if err != nil {
@@ -198,8 +222,12 @@ func (a *AppRepository) GetAppStatus(ctx context.Context, appId string, ownerId 
 		})
 		return DTO.AppStatus{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			a.loggerService.Error(failedToCloseStatement, closeErr)
+		}
+	}()
 
-	defer stmt.Close()
 	var appStatus DTO.AppStatus
 	err = stmt.QueryRowContext(ctx, appId, ownerId).Scan(&appStatus.AppID, &appStatus.Status, &appStatus.ChangedAt,
 		&appStatus.Duration)
@@ -235,8 +263,12 @@ func (a *AppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppToChec
 		})
 		return nil, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			a.loggerService.Error(failedToCloseStatement, closeErr)
+		}
+	}()
 
-	defer stmt.Close()
 	rows, err := stmt.QueryContext(ctx)
 	if err != nil {
 		a.loggerService.Error(failedToExecuteSelectQuery, map[string]any{
@@ -245,7 +277,11 @@ func (a *AppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppToChec
 		})
 		return nil, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			a.loggerService.Error(failedToCloseRows, closeErr)
+		}
+	}()
 
 	apps := make([]*models.AppToCheck, 0)
 	for rows.Next() {
@@ -292,6 +328,11 @@ func (a *AppRepository) UpdateApp(ctx context.Context, appId string, app DTO.Upd
 		})
 		return models.NewError(500, "Database", "Failed to update app settings")
 	}
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			a.loggerService.Error(failedToCloseStatement, closeErr)
+		}
+	}()
 
 	_, err = stmt.ExecContext(ctx, app.Name, app.Description, app.IpAddress, app.Port, app.DiscordWebhookUrl,
 		app.SlackWebhookUrl, appId, ownerId)
@@ -343,6 +384,11 @@ func (a *AppRepository) InsertAppStatuses(ctx context.Context, appsStatuses []DT
 		})
 		return models.NewError(500, "Database", "Failed to add app statuses to the database")
 	}
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			a.loggerService.Error(failedToCloseStatement, closeErr)
+		}
+	}()
 
 	_, err = stmt.ExecContext(ctx, args...)
 	if err != nil {
@@ -396,6 +442,11 @@ func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsSta
 		})
 		return []models.NotificationInfo{}, models.NewError(500, "Database", "Failed to get app from the database")
 	}
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			a.loggerService.Error(failedToCloseStatement, closeErr)
+		}
+	}()
 
 	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
@@ -405,7 +456,11 @@ func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsSta
 		})
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			a.loggerService.Error(failedToCloseRows, closeErr)
+		}
+	}()
 
 	var notifications []models.NotificationInfo
 	for rows.Next() {

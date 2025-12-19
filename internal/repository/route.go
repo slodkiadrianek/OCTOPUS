@@ -43,8 +43,24 @@ func (r *RouteRepository) UpdateWorkingRoutesStatuses(ctx context.Context, route
 	) AS v(id, status)
 		WHERE t.id = v.id::integer;
 	`, strings.Join(placeholders, ","))
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		r.loggerService.Error(failedToPrepareQuery, map[string]any{
+			"query": query,
+			"args":  routesStatuses,
+			"err":   err.Error(),
+		})
+		return models.NewError(500, "Database", "Failed to update routes statuses")
+	}
+	defer func() {
+		if err != nil {
+			if closeErr := stmt.Close(); closeErr != nil {
+				r.loggerService.Error(failedToCloseStatement, closeErr)
+			}
+		}
+	}()
 
-	_, err := r.db.ExecContext(ctx, query, args...)
+	_, err = stmt.ExecContext(ctx, args...)
 	if err != nil {
 		r.loggerService.Error(failedToExecuteUpdateQuery, map[string]any{
 			"query": query,
@@ -96,6 +112,11 @@ WHERE aps.status = 'running'
 		})
 		return []models.RouteToTest{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			r.loggerService.Error(failedToCloseStatement, closeErr)
+		}
+	}()
 
 	rows, err := stmt.QueryContext(ctx)
 	if err != nil {
@@ -105,7 +126,11 @@ WHERE aps.status = 'running'
 		})
 		return []models.RouteToTest{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			r.loggerService.Error(failedToScanRow, closeErr)
+		}
+	}()
 
 	var routesToTest []models.RouteToTest
 	for rows.Next() {
@@ -155,8 +180,12 @@ func (r *RouteRepository) InsertRoutesInfo(ctx context.Context, routesInfo []*DT
 		})
 		return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			r.loggerService.Error(failedToCloseStatement, closeErr)
+		}
+	}()
 
-	defer stmt.Close()
 	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
 		r.loggerService.Error(failedToExecuteInsertQuery, map[string]any{
@@ -165,7 +194,12 @@ func (r *RouteRepository) InsertRoutesInfo(ctx context.Context, routesInfo []*DT
 		})
 		return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
-	
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			r.loggerService.Error(failedToCloseRows, closeErr)
+		}
+	}()
+
 	routesInfoIds := make([]int, 0, len(routesInfo))
 	for rows.Next() {
 		var routeInfoId int
@@ -217,7 +251,12 @@ func (r *RouteRepository) InsertRoutesRequests(ctx context.Context,
 		})
 		return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
-	defer stmt.Close()
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			r.loggerService.Error(failedToCloseStatement, closeErr)
+		}
+	}()
+
 	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
 		r.loggerService.Error(failedToExecuteInsertQuery, map[string]any{
@@ -226,6 +265,12 @@ func (r *RouteRepository) InsertRoutesRequests(ctx context.Context,
 		})
 		return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			r.loggerService.Error(failedToCloseRows, closeErr)
+		}
+	}()
+
 	routesRequestsIds := make([]int, 0, len(routesRequests))
 	for rows.Next() {
 		var routeRequestId int
@@ -273,7 +318,12 @@ func (r *RouteRepository) InsertRoutesResponses(ctx context.Context,
 		})
 		return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
-	defer stmt.Close()
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			r.loggerService.Error(failedToCloseStatement, closeErr)
+		}
+	}()
+
 	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
 		r.loggerService.Error(failedToExecuteInsertQuery, map[string]any{
@@ -282,6 +332,12 @@ func (r *RouteRepository) InsertRoutesResponses(ctx context.Context,
 		})
 		return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			r.loggerService.Error(failedToCloseRows, closeErr)
+		}
+	}()
+
 	routesResponsesIds := make([]int, 0, len(routesResponses))
 	for rows.Next() {
 		var routeResponseId int
@@ -338,7 +394,12 @@ JOIN upserted u USING (body,params,query,authorization_header);
 		})
 		return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
-	defer stmt.Close()
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			r.loggerService.Error(failedToCloseStatement, closeErr)
+		}
+	}()
+
 	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
 		r.loggerService.Error(failedToExecuteInsertQuery, map[string]any{
@@ -347,6 +408,12 @@ JOIN upserted u USING (body,params,query,authorization_header);
 		})
 		return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			r.loggerService.Error(failedToCloseRows, closeErr)
+		}
+	}()
+
 	nextRoutesDataIds := make([]int, 0, len(nextRoutes))
 	for rows.Next() {
 		var nextRouteDataId int
@@ -395,7 +462,12 @@ RETURNING id`
 			"err":   err.Error(),
 		})
 	}
-	defer stmt.Close()
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			r.loggerService.Error(failedToCloseStatement, closeErr)
+		}
+	}()
+
 	var id int
 	err = stmt.QueryRowContext(ctx, workingRoute.Name, workingRoute.AppId, workingRoute.ParentID, workingRoute.RouteID,
 		workingRoute.RequestID, workingRoute.ResponseID, workingRoute.NextRouteDataId, workingRoute.Status).Scan(&id)

@@ -29,7 +29,12 @@ func (u *UserRepository) FindUserByEmail(ctx context.Context, email string) (mod
 		u.loggerService.Info(failedToPrepareQuery, err)
 		return models.User{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
-	defer stmt.Close()
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			u.loggerService.Error(failedToCloseStatement, closeErr)
+		}
+	}()
+
 	var user models.User
 	err = stmt.QueryRowContext(ctx, email).Scan(&user.ID, &user.Email, &user.Name, &user.Surname, &user.Password,
 		&user.DiscordNotificationsSettings, &user.EmailNotificationsSettings, &user.SlackNotificationsSettings,
@@ -61,7 +66,12 @@ func (u *UserRepository) InsertUserToDb(ctx context.Context, user DTO.CreateUser
 		u.loggerService.Info(failedToPrepareQuery, err)
 		return models.NewError(500, "Database", "Failed to insert data to the database")
 	}
-	defer stmt.Close()
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			u.loggerService.Error(failedToCloseStatement, closeErr)
+		}
+	}()
+
 	_, err = stmt.ExecContext(ctx, user.Name, user.Surname, user.Email, password)
 	if err != nil {
 		u.loggerService.Info(failedToExecuteInsertQuery, map[string]any{
@@ -82,6 +92,12 @@ func (u *UserRepository) UpdateUser(ctx context.Context, user DTO.CreateUser, us
 		u.loggerService.Info(failedToPrepareQuery, query)
 		return models.NewError(500, "Database", "Failed to update data in database")
 	}
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			u.loggerService.Error(failedToCloseStatement, closeErr)
+		}
+	}()
+
 	_, err = stmt.ExecContext(ctx, user.Name, user.Surname, user.Email, userId)
 	if err != nil {
 		u.loggerService.Info(failedToExecuteUpdateQuery, map[string]any{
@@ -102,6 +118,11 @@ func (u *UserRepository) UpdateUserNotifications(ctx context.Context, userId int
 		u.loggerService.Info(failedToPrepareQuery, query)
 		return models.NewError(500, "Database", "Failed to update data in database")
 	}
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			u.loggerService.Error(failedToCloseStatement, closeErr)
+		}
+	}()
 
 	_, err = stmt.ExecContext(ctx, userNotifications.DiscordNotificationsSettings, userNotifications.SlackNotificationsSettings, userNotifications.EmailNotificationsSettings, userId)
 	if err != nil {
@@ -125,6 +146,11 @@ func (u *UserRepository) DeleteUser(ctx context.Context, password string, userId
 		})
 		return models.NewError(500, "Database", "Failed to delete data from database")
 	}
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			u.loggerService.Error(failedToCloseStatement, closeErr)
+		}
+	}()
 
 	_, err = stmt.ExecContext(ctx, userId)
 	if err != nil {
@@ -150,7 +176,11 @@ func (u *UserRepository) FindUserById(ctx context.Context, userId int) (models.U
 		})
 		return models.User{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
-	defer stmt.Close()
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			u.loggerService.Error(failedToCloseStatement, closeErr)
+		}
+	}()
 	var user models.User
 	err = stmt.QueryRowContext(ctx, userId).Scan(&user.ID, &user.Email, &user.Name, &user.Surname, &user.Password,
 		&user.DiscordNotificationsSettings, &user.EmailNotificationsSettings, &user.SlackNotificationsSettings,
@@ -182,6 +212,12 @@ func (u *UserRepository) ChangeUserPassword(ctx context.Context, userId int, new
 		u.loggerService.Info(failedToPrepareQuery, query)
 		return models.NewError(500, "Database", "Failed to update data in database")
 	}
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			u.loggerService.Error(failedToCloseStatement, closeErr)
+		}
+	}()
+
 	_, err = stmt.ExecContext(ctx, newPassword, userId)
 	if err != nil {
 		u.loggerService.Info(failedToExecuteUpdateQuery, map[string]any{
