@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
-	
+
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/utils"
@@ -24,15 +24,16 @@ func NewRouteRepository(db *sql.DB, loggerService utils.LoggerService) *RouteRep
 }
 
 func (r *RouteRepository) UpdateWorkingRoutesStatuses(ctx context.Context, routesStatuses map[int]string) error {
-	placeholders := []string{}
+	placeholders := make([]string, 0, len(routesStatuses))
 	argPos := 1
-	args := make([]any, 0)
+	args := make([]any, 0, len(routesStatuses))
 	for i, val := range routesStatuses {
 		preparedValues := fmt.Sprintf("($%d,$%d)", argPos, argPos+1)
 		args = append(args, int(i), val)
 		placeholders = append(placeholders, preparedValues)
 		argPos += 2
 	}
+
 	query := fmt.Sprintf(`
 	UPDATE working_routes AS t
 	SET 
@@ -42,6 +43,7 @@ func (r *RouteRepository) UpdateWorkingRoutesStatuses(ctx context.Context, route
 	) AS v(id, status)
 		WHERE t.id = v.id::integer;
 	`, strings.Join(placeholders, ","))
+
 	_, err := r.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		r.loggerService.Error(failedToExecuteUpdateQuery, map[string]any{
@@ -50,6 +52,7 @@ func (r *RouteRepository) UpdateWorkingRoutesStatuses(ctx context.Context, route
 		})
 		return models.NewError(500, "Database", "Failed to update routes statuses")
 	}
+
 	return nil
 }
 
@@ -84,6 +87,7 @@ FROM working_routes wr
     INNER JOIN apps_statuses aps on aps.app_id = wr.app_id
 WHERE aps.status = 'running'
 	`
+
 	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		r.loggerService.Error(failedToPrepareQuery, map[string]any{
@@ -92,6 +96,7 @@ WHERE aps.status = 'running'
 		})
 		return []models.RouteToTest{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
+
 	rows, err := stmt.QueryContext(ctx)
 	if err != nil {
 		r.loggerService.Error(failedToExecuteSelectQuery, map[string]any{
@@ -100,6 +105,8 @@ WHERE aps.status = 'running'
 		})
 		return []models.RouteToTest{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
+	defer rows.Close()
+
 	var routesToTest []models.RouteToTest
 	for rows.Next() {
 		var routeToTest models.RouteToTest
@@ -117,17 +124,19 @@ WHERE aps.status = 'running'
 		}
 		routesToTest = append(routesToTest, routeToTest)
 	}
+
 	return routesToTest, nil
 }
 
 func (r *RouteRepository) InsertRoutesInfo(ctx context.Context, routesInfo []*DTO.RouteInfo) ([]int, error) {
-	placeholders := []string{}
-	args := make([]any, 0)
+	placeholders := make([]string, 0, len(routesInfo))
+	args := make([]any, 0, len(routesInfo))
 	for i := range routesInfo {
 		preparedValues := fmt.Sprintf("($%d,$%d)", i*2+1, i*2+2)
 		placeholders = append(placeholders, preparedValues)
 		args = append(args, routesInfo[i].Path, routesInfo[i].Method)
 	}
+
 	insertQuery := fmt.Sprintf(`INSERT INTO routes_info (
 		path,
 		method
@@ -137,6 +146,7 @@ func (r *RouteRepository) InsertRoutesInfo(ctx context.Context, routesInfo []*DT
 	DO UPDATE
 		SET path = EXCLUDED.path
 	Returning id`, strings.Join(placeholders, ","))
+
 	stmt, err := r.db.PrepareContext(ctx, insertQuery)
 	if err != nil {
 		r.loggerService.Error(failedToPrepareQuery, map[string]any{
@@ -145,6 +155,7 @@ func (r *RouteRepository) InsertRoutesInfo(ctx context.Context, routesInfo []*DT
 		})
 		return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
+
 	defer stmt.Close()
 	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
@@ -154,7 +165,8 @@ func (r *RouteRepository) InsertRoutesInfo(ctx context.Context, routesInfo []*DT
 		})
 		return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
-	var routesInfoIds []int
+	
+	routesInfoIds := make([]int, 0, len(routesInfo))
 	for rows.Next() {
 		var routeInfoId int
 		err := rows.Scan(&routeInfoId)
@@ -173,8 +185,8 @@ func (r *RouteRepository) InsertRoutesInfo(ctx context.Context, routesInfo []*DT
 func (r *RouteRepository) InsertRoutesRequests(ctx context.Context,
 	routesRequests []*DTO.RouteRequest,
 ) ([]int, error) {
-	placeholders := []string{}
-	args := make([]any, 0)
+	placeholders := make([]string, 0, len(routesRequests))
+	args := make([]any, 0, len(routesRequests))
 	for i := range routesRequests {
 		preparedValues := fmt.Sprintf("($%d::jsonb,$%d::jsonb,$%d::jsonb,$%d)", i*4+1, i*4+2, i*4+3, i*4+4)
 		placeholders = append(placeholders, preparedValues)
@@ -214,7 +226,7 @@ func (r *RouteRepository) InsertRoutesRequests(ctx context.Context,
 		})
 		return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
-	var routesRequestsIds []int
+	routesRequestsIds := make([]int, 0, len(routesRequests))
 	for rows.Next() {
 		var routeRequestId int
 		err := rows.Scan(&routeRequestId)
@@ -234,8 +246,8 @@ func (r *RouteRepository) InsertRoutesResponses(ctx context.Context,
 	routesResponses []*DTO.RouteResponse) ([]int,
 	error,
 ) {
-	placeholders := []string{}
-	args := make([]any, 0)
+	placeholders := make([]string, 0, len(routesResponses))
+	args := make([]any, 0, len(routesResponses))
 	for i := range routesResponses {
 		values := fmt.Sprintf("($%d,$%d::jsonb)", i*2+1, i*2+2)
 		placeholders = append(placeholders, values)
@@ -270,7 +282,7 @@ func (r *RouteRepository) InsertRoutesResponses(ctx context.Context,
 		})
 		return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
-	var routesResponsesIds []int
+	routesResponsesIds := make([]int, 0, len(routesResponses))
 	for rows.Next() {
 		var routeResponseId int
 		err := rows.Scan(&routeResponseId)
@@ -290,8 +302,8 @@ func (r *RouteRepository) InsertNextRoutesData(ctx context.Context,
 	nextRoutes []*DTO.NextRoute) ([]int,
 	error,
 ) {
-	placeholders := []string{}
-	args := make([]any, 0)
+	placeholders := make([]string, 0, len(nextRoutes))
+	args := make([]any, 0, len(nextRoutes))
 	for i := range nextRoutes {
 		values := fmt.Sprintf("($%d::jsonb,$%d::jsonb,$%d::jsonb, $%d)", i*4+1, i*4+2, i*4+3, i*4+4)
 		placeholders = append(placeholders, values)
@@ -335,7 +347,7 @@ JOIN upserted u USING (body,params,query,authorization_header);
 		})
 		return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
-	var NextRoutesDataIds []int
+	nextRoutesDataIds := make([]int, 0, len(nextRoutes))
 	for rows.Next() {
 		var nextRouteDataId int
 		err := rows.Scan(&nextRouteDataId)
@@ -346,9 +358,9 @@ JOIN upserted u USING (body,params,query,authorization_header);
 			})
 			return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 		}
-		NextRoutesDataIds = append(NextRoutesDataIds, nextRouteDataId)
+		nextRoutesDataIds = append(nextRoutesDataIds, nextRouteDataId)
 	}
-	return NextRoutesDataIds, nil
+	return nextRoutesDataIds, nil
 }
 
 func (r *RouteRepository) InsertWorkingRoute(ctx context.Context, workingRoute DTO.WorkingRoute) (int,

@@ -24,8 +24,8 @@ func NewAppRepository(db *sql.DB, loggerService utils.LoggerService) *AppReposit
 }
 
 func (a *AppRepository) InsertApp(ctx context.Context, app []DTO.App) error {
-	placeholders := []string{}
-	args := make([]any, 0)
+	placeholders := make([]string, 0, len(app))
+	args := make([]any, 0, len(app))
 	for i := range app {
 		preparedValues := fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d),", i*6+1, i*6+2, i*6+3, i*6+4, i*6+5, i*6+6)
 		args = append(args, app[i].ID, app[i].Name, app[i].IsDocker, app[i].OwnerID, app[i].IpAddress, app[i].Port)
@@ -60,6 +60,7 @@ func (a *AppRepository) InsertApp(ctx context.Context, app []DTO.App) error {
 		})
 		return models.NewError(500, "Database", "Failed to add new app to the database")
 	}
+
 	return nil
 }
 
@@ -76,9 +77,22 @@ func (a *AppRepository) GetApp(ctx context.Context, appId string, ownerId int) (
 		port
 	FROM apps 
 	WHERE id = $1 AND owner_id = $2`
-	row := a.db.QueryRowContext(ctx, query, appId, ownerId)
+	stmt, err := a.db.PrepareContext(ctx, query)
+	if err != nil {
+		a.loggerService.Error(failedToPrepareQuery, map[string]any{
+			"query": query,
+			"args": map[string]any{
+				"appId":   appId,
+				"ownerId": ownerId,
+			},
+			"err": err.Error(),
+		})
+		return &models.App{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
+	}
+
 	var app models.App
-	err := row.Scan(&app.ID, &app.Name, &app.Description, &app.IsDocker, &app.OwnerID, &app.SlackWebhookUrl,
+	row := stmt.QueryRowContext(ctx, appId, ownerId)
+	err = row.Scan(&app.ID, &app.Name, &app.Description, &app.IsDocker, &app.OwnerID, &app.SlackWebhookUrl,
 		&app.DiscordWebhookUrl, &app.IpAddress, &app.Port)
 	if err != nil {
 		a.loggerService.Error(failedToExecuteSelectQuery, map[string]any{
@@ -88,6 +102,7 @@ func (a *AppRepository) GetApp(ctx context.Context, appId string, ownerId int) (
 		})
 		return nil, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
+
 	return &app, nil
 }
 
@@ -104,7 +119,19 @@ func (a *AppRepository) GetApps(ctx context.Context, ownerId int) ([]models.App,
 		port 
 	FROM apps 
 	WHERE owner_id = $1`
-	rows, err := a.db.QueryContext(ctx, query, ownerId)
+	stmt, err := a.db.PrepareContext(ctx, query)
+	if err != nil {
+		a.loggerService.Error(failedToPrepareQuery, map[string]any{
+			"query": query,
+			"args": map[string]any{
+				"ownerId": ownerId,
+			},
+			"err": err.Error(),
+		})
+		return []models.App{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
+	}
+
+	rows, err := stmt.QueryContext(ctx, ownerId)
 	if err != nil {
 		a.loggerService.Error(failedToExecuteSelectQuery, map[string]any{
 			"query": query,
@@ -113,6 +140,7 @@ func (a *AppRepository) GetApps(ctx context.Context, ownerId int) ([]models.App,
 		return nil, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
 	defer rows.Close()
+
 	var apps []models.App
 	for rows.Next() {
 		var app models.App
@@ -146,6 +174,7 @@ func (a *AppRepository) DeleteApp(ctx context.Context, appId string, ownerId int
 		})
 		return models.NewError(500, "Database", "Failed to delete app from the database")
 	}
+
 	_, err = stmt.ExecContext(ctx, appId, ownerId)
 	if err != nil {
 		a.loggerService.Error(failedToExecuteDeleteQuery, map[string]any{
@@ -155,6 +184,7 @@ func (a *AppRepository) DeleteApp(ctx context.Context, appId string, ownerId int
 		})
 		return models.NewError(500, "Database", "Failed to delete app from database")
 	}
+
 	return nil
 }
 
@@ -168,6 +198,7 @@ func (a *AppRepository) GetAppStatus(ctx context.Context, appId string, ownerId 
 		})
 		return DTO.AppStatus{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
+
 	defer stmt.Close()
 	var appStatus DTO.AppStatus
 	err = stmt.QueryRowContext(ctx, appId, ownerId).Scan(&appStatus.AppID, &appStatus.Status, &appStatus.ChangedAt,
@@ -180,6 +211,7 @@ func (a *AppRepository) GetAppStatus(ctx context.Context, appId string, ownerId 
 		})
 		return DTO.AppStatus{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
+
 	return appStatus, nil
 }
 
@@ -203,6 +235,7 @@ func (a *AppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppToChec
 		})
 		return nil, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
+
 	defer stmt.Close()
 	rows, err := stmt.QueryContext(ctx)
 	if err != nil {
@@ -213,6 +246,7 @@ func (a *AppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppToChec
 		return nil, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
 	defer rows.Close()
+
 	apps := make([]*models.AppToCheck, 0)
 	for rows.Next() {
 		app := &models.AppToCheck{}
@@ -226,6 +260,7 @@ func (a *AppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppToChec
 		}
 		apps = append(apps, app)
 	}
+
 	if err := rows.Err(); err != nil {
 		a.loggerService.Error(failedToIterateOverRows, map[string]any{
 			"query": query,
@@ -233,6 +268,7 @@ func (a *AppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppToChec
 		})
 		return nil, models.NewError(500, "Database", failedToGetDataFromDatabase)
 	}
+
 	return apps, nil
 }
 
@@ -256,6 +292,7 @@ func (a *AppRepository) UpdateApp(ctx context.Context, appId string, app DTO.Upd
 		})
 		return models.NewError(500, "Database", "Failed to update app settings")
 	}
+
 	_, err = stmt.ExecContext(ctx, app.Name, app.Description, app.IpAddress, app.Port, app.DiscordWebhookUrl,
 		app.SlackWebhookUrl, appId, ownerId)
 	if err != nil {
@@ -269,12 +306,13 @@ func (a *AppRepository) UpdateApp(ctx context.Context, appId string, app DTO.Upd
 		})
 		return models.NewError(500, "Database", "Failed to update app settings")
 	}
+
 	return nil
 }
 
 func (a *AppRepository) InsertAppStatuses(ctx context.Context, appsStatuses []DTO.AppStatus) error {
-	placeholders := []string{}
-	args := make([]any, 0)
+	placeholders := make([]string, 0, len(appsStatuses))
+	args := make([]any, 0, len(appsStatuses))
 	for i := range appsStatuses {
 		preparedValues := fmt.Sprintf("($%d,$%d,$%d,$%d)", i*4+1, i*4+2, i*4+3, i*4+4)
 		args = append(args, appsStatuses[i].AppID, appsStatuses[i].Status, appsStatuses[i].ChangedAt,
@@ -305,6 +343,7 @@ func (a *AppRepository) InsertAppStatuses(ctx context.Context, appsStatuses []DT
 		})
 		return models.NewError(500, "Database", "Failed to add app statuses to the database")
 	}
+
 	_, err = stmt.ExecContext(ctx, args...)
 	if err != nil {
 		a.loggerService.Error(failedToExecuteInsertQuery, map[string]any{
@@ -314,17 +353,19 @@ func (a *AppRepository) InsertAppStatuses(ctx context.Context, appsStatuses []DT
 		})
 		return models.NewError(500, "Database", "Failed to add app statuses to the database")
 	}
+
 	return nil
 }
 
 func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsStatuses []DTO.AppStatus) ([]models.NotificationInfo, error) {
-	placeholders := []string{}
-	args := make([]any, 0)
+	placeholders := make([]string, 0, len(appsStatuses))
+	args := make([]any, 0, len(appsStatuses))
 	for i := range appsStatuses {
 		preparedValues := fmt.Sprintf("$%d", i+1)
 		args = append(args, appsStatuses[i].AppID)
 		placeholders = append(placeholders, preparedValues)
 	}
+
 	query := fmt.Sprintf(`
 	SELECT
 		a.id,
@@ -355,6 +396,7 @@ func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsSta
 		})
 		return []models.NotificationInfo{}, models.NewError(500, "Database", "Failed to get app from the database")
 	}
+
 	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
 		a.loggerService.Error(failedToExecuteSelectQuery, map[string]any{
@@ -364,6 +406,7 @@ func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsSta
 		return nil, err
 	}
 	defer rows.Close()
+
 	var notifications []models.NotificationInfo
 	for rows.Next() {
 		var notification models.NotificationInfo
@@ -379,6 +422,7 @@ func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsSta
 		}
 		notifications = append(notifications, notification)
 	}
+
 	if err := rows.Err(); err != nil {
 		a.loggerService.Error(failedToIterateOverRows, map[string]any{
 			"query": query,
@@ -386,5 +430,6 @@ func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsSta
 		})
 		return nil, models.NewError(500, "Database", "Failed to get app from the database")
 	}
+
 	return notifications, nil
 }
