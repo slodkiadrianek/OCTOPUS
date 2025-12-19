@@ -1,8 +1,10 @@
 package config
 
 import (
+	"errors"
 	"testing"
 
+	"github.com/slodkiadrianek/octopus/tests"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,13 +16,13 @@ func TestReadFile(t *testing.T) {
 	type args struct {
 		name          string
 		pathToFile    string
-		expectedError *string
+		expectedError error
 		expectedData  map[string]string
 	}
-	testCases := []args{
+	testsScenarios := []args{
 		{
 			name:          "Test with proper data",
-			pathToFile:    "../../.env.test",
+			pathToFile:    tests.TestEnvFileLocationForConfig,
 			expectedError: nil,
 			expectedData: map[string]string{
 				"Port":         "3009",
@@ -36,26 +38,26 @@ func TestReadFile(t *testing.T) {
 		{
 			name:          "Read file which does not exist",
 			pathToFile:    "../../.env.test2",
-			expectedError: String("failed to open file ../../.env.test2: open ../../.env.test2: no such file or directory"),
+			expectedError: errors.New("failed to open file ../../.env.test2: open ../../.env.test2: no such file or directory"),
 			expectedData:  map[string]string{},
 		},
 		{
 			name:          "Too big file",
 			pathToFile:    "../../.test.env",
-			expectedError: String("failed to scan a file"),
+			expectedError: errors.New("failed to scan a file"),
 			expectedData:  map[string]string{},
 		},
 	}
 
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			res, err := readFile(testCase.pathToFile)
-			if testCase.expectedError == nil {
-				assert.Nil(t, testCase.expectedError, err)
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
+			res, err := readFile(testScenario.pathToFile)
+			if testScenario.expectedError == nil {
+				assert.Nil(t, testScenario.expectedError, err)
 			} else {
-				assert.Equal(t, *testCase.expectedError, err.Error())
+				assert.Equal(t, testScenario.expectedError.Error(), err.Error())
 			}
-			assert.Equal(t, testCase.expectedData, res)
+			assert.Equal(t, testScenario.expectedData, res)
 		})
 	}
 }
@@ -64,10 +66,10 @@ func TestSetConfig(t *testing.T) {
 	type args struct {
 		name          string
 		pathToFile    string
-		expectedError *string
+		expectedError error
 		expectedData  Env
 	}
-	testCases := []args{
+	testsScenarios := []args{
 		{
 			name:          "Proper data",
 			pathToFile:    ".env.test",
@@ -82,20 +84,20 @@ func TestSetConfig(t *testing.T) {
 		{
 			name:          "Wrong file provided",
 			pathToFile:    ".env.test2",
-			expectedError: String("failed to open file .env.test2: open .env.test2: no such file or directory"),
+			expectedError: errors.New("failed to open file .env.test2: open .env.test2: no such file or directory"),
 			expectedData:  Env{},
 		},
 	}
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			res, err := SetConfig(testCase.pathToFile)
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
+			res, err := SetConfig(testScenario.pathToFile)
 
-			if testCase.expectedError == nil {
-				assert.Nil(t, testCase.expectedError, err)
+			if testScenario.expectedError == nil {
+				assert.Nil(t, testScenario.expectedError, err)
 			} else {
-				assert.Equal(t, *testCase.expectedError, err.Error())
+				assert.Equal(t, testScenario.expectedError.Error(), err.Error())
 			}
-			assert.Equal(t, testCase.expectedData, *res)
+			assert.Equal(t, testScenario.expectedData, *res)
 		})
 	}
 }

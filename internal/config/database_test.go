@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,7 +12,7 @@ func TestNewDb(t *testing.T) {
 		name          string
 		driver        string
 		databaseLink  string
-		expectedError *string
+		expectedError error
 		expectedData  bool
 	}
 
@@ -26,13 +27,13 @@ func TestNewDb(t *testing.T) {
 			name:          "Wronk connection link",
 			driver:        "postgres",
 			databaseLink:  "invalid_connection_string",
-			expectedError: String(`missing "=" after "invalid_connection_string" in connection info string"`),
+			expectedError: errors.New(`missing "=" after "invalid_connection_string" in connection info string"`),
 			expectedData:  false,
 		}, {
 			name:          "Wronk driver ",
 			driver:        "unk",
 			databaseLink:  "invalid_connection_string",
-			expectedError: String(`sql: unknown driver "unk" (forgotten import?)`),
+			expectedError: errors.New(`sql: unknown driver "unk" (forgotten import?)`),
 			expectedData:  false,
 		},
 	}
@@ -43,7 +44,7 @@ func TestNewDb(t *testing.T) {
 			if testCase.expectedError == nil {
 				assert.Nil(t, testCase.expectedError, err)
 			} else {
-				assert.Equal(t, *testCase.expectedError, err.Error())
+				assert.Equal(t, testCase.expectedError.Error(), err.Error())
 			}
 			if res == nil || *res != (Db{}) {
 				assert.Equal(t, testCase.expectedData, true)

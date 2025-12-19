@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -13,10 +14,10 @@ func TestNewCacheService(t *testing.T) {
 	type args struct {
 		name          string
 		cacheLink     string
-		expectedError *string
+		expectedError error
 		expectedData  bool
 	}
-	testCases := []args{
+	testsScenarios := []args{
 		{
 			name:          "Proper data",
 			cacheLink:     "redis://zaqwerfvbgtyhn@192.168.0.100:6379/0",
@@ -26,22 +27,24 @@ func TestNewCacheService(t *testing.T) {
 		{
 			name:          "Wrong connection link",
 			cacheLink:     "://aqwerfvbgtyhn@192.168.0.100:6379/0",
-			expectedError: String(`parse "://aqwerfvbgtyhn@192.168.0.100:6379/0": missing protocol scheme`),
+			expectedError: errors.New(`parse "://aqwerfvbgtyhn@192.168.0.100:6379/0": missing protocol scheme`),
 			expectedData:  false,
 		},
 	}
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			res, err := NewCacheService(testCase.cacheLink)
-			if testCase.expectedError == nil {
-				assert.Nil(t, testCase.expectedError, err)
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
+			res, err := NewCacheService(testScenario.cacheLink)
+
+			if testScenario.expectedError == nil {
+				assert.Nil(t, testScenario.expectedError, err)
 			} else {
-				assert.Equal(t, *testCase.expectedError, err.Error())
+				assert.Equal(t, testScenario.expectedError.Error(), err.Error())
 			}
+
 			if res == nil || *res != (CacheService{}) {
-				assert.Equal(t, testCase.expectedData, true)
+				assert.Equal(t, testScenario.expectedData, true)
 			} else {
-				assert.Equal(t, testCase.expectedData, false)
+				assert.Equal(t, testScenario.expectedData, false)
 			}
 		})
 	}
@@ -51,10 +54,10 @@ func TestCacheService_SetData(t *testing.T) {
 	type args struct {
 		name          string
 		key           string
-		expectedError *string
+		expectedError error
 	}
 
-	testCases := []args{
+	testsScenarios := []args{
 		{
 			name:          "Proper data",
 			key:           "test",
@@ -63,20 +66,21 @@ func TestCacheService_SetData(t *testing.T) {
 		{
 			name:          "Wrong  data",
 			key:           strings.Repeat("x", 600*1024*1024),
-			expectedError: String("write: connection reset by peer"),
+			expectedError: errors.New("write: connection reset by peer"),
 		},
 	}
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
 			serviceClient, _ := NewCacheService("redis://:zaqwerfvbgtyhn@192.168.0.100:6379/0")
 			ctx := context.Background()
 			ttl := 20 * time.Millisecond
-			err := serviceClient.SetData(ctx, testCase.key, "hi", ttl)
-			if testCase.expectedError == nil {
-				assert.Nil(t, err) // TTL truncation does NOT count as an error
+
+			err := serviceClient.SetData(ctx, testScenario.key, "hi", ttl)
+			if testScenario.expectedError == nil {
+				assert.Nil(t, err)
 			} else {
 				assert.NotNil(t, err)
-				assert.Contains(t, err.Error(), *testCase.expectedError)
+				assert.Contains(t, err.Error(), testScenario.expectedError.Error())
 			}
 		})
 	}
@@ -86,10 +90,10 @@ func TestCacheService_GetData(t *testing.T) {
 	type args struct {
 		name          string
 		key           string
-		expectedError *string
+		expectedError error
 		expectedData  string
 	}
-	testCases := []args{
+	testsScenarios := []args{
 		{
 			name:          "Proper data",
 			key:           "test",
@@ -99,27 +103,27 @@ func TestCacheService_GetData(t *testing.T) {
 		{
 			name:          "Wrong  data",
 			key:           "",
-			expectedError: String(`redis: nil`),
+			expectedError: errors.New(`redis: nil`),
 			expectedData:  "",
 		},
 	}
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
 			serviceClient, _ := NewCacheService("redis://:zaqwerfvbgtyhn@192.168.0.100:6379/0")
 
 			ctx := context.Background()
 			ttl := 20 * time.Millisecond
-			if testCase.expectedError == nil {
-				_ = serviceClient.SetData(ctx, testCase.key, "h1", ttl)
+			if testScenario.expectedError == nil {
+				_ = serviceClient.SetData(ctx, testScenario.key, "h1", ttl)
 			}
-			res, err := serviceClient.GetData(ctx, testCase.key)
-			if testCase.expectedError == nil {
+			res, err := serviceClient.GetData(ctx, testScenario.key)
+			if testScenario.expectedError == nil {
 				assert.Nil(t, err)
 			} else {
 				assert.NotNil(t, err)
-				assert.Contains(t, err.Error(), *testCase.expectedError)
+				assert.Contains(t, err.Error(), testScenario.expectedError.Error())
 			}
-			assert.Equal(t, testCase.expectedData, res)
+			assert.Equal(t, testScenario.expectedData, res)
 		})
 	}
 }
@@ -128,10 +132,10 @@ func TestCacheService_ExistsData(t *testing.T) {
 	type args struct {
 		name          string
 		key           string
-		expectedError *string
+		expectedError error
 		expectedData  int64
 	}
-	testCases := []args{
+	testsScenarios := []args{
 		{
 			name:          "Proper data",
 			key:           "test",
@@ -141,27 +145,27 @@ func TestCacheService_ExistsData(t *testing.T) {
 		{
 			name:          "Wrong  data",
 			key:           strings.Repeat("x", 600*1024*1024),
-			expectedError: String("write: connection reset by peer"),
+			expectedError: errors.New("write: connection reset by peer"),
 			expectedData:  0,
 		},
 	}
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
 			serviceClient, _ := NewCacheService("redis://:zaqwerfvbgtyhn@192.168.0.100:6379/0")
 
 			ctx := context.Background()
 			ttl := 20 * time.Millisecond
-			if testCase.expectedError == nil {
-				_ = serviceClient.SetData(ctx, testCase.key, "h1", ttl)
+			if testScenario.expectedError == nil {
+				_ = serviceClient.SetData(ctx, testScenario.key, "h1", ttl)
 			}
-			res, err := serviceClient.ExistsData(ctx, testCase.key)
-			if testCase.expectedError == nil {
+			res, err := serviceClient.ExistsData(ctx, testScenario.key)
+			if testScenario.expectedError == nil {
 				assert.Nil(t, err)
 			} else {
 				assert.NotNil(t, err)
-				assert.Contains(t, err.Error(), *testCase.expectedError)
+				assert.Contains(t, err.Error(), testScenario.expectedError.Error())
 			}
-			assert.Equal(t, testCase.expectedData, res)
+			assert.Equal(t, testScenario.expectedData, res)
 		})
 	}
 }
@@ -170,9 +174,9 @@ func TestCacheService_DeleteData(t *testing.T) {
 	type args struct {
 		name          string
 		key           string
-		expectedError *string
+		expectedError error
 	}
-	testCases := []args{
+	testsScenarios := []args{
 		{
 			name:          "Proper data",
 			key:           "test",
@@ -181,24 +185,24 @@ func TestCacheService_DeleteData(t *testing.T) {
 		{
 			name:          "Wrong  data",
 			key:           strings.Repeat("x", 600*1024*1024),
-			expectedError: String("write: connection reset by peer"),
+			expectedError: errors.New("write: connection reset by peer"),
 		},
 	}
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
+	for _, testScenario := range testsScenarios {
+		t.Run(testScenario.name, func(t *testing.T) {
 			serviceClient, _ := NewCacheService("redis://:zaqwerfvbgtyhn@192.168.0.100:6379/0")
 
 			ctx := context.Background()
 			ttl := 20 * time.Millisecond
-			if testCase.expectedError == nil {
-				_ = serviceClient.SetData(ctx, testCase.key, "h1", ttl)
+			if testScenario.expectedError == nil {
+				_ = serviceClient.SetData(ctx, testScenario.key, "h1", ttl)
 			}
-			err := serviceClient.DeleteData(ctx, testCase.key)
-			if testCase.expectedError == nil {
+			err := serviceClient.DeleteData(ctx, testScenario.key)
+			if testScenario.expectedError == nil {
 				assert.Nil(t, err)
 			} else {
 				assert.NotNil(t, err)
-				assert.Contains(t, err.Error(), *testCase.expectedError)
+				assert.Contains(t, err.Error(), testScenario.expectedError.Error())
 			}
 		})
 	}

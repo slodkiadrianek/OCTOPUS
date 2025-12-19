@@ -15,10 +15,12 @@ func NewDb(databaseLink, driver string) (*Db, error) {
 	if err != nil {
 		return &Db{}, err
 	}
+
 	err = dbConnection.Ping()
 	if err != nil {
 		return &Db{}, err
 	}
+
 	return &Db{
 		DbConnection: dbConnection,
 	}, nil

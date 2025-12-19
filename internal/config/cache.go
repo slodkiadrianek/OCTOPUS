@@ -16,6 +16,7 @@ func NewCacheService(cacheLink string) (*CacheService, error) {
 	if err != nil {
 		return &CacheService{}, err
 	}
+
 	return &CacheService{
 		client: redis.NewClient(opt),
 	}, nil
@@ -26,6 +27,7 @@ func (c *CacheService) SetData(ctx context.Context, key string, data string, ttl
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -34,6 +36,7 @@ func (c *CacheService) GetData(ctx context.Context, key string) (string, error) 
 	if err != nil {
 		return "", err
 	}
+
 	return res, nil
 }
 
@@ -42,6 +45,7 @@ func (c *CacheService) ExistsData(ctx context.Context, key string) (int64, error
 	if err != nil {
 		return 0, err
 	}
+
 	return res, nil
 }
 
@@ -50,5 +54,6 @@ func (c *CacheService) DeleteData(ctx context.Context, key string) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }

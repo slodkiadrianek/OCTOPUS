@@ -15,10 +15,13 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
 
-const EnvFileLocationForServices = "../../../.env"
+const (
+	EnvFileLocationForServices   = "../../../.env"
+	EnvFileLocationForConfig     = "../../.env"
+	TestEnvFileLocationForConfig = "../../.env.test"
+)
 
 func CreateCacheService(loggerService *utils.Logger) interfaces.CacheService {
-
 	cfg, err := config.SetConfig("../../../.env")
 	if err != nil {
 		loggerService.Error("Failed to load config", err)
@@ -95,7 +98,8 @@ func CreateTestContainer(image string, cmd []string, loggerService *utils.Logger
 }
 
 func KillAndRemoveContainer(ctx context.Context, containerID string, loggerService *utils.Logger,
-	dockerHost string) error {
+	dockerHost string,
+) error {
 	cli, err := client.NewClientWithOpts(client.WithHost(dockerHost))
 	if err != nil {
 		return err
