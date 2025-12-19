@@ -45,6 +45,7 @@ func (ws *WsController) Logs(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return
 		}
+
 		return
 	}
 

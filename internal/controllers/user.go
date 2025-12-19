@@ -13,6 +13,7 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/utils"
 	"github.com/slodkiadrianek/octopus/internal/utils/request"
 	"github.com/slodkiadrianek/octopus/internal/utils/response"
+	"github.com/slodkiadrianek/octopus/internal/utils/validation"
 )
 
 type userService interface {
@@ -51,7 +52,7 @@ func (u *UserController) GetUserInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = request.ValidateUsersIds(userId, userIdFromJwt)
+	err = validation.ValidateUsersIds(userId, userIdFromJwt)
 	if err != nil {
 		u.loggerService.Error("You are not allowed to do this action", map[string]any{
 			"path":        r.URL.Path,
@@ -60,13 +61,14 @@ func (u *UserController) GetUserInfo(w http.ResponseWriter, r *http.Request) {
 		response.SetError(w, r, err)
 		return
 	}
+
 	user, err := u.userService.GetUser(r.Context(), userId)
 	if err != nil {
 		response.SetError(w, r, err)
 		return
 	}
 
-	response.SendResponse(w, 200, user)
+	response.Send(w, 200, user)
 }
 
 func (u *UserController) InsertUser(w http.ResponseWriter, r *http.Request) {
@@ -84,7 +86,7 @@ func (u *UserController) InsertUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.SendResponse(w, 201, map[string]string{})
+	response.Send(w, 201, map[string]string{})
 }
 
 func (u *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
@@ -115,7 +117,7 @@ func (u *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = request.ValidateUsersIds(userId, userIdFromJwt)
+	err = validation.ValidateUsersIds(userId, userIdFromJwt)
 	if err != nil {
 		u.loggerService.Error("You are not allowed to do this action", map[string]any{
 			"path":        r.URL.Path,
@@ -124,6 +126,7 @@ func (u *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		response.SetError(w, r, err)
 		return
 	}
+
 	userDto := DTO.NewCreateUser(userBody.Email, userBody.Name, userBody.Surname)
 	err = u.userService.UpdateUser(r.Context(), *userDto, userId)
 	if err != nil {
@@ -131,8 +134,9 @@ func (u *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.SendResponse(w, 204, map[string]string{})
+	response.Send(w, 204, map[string]string{})
 }
+
 func (u *UserController) UpdateUserNotifications(w http.ResponseWriter, r *http.Request) {
 	userBody, err := request.ReadBody[DTO.UpdateUserNotificationsSettings](r)
 	if err != nil {
@@ -161,7 +165,7 @@ func (u *UserController) UpdateUserNotifications(w http.ResponseWriter, r *http.
 		return
 	}
 
-	err = request.ValidateUsersIds(userId, userIdFromJwt)
+	err = validation.ValidateUsersIds(userId, userIdFromJwt)
 	if err != nil {
 		u.loggerService.Error("You are not allowed to do this action", map[string]any{
 			"path":        r.URL.Path,
@@ -170,13 +174,14 @@ func (u *UserController) UpdateUserNotifications(w http.ResponseWriter, r *http.
 		response.SetError(w, r, err)
 		return
 	}
+
 	err = u.userService.UpdateUserNotifications(r.Context(), userId, *userBody)
 	if err != nil {
 		response.SetError(w, r, err)
 		return
 	}
 
-	response.SendResponse(w, 204, map[string]string{})
+	response.Send(w, 204, map[string]string{})
 }
 
 func (u *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
@@ -202,7 +207,7 @@ func (u *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = request.ValidateUsersIds(userId, userIdFromJwt)
+	err = validation.ValidateUsersIds(userId, userIdFromJwt)
 	if err != nil {
 		u.loggerService.Error("You are not allowed to do this action", map[string]any{
 			"path":        r.URL.Path,
@@ -211,13 +216,14 @@ func (u *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		response.SetError(w, r, err)
 		return
 	}
+
 	err = u.userService.DeleteUser(r.Context(), userId, userBody.Password)
 	if err != nil {
 		response.SetError(w, r, err)
 		return
 	}
 
-	response.SendResponse(w, 204, map[string]string{})
+	response.Send(w, 204, map[string]string{})
 }
 
 func (u *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Request) {
@@ -243,7 +249,7 @@ func (u *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	err = request.ValidateUsersIds(userId, userIdFromJwt)
+	err = validation.ValidateUsersIds(userId, userIdFromJwt)
 	if err != nil {
 		u.loggerService.Error("You are not allowed to do this action", map[string]any{
 			"path":        r.URL.Path,
@@ -252,6 +258,7 @@ func (u *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Reque
 		response.SetError(w, r, err)
 		return
 	}
+
 	if userBody.NewPassword != userBody.ConfirmPassword {
 		err = fmt.Errorf("passwords do not match")
 		response.SetError(w, r, err)
@@ -263,6 +270,5 @@ func (u *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Reque
 		response.SetError(w, r, err)
 	}
 
-	response.SendResponse(w, 204, map[string]string{})
-
+	response.Send(w, 204, map[string]string{})
 }

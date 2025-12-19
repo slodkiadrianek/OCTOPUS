@@ -33,7 +33,7 @@ func (s *ServerController) GetServerInfo(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	response.SendResponse(w, 200, serverInfo)
+	response.Send(w, 200, serverInfo)
 }
 
 func (s *ServerController) GetServerMetrics(w http.ResponseWriter, r *http.Request) {
@@ -43,5 +43,5 @@ func (s *ServerController) GetServerMetrics(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	response.SendResponse(w, 200, serverMetrics)
+	response.Send(w, 200, serverMetrics)
 }

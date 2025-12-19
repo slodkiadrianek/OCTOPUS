@@ -44,7 +44,7 @@ func (dc *DockerController) PauseContainer(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	response.SendResponse(w, 204, map[string]any{})
+	response.Send(w, 204, map[string]any{})
 }
 
 func (dc *DockerController) RestartContainer(w http.ResponseWriter, r *http.Request) {
@@ -61,7 +61,7 @@ func (dc *DockerController) RestartContainer(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	response.SendResponse(w, 204, map[string]any{})
+	response.Send(w, 204, map[string]any{})
 }
 
 func (dc *DockerController) StartContainer(w http.ResponseWriter, r *http.Request) {
@@ -78,7 +78,7 @@ func (dc *DockerController) StartContainer(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	response.SendResponse(w, 204, map[string]any{})
+	response.Send(w, 204, map[string]any{})
 }
 
 func (dc *DockerController) UnpauseContainer(w http.ResponseWriter, r *http.Request) {
@@ -95,8 +95,9 @@ func (dc *DockerController) UnpauseContainer(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	response.SendResponse(w, 204, map[string]any{})
+	response.Send(w, 204, map[string]any{})
 }
+
 func (dc *DockerController) StopContainer(w http.ResponseWriter, r *http.Request) {
 	appId, err := request.ReadParam(r, "appId")
 	if err != nil {
@@ -111,7 +112,7 @@ func (dc *DockerController) StopContainer(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	response.SendResponse(w, 204, map[string]any{})
+	response.Send(w, 204, map[string]any{})
 }
 
 func (dc *DockerController) ImportDockerContainers(w http.ResponseWriter, r *http.Request) {
@@ -128,5 +129,5 @@ func (dc *DockerController) ImportDockerContainers(w http.ResponseWriter, r *htt
 		return
 	}
 
-	response.SendResponse(w, 201, map[string]any{})
+	response.Send(w, 201, map[string]any{})
 }

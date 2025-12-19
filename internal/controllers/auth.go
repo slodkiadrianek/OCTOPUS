@@ -39,7 +39,8 @@ func (a AuthController) LoginUser(w http.ResponseWriter, r *http.Request) {
 		response.SetError(w, r, err)
 		return
 	}
-	response.SendResponse(w, 200, map[string]string{"token": tokenString})
+
+	response.Send(w, 200, map[string]string{"token": tokenString})
 }
 
 func (a AuthController) VerifyUser(w http.ResponseWriter, r *http.Request) {
@@ -50,11 +51,11 @@ func (a AuthController) VerifyUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.SendResponse(w, 204, map[string]int{
+	response.Send(w, 204, map[string]int{
 		"userId": userId,
 	})
 }
 
 func (a AuthController) LogoutUser(w http.ResponseWriter, _ *http.Request) {
-	response.SendResponse(w, 204, map[string]string{})
+	response.Send(w, 204, map[string]string{})
 }
