@@ -16,9 +16,7 @@ import (
 )
 
 const (
-	EnvFileLocationForServices   = "../../../.env"
-	EnvFileLocationForConfig     = "../../.env"
-	TestEnvFileLocationForConfig = "../../.env.test"
+	EnvFileLocationForServices = "../../../.env"
 )
 
 func CreateCacheService(loggerService *utils.Logger) interfaces.CacheService {
