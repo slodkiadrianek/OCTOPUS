@@ -23,7 +23,8 @@ type AppStatusService struct {
 }
 
 func NewAppStatusService(appRepository interfaces.AppRepository, cacheService interfaces.CacheService,
-	loggerService utils.LoggerService, dockerHost string) *AppStatusService {
+	loggerService utils.LoggerService, dockerHost string,
+) *AppStatusService {
 	return &AppStatusService{
 		appRepository: appRepository,
 		cacheService:  cacheService,
@@ -33,13 +34,13 @@ func NewAppStatusService(appRepository interfaces.AppRepository, cacheService in
 }
 
 func (as *AppStatusService) readAppStatusFromCache(ctx context.Context, cacheKey string) (DTO.AppStatus, error) {
-	appStatusAsJson, err := as.cacheService.GetData(ctx, cacheKey)
+	appStatusAsJSON, err := as.cacheService.GetData(ctx, cacheKey)
 	if err != nil {
 		as.loggerService.Warn("Failed to get data from cache", err)
 		return DTO.AppStatus{}, models.NewError(500, "Server", "Internal server error")
 	}
 
-	appStatus, err := utils.UnmarshalData[DTO.AppStatus]([]byte(appStatusAsJson))
+	appStatus, err := utils.UnmarshalData[DTO.AppStatus]([]byte(appStatusAsJSON))
 	if err != nil {
 		as.loggerService.Warn("Failed to unmarshal  data", err)
 		return DTO.AppStatus{}, models.NewError(500, "Server", "Internal server error")
@@ -83,7 +84,7 @@ func (as *AppStatusService) checkAndCompareAppStatuses(ctx context.Context, cli 
 					duration := time.Since(startedTime)
 					appStatus = *DTO.NewAppStatus(job.ID, status, startedTime, duration)
 				} else {
-					address := fmt.Sprintf("%s:%s", job.IpAddress, job.Port)
+					address := fmt.Sprintf("%s:%s", job.IPAddress, job.Port)
 					conn, err := net.DialTimeout("tcp", address, 3*time.Second)
 					status := "running"
 					startedTime := time.Now()
@@ -161,8 +162,8 @@ func (as *AppStatusService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatu
 	return appsToSendNotification, nil
 }
 
-func (as *AppStatusService) GetAppStatus(ctx context.Context, appId string, ownerId int) (DTO.AppStatus, error) {
-	cacheKey := fmt.Sprintf("status-%s", appId)
+func (as *AppStatusService) GetAppStatus(ctx context.Context, appID string, ownerID int) (DTO.AppStatus, error) {
+	cacheKey := fmt.Sprintf("status-%s", appID)
 
 	doesAppStatusExists, err := as.cacheService.ExistsData(ctx, cacheKey)
 	if err != nil {
@@ -177,7 +178,7 @@ func (as *AppStatusService) GetAppStatus(ctx context.Context, appId string, owne
 		return appStatus, nil
 	}
 
-	appStatus, err := as.appRepository.GetAppStatus(ctx, appId, ownerId)
+	appStatus, err := as.appRepository.GetAppStatus(ctx, appID, ownerID)
 	if err != nil {
 		return DTO.AppStatus{}, err
 	}

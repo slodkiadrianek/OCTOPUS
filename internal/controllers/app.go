@@ -12,14 +12,14 @@ import (
 )
 
 type appService interface {
-	CreateApp(ctx context.Context, app DTO.CreateApp, ownerId int) error
-	GetApp(ctx context.Context, id string, ownerId int) (*models.App, error)
-	GetApps(ctx context.Context, ownerId int) ([]models.App, error)
-	GetAppStatus(ctx context.Context, id string, ownerId int) (DTO.AppStatus, error)
-	DeleteApp(ctx context.Context, id string, ownerId int) error
+	CreateApp(ctx context.Context, app DTO.CreateApp, ownerID int) error
+	GetApp(ctx context.Context, id string, ownerID int) (*models.App, error)
+	GetApps(ctx context.Context, ownerID int) ([]models.App, error)
+	GetAppStatus(ctx context.Context, id string, ownerID int) (DTO.AppStatus, error)
+	DeleteApp(ctx context.Context, id string, ownerID int) error
 	CheckAppsStatus(ctx context.Context) ([]DTO.AppStatus, error)
 	SendNotifications(ctx context.Context, appsStatuses []DTO.AppStatus) error
-	UpdateApp(ctx context.Context, appId string, app DTO.UpdateApp, ownerId int) error
+	UpdateApp(ctx context.Context, appID string, app DTO.UpdateApp, ownerID int) error
 }
 
 type AppController struct {
@@ -35,14 +35,14 @@ func NewAppController(appService appService, loggerService utils.LoggerService) 
 }
 
 func (a *AppController) GetInfoAboutApps(w http.ResponseWriter, r *http.Request) {
-	ownerId, err := request.ReadUserIdFromToken(r)
+	ownerID, err := request.ReadUserIDFromToken(r)
 	if err != nil {
 		a.loggerService.Error(failedToReadDataFromToken)
 		response.SetError(w, r, err)
 		return
 	}
 
-	apps, err := a.appService.GetApps(r.Context(), ownerId)
+	apps, err := a.appService.GetApps(r.Context(), ownerID)
 	if err != nil {
 		response.SetError(w, r, err)
 		return
@@ -52,20 +52,20 @@ func (a *AppController) GetInfoAboutApps(w http.ResponseWriter, r *http.Request)
 }
 
 func (a *AppController) GetInfoAboutApp(w http.ResponseWriter, r *http.Request) {
-	appId, err := request.ReadParam(r, "appId")
+	appID, err := request.ReadParam(r, "appID")
 	if err != nil {
 		response.SetError(w, r, err)
 		return
 	}
 
-	ownerId, err := request.ReadUserIdFromToken(r)
+	ownerID, err := request.ReadUserIDFromToken(r)
 	if err != nil {
 		a.loggerService.Error(failedToReadDataFromToken)
 		response.SetError(w, r, err)
 		return
 	}
 
-	app, err := a.appService.GetApp(r.Context(), appId, ownerId)
+	app, err := a.appService.GetApp(r.Context(), appID, ownerID)
 	if err != nil {
 		response.SetError(w, r, err)
 		return
@@ -82,14 +82,14 @@ func (a *AppController) CreateApp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ownerId, err := request.ReadUserIdFromToken(r)
+	ownerID, err := request.ReadUserIDFromToken(r)
 	if err != nil {
 		a.loggerService.Error(failedToReadDataFromToken)
 		response.SetError(w, r, err)
 		return
 	}
 
-	err = a.appService.CreateApp(r.Context(), *appBody, ownerId)
+	err = a.appService.CreateApp(r.Context(), *appBody, ownerID)
 	if err != nil {
 		response.SetError(w, r, err)
 		return
@@ -106,21 +106,21 @@ func (a *AppController) UpdateApp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	appId, err := request.ReadParam(r, "appId")
+	appID, err := request.ReadParam(r, "appID")
 	if err != nil {
 		a.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
 		response.SetError(w, r, err)
 		return
 	}
 
-	ownerId, err := request.ReadUserIdFromToken(r)
+	ownerID, err := request.ReadUserIDFromToken(r)
 	if err != nil {
 		a.loggerService.Error(failedToReadDataFromToken)
 		response.SetError(w, r, err)
 		return
 	}
 
-	err = a.appService.UpdateApp(r.Context(), appId, *app, ownerId)
+	err = a.appService.UpdateApp(r.Context(), appID, *app, ownerID)
 	if err != nil {
 		response.SetError(w, r, err)
 		return
@@ -130,21 +130,21 @@ func (a *AppController) UpdateApp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *AppController) DeleteApp(w http.ResponseWriter, r *http.Request) {
-	appId, err := request.ReadParam(r, "appId")
+	appID, err := request.ReadParam(r, "appID")
 	if err != nil {
 		a.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
 		response.SetError(w, r, err)
 		return
 	}
 
-	ownerId, err := request.ReadUserIdFromToken(r)
+	ownerID, err := request.ReadUserIDFromToken(r)
 	if err != nil {
 		a.loggerService.Error(failedToReadDataFromToken)
 		response.SetError(w, r, err)
 		return
 	}
 
-	err = a.appService.DeleteApp(r.Context(), appId, ownerId)
+	err = a.appService.DeleteApp(r.Context(), appID, ownerID)
 	if err != nil {
 		response.SetError(w, r, err)
 		return
@@ -154,21 +154,21 @@ func (a *AppController) DeleteApp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *AppController) GetAppStatus(w http.ResponseWriter, r *http.Request) {
-	appId, err := request.ReadParam(r, "appId")
+	appID, err := request.ReadParam(r, "appID")
 	if err != nil {
 		a.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
 		response.SetError(w, r, err)
 		return
 	}
 
-	ownerId, err := request.ReadUserIdFromToken(r)
+	ownerID, err := request.ReadUserIDFromToken(r)
 	if err != nil {
 		a.loggerService.Error(failedToReadDataFromToken)
 		response.SetError(w, r, err)
 		return
 	}
 
-	appStatus, err := a.appService.GetAppStatus(r.Context(), appId, ownerId)
+	appStatus, err := a.appService.GetAppStatus(r.Context(), appID, ownerID)
 	if err != nil {
 		response.SetError(w, r, err)
 		return

@@ -10,12 +10,12 @@ import (
 )
 
 type dockerService interface {
-	PauseContainer(ctx context.Context, appId string) error
-	RestartContainer(ctx context.Context, appId string) error
-	StartContainer(ctx context.Context, appId string) error
-	UnpauseContainer(ctx context.Context, appId string) error
-	StopContainer(ctx context.Context, appId string) error
-	ImportContainers(ctx context.Context, ownerId int) error
+	PauseContainer(ctx context.Context, appID string) error
+	RestartContainer(ctx context.Context, appID string) error
+	StartContainer(ctx context.Context, appID string) error
+	UnpauseContainer(ctx context.Context, appID string) error
+	StopContainer(ctx context.Context, appID string) error
+	ImportContainers(ctx context.Context, ownerID int) error
 }
 
 type DockerController struct {
@@ -31,14 +31,14 @@ func NewDockerController(service dockerService, loggerService utils.LoggerServic
 }
 
 func (dc *DockerController) PauseContainer(w http.ResponseWriter, r *http.Request) {
-	appId, err := request.ReadParam(r, "appId")
+	appID, err := request.ReadParam(r, "appID")
 	if err != nil {
 		dc.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
 		response.SetError(w, r, err)
 		return
 	}
 
-	err = dc.dockerService.PauseContainer(r.Context(), appId)
+	err = dc.dockerService.PauseContainer(r.Context(), appID)
 	if err != nil {
 		response.SetError(w, r, err)
 		return
@@ -48,14 +48,14 @@ func (dc *DockerController) PauseContainer(w http.ResponseWriter, r *http.Reques
 }
 
 func (dc *DockerController) RestartContainer(w http.ResponseWriter, r *http.Request) {
-	appId, err := request.ReadParam(r, "appId")
+	appID, err := request.ReadParam(r, "appID")
 	if err != nil {
 		dc.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
 		response.SetError(w, r, err)
 		return
 	}
 
-	err = dc.dockerService.RestartContainer(r.Context(), appId)
+	err = dc.dockerService.RestartContainer(r.Context(), appID)
 	if err != nil {
 		response.SetError(w, r, err)
 		return
@@ -65,14 +65,14 @@ func (dc *DockerController) RestartContainer(w http.ResponseWriter, r *http.Requ
 }
 
 func (dc *DockerController) StartContainer(w http.ResponseWriter, r *http.Request) {
-	appId, err := request.ReadParam(r, "appId")
+	appID, err := request.ReadParam(r, "appID")
 	if err != nil {
 		dc.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
 		response.SetError(w, r, err)
 		return
 	}
 
-	err = dc.dockerService.StartContainer(r.Context(), appId)
+	err = dc.dockerService.StartContainer(r.Context(), appID)
 	if err != nil {
 		response.SetError(w, r, err)
 		return
@@ -82,14 +82,14 @@ func (dc *DockerController) StartContainer(w http.ResponseWriter, r *http.Reques
 }
 
 func (dc *DockerController) UnpauseContainer(w http.ResponseWriter, r *http.Request) {
-	appId, err := request.ReadParam(r, "appId")
+	appID, err := request.ReadParam(r, "appID")
 	if err != nil {
 		dc.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
 		response.SetError(w, r, err)
 		return
 	}
 
-	err = dc.dockerService.UnpauseContainer(r.Context(), appId)
+	err = dc.dockerService.UnpauseContainer(r.Context(), appID)
 	if err != nil {
 		response.SetError(w, r, err)
 		return
@@ -99,14 +99,14 @@ func (dc *DockerController) UnpauseContainer(w http.ResponseWriter, r *http.Requ
 }
 
 func (dc *DockerController) StopContainer(w http.ResponseWriter, r *http.Request) {
-	appId, err := request.ReadParam(r, "appId")
+	appID, err := request.ReadParam(r, "appID")
 	if err != nil {
 		dc.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
 		response.SetError(w, r, err)
 		return
 	}
 
-	err = dc.dockerService.StopContainer(r.Context(), appId)
+	err = dc.dockerService.StopContainer(r.Context(), appID)
 	if err != nil {
 		response.SetError(w, r, err)
 		return
@@ -116,14 +116,14 @@ func (dc *DockerController) StopContainer(w http.ResponseWriter, r *http.Request
 }
 
 func (dc *DockerController) ImportDockerContainers(w http.ResponseWriter, r *http.Request) {
-	ownerId, err := request.ReadUserIdFromToken(r)
+	ownerID, err := request.ReadUserIDFromToken(r)
 	if err != nil {
 		dc.loggerService.Error(failedToReadDataFromToken)
 		response.SetError(w, r, err)
 		return
 	}
 
-	err = dc.dockerService.ImportContainers(r.Context(), ownerId)
+	err = dc.dockerService.ImportContainers(r.Context(), ownerID)
 	if err != nil {
 		response.SetError(w, r, err)
 		return

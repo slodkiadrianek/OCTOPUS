@@ -29,14 +29,13 @@ func NewAppNotificationsService(appRepository interfaces.AppRepository, loggerSe
 
 func (an *AppNotificationsService) assignNotificationToProperSendService(notificationsInfo []models.NotificationInfo) map[string][]models.
 	NotificationInfo {
-
 	sortedNotificationsToSend := make(map[string][]models.NotificationInfo, len(notificationsInfo))
 
 	for _, notificationInfo := range notificationsInfo {
-		if notificationInfo.DiscordNotificationsSettings && notificationInfo.DiscordWebhookUrl != "" {
+		if notificationInfo.DiscordNotificationsSettings && notificationInfo.DiscordWebhookURL != "" {
 			sortedNotificationsToSend["Discord"] = append(sortedNotificationsToSend["Discord"], notificationInfo)
 		}
-		if notificationInfo.SlackNotificationsSettings && notificationInfo.SlackWebhookUrl != "" {
+		if notificationInfo.SlackNotificationsSettings && notificationInfo.SlackWebhookURL != "" {
 			sortedNotificationsToSend["Slack"] = append(sortedNotificationsToSend["Slack"], notificationInfo)
 		}
 		if notificationInfo.EmailNotificationsSettings {
@@ -56,12 +55,12 @@ func (an *AppNotificationsService) sortNotificationsBySendToInformation(sortedNo
 	sortedSlackNotifications = make(map[string]string, len(sortedNotificationsToSend))
 
 	for _, discordNotificationInfo := range sortedNotificationsToSend["Discord"] {
-		sortedDiscordNotifications[discordNotificationInfo.DiscordWebhookUrl] += fmt.Sprintf("%s - %s - %s\n",
+		sortedDiscordNotifications[discordNotificationInfo.DiscordWebhookURL] += fmt.Sprintf("%s - %s - %s\n",
 			discordNotificationInfo.ID, discordNotificationInfo.Name, discordNotificationInfo.Status)
 	}
 
 	for _, slackNotificationInfo := range sortedNotificationsToSend["Slack"] {
-		sortedSlackNotifications[slackNotificationInfo.SlackWebhookUrl] += fmt.Sprintf("%s - %s - %s\n",
+		sortedSlackNotifications[slackNotificationInfo.SlackWebhookURL] += fmt.Sprintf("%s - %s - %s\n",
 			slackNotificationInfo.ID, slackNotificationInfo.Name, slackNotificationInfo.Status)
 	}
 	return sortedDiscordNotifications, sortedSlackNotifications
@@ -102,7 +101,7 @@ func (an *AppNotificationsService) sendWebhook(ctx context.Context, notification
 					continue
 				}
 
-				responseStatusCode, _, err := request.SendHttp(ctx, job.url, "", "POST", body, false)
+				responseStatusCode, _, err := request.SendHTTP(ctx, job.url, "", "POST", body, false)
 				if err != nil {
 					an.loggerService.Info("Failed to send a webhook", err)
 					errorChan <- err

@@ -45,7 +45,7 @@ func (rs *RouteService) prepareDataAboutRouteToInsertToDb(routes *[]DTO.CreateRo
 					continue
 				}
 
-				responseRoutesChan <- *DTO.NewRouteResponse(job.ResponseStatusCode, job.ParentId, string(responseBodyBytes))
+				responseRoutesChan <- *DTO.NewRouteResponse(job.ResponseStatusCode, job.ParentID, string(responseBodyBytes))
 
 				requestParamsBytes, err := utils.MarshalData(job.RequestParams)
 				if err != nil {
@@ -64,7 +64,7 @@ func (rs *RouteService) prepareDataAboutRouteToInsertToDb(routes *[]DTO.CreateRo
 					errorChan <- err
 					continue
 				}
-				requestRoutesChan <- *DTO.NewRouteRequest(job.RequestAuthorization, string(requestQueryBytes), string(requestParamsBytes), string(requestBodyBytes), job.ParentId)
+				requestRoutesChan <- *DTO.NewRouteRequest(job.RequestAuthorization, string(requestQueryBytes), string(requestParamsBytes), string(requestBodyBytes), job.ParentID)
 
 				nextRouteBodyBytes, err := utils.MarshalData(job.NextRouteBody)
 				if err != nil {
@@ -85,8 +85,8 @@ func (rs *RouteService) prepareDataAboutRouteToInsertToDb(routes *[]DTO.CreateRo
 				}
 
 				nextRoutesChan <- *DTO.NewNextRouteData(string(nextRouteBodyBytes), string(nextRouteQueryBytes),
-					string(nextRouteParamsBytes), job.NextAuthorizationHeader, job.ParentId)
-				routesInfoChan <- *DTO.NewRouteInfo(job.Path, job.Method, job.ParentId)
+					string(nextRouteParamsBytes), job.NextRouteAuthorizationHeader, job.ParentID)
+				routesInfoChan <- *DTO.NewRouteInfo(job.Path, job.Method, job.ParentID)
 			}
 		}()
 	}
@@ -133,8 +133,8 @@ func (rs *RouteService) prepareDataAboutRouteToInsertToDb(routes *[]DTO.CreateRo
 }
 
 func (rs *RouteService) saveRouteComponents(ctx context.Context, nextRoutes []*DTO.NextRoute,
-	requestRoutes []*DTO.RouteRequest, responseRoutes []*DTO.RouteResponse, routesInfo []*DTO.RouteInfo) (routesInfoIds, routesRequestsIds, routesResponsesIds, nextRoutesDataIds []int, err error) {
-
+	requestRoutes []*DTO.RouteRequest, responseRoutes []*DTO.RouteResponse, routesInfo []*DTO.RouteInfo,
+) (routesInfoIDs, routesRequestsIDs, routesResponsesIDs, nextRoutesDataIDs []int, err error) {
 	var wg sync.WaitGroup
 
 	nextRoutes = utils.InsertionSortForRoutes(nextRoutes)
@@ -147,23 +147,23 @@ func (rs *RouteService) saveRouteComponents(ctx context.Context, nextRoutes []*D
 	wg.Add(4)
 	go func() {
 		defer wg.Done()
-		routesInfoIds, routesInfoErr = rs.routeRepository.InsertRoutesInfo(ctx, routesInfo)
+		routesInfoIDs, routesInfoErr = rs.routeRepository.InsertRoutesInfo(ctx, routesInfo)
 	}()
 	go func() {
 		defer wg.Done()
-		nextRoutesDataIds, nextRoutesDataErr = rs.routeRepository.InsertNextRoutesData(ctx, nextRoutes)
+		nextRoutesDataIDs, nextRoutesDataErr = rs.routeRepository.InsertNextRoutesData(ctx, nextRoutes)
 	}()
 	go func() {
 		defer wg.Done()
-		routesResponsesIds, routesResponsesErr = rs.routeRepository.InsertRoutesResponses(ctx, responseRoutes)
+		routesResponsesIDs, routesResponsesErr = rs.routeRepository.InsertRoutesResponses(ctx, responseRoutes)
 	}()
 	go func() {
 		defer wg.Done()
-		routesRequestsIds, routesRequestsErr = rs.routeRepository.InsertRoutesRequests(ctx, requestRoutes)
+		routesRequestsIDs, routesRequestsErr = rs.routeRepository.InsertRoutesRequests(ctx, requestRoutes)
 	}()
 	wg.Wait()
 
-	if  routesInfoErr != nil {
+	if routesInfoErr != nil {
 		return nil, nil, nil, nil, routesInfoErr
 	}
 	if routesRequestsErr != nil {
@@ -176,35 +176,39 @@ func (rs *RouteService) saveRouteComponents(ctx context.Context, nextRoutes []*D
 		return nil, nil, nil, nil, nextRoutesDataErr
 	}
 
-	return routesInfoIds, routesRequestsIds, routesResponsesIds, nextRoutesDataIds, nil
+	return routesInfoIDs, routesRequestsIDs, routesResponsesIDs, nextRoutesDataIDs, nil
 }
-func (rs *RouteService) saveWorkingRoutes(ctx context.Context, routes *[]DTO.CreateRoute, appId, name string,
-	nextRoutesDataIds,
-	routesRequestsIds, routesResponsesIds, routesInfoIds []int) error {
+
+func (rs *RouteService) saveWorkingRoutes(ctx context.Context, routes *[]DTO.CreateRoute, appID, name string,
+	nextRoutesDataIDs,
+	routesRequestsIDs, routesResponsesIDs, routesInfoIDs []int,
+) error {
 	workingRoutes := make([]DTO.WorkingRoute, len(*routes))
 	for i, val := range *routes {
-		workingRoutes[i] = DTO.WorkingRoute{ParentID: val.ParentId, AppId: appId, Name: name}
+		workingRoutes[i] = DTO.WorkingRoute{ParentID: val.ParentID, AppID: appID, Name: name}
 	}
-	parentId := 0
+	parentID := 0
 
 	for i := 0; i < len(workingRoutes); i++ {
-		workingRoutes[i].NextRouteDataId = nextRoutesDataIds[i]
-		workingRoutes[i].RequestID = routesRequestsIds[i]
-		workingRoutes[i].ResponseID = routesResponsesIds[i]
-		workingRoutes[i].RouteID = routesInfoIds[i]
-		workingRoutes[i].ParentID = parentId
+		workingRoutes[i].NextRouteDataID = nextRoutesDataIDs[i]
+		workingRoutes[i].RequestID = routesRequestsIDs[i]
+		workingRoutes[i].ResponseID = routesResponsesIDs[i]
+		workingRoutes[i].RouteID = routesInfoIDs[i]
+		workingRoutes[i].ParentID = parentID
 		workingRoutes[i].Status = "unknown"
 		res, err := rs.routeRepository.InsertWorkingRoute(ctx, workingRoutes[i])
 		if err != nil {
 			return err
 		}
-		parentId = res
+		parentID = res
 	}
 
 	return nil
 }
-func (rs *RouteService) AddWorkingRoutes(ctx context.Context, routes *[]DTO.CreateRoute, appId,
-	name string) error {
+
+func (rs *RouteService) AddWorkingRoutes(ctx context.Context, routes *[]DTO.CreateRoute, appID,
+	name string,
+) error {
 	nextRoutes, requestRoutes, responseRoutes, routesInfo, err := rs.prepareDataAboutRouteToInsertToDb(routes)
 	if err != nil {
 		return err
@@ -215,13 +219,13 @@ func (rs *RouteService) AddWorkingRoutes(ctx context.Context, routes *[]DTO.Crea
 	responseRoutes = utils.InsertionSortForRoutes(responseRoutes)
 	routesInfo = utils.InsertionSortForRoutes(routesInfo)
 
-	routesInfoIds, routesRequestsIds, routesResponsesIds, nextRoutesDataIds, err := rs.saveRouteComponents(ctx, nextRoutes,
+	routesInfoIDs, routesRequestsIDs, routesResponsesIDs, nextRoutesDataIDs, err := rs.saveRouteComponents(ctx, nextRoutes,
 		requestRoutes, responseRoutes, routesInfo)
 	if err != nil {
 		return err
 	}
-	err = rs.saveWorkingRoutes(ctx, routes, appId, name, nextRoutesDataIds, routesRequestsIds,
-		routesResponsesIds, routesInfoIds)
+	err = rs.saveWorkingRoutes(ctx, routes, appID, name, nextRoutesDataIDs, routesRequestsIDs,
+		routesResponsesIDs, routesInfoIDs)
 
 	return nil
 }

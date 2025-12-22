@@ -59,7 +59,7 @@ func (u *UserRepository) FindUserByEmail(ctx context.Context, email string) (mod
 	return user, nil
 }
 
-func (u *UserRepository) InsertUserToDb(ctx context.Context, user DTO.CreateUser, password string) error {
+func (u *UserRepository) InsertUserToDB(ctx context.Context, user DTO.CreateUser, password string) error {
 	query := `INSERT INTO users(name, surname, email, password) VALUES($1, $2, $3, $4 )`
 	stmt, err := u.db.PrepareContext(ctx, query)
 	if err != nil {
@@ -85,7 +85,7 @@ func (u *UserRepository) InsertUserToDb(ctx context.Context, user DTO.CreateUser
 	return nil
 }
 
-func (u *UserRepository) UpdateUser(ctx context.Context, user DTO.CreateUser, userId int) error {
+func (u *UserRepository) UpdateUser(ctx context.Context, user DTO.CreateUser, userID int) error {
 	query := `UPDATE users SET name=$1, surname=$2, email=$3 WHERE id=$4`
 	stmt, err := u.db.PrepareContext(ctx, query)
 	if err != nil {
@@ -98,11 +98,11 @@ func (u *UserRepository) UpdateUser(ctx context.Context, user DTO.CreateUser, us
 		}
 	}()
 
-	_, err = stmt.ExecContext(ctx, user.Name, user.Surname, user.Email, userId)
+	_, err = stmt.ExecContext(ctx, user.Name, user.Surname, user.Email, userID)
 	if err != nil {
 		u.loggerService.Info(failedToExecuteUpdateQuery, map[string]any{
 			"query": query,
-			"args":  []any{user.Name, user.Surname, user.Email, userId},
+			"args":  []any{user.Name, user.Surname, user.Email, userID},
 			"err":   err.Error(),
 		})
 		return models.NewError(500, "Database", "Failed to update data in database")
@@ -110,7 +110,7 @@ func (u *UserRepository) UpdateUser(ctx context.Context, user DTO.CreateUser, us
 	return nil
 }
 
-func (u *UserRepository) UpdateUserNotifications(ctx context.Context, userId int, userNotifications DTO.UpdateUserNotificationsSettings,
+func (u *UserRepository) UpdateUserNotifications(ctx context.Context, userID int, userNotifications DTO.UpdateUserNotificationsSettings,
 ) error {
 	query := `UPDATE users SET discord_notifications_settings=$1, slack_notifications_settings=$2, email_notifications_settings=$3 WHERE id=$4`
 	stmt, err := u.db.PrepareContext(ctx, query)
@@ -124,11 +124,11 @@ func (u *UserRepository) UpdateUserNotifications(ctx context.Context, userId int
 		}
 	}()
 
-	_, err = stmt.ExecContext(ctx, userNotifications.DiscordNotificationsSettings, userNotifications.SlackNotificationsSettings, userNotifications.EmailNotificationsSettings, userId)
+	_, err = stmt.ExecContext(ctx, userNotifications.DiscordNotificationsSettings, userNotifications.SlackNotificationsSettings, userNotifications.EmailNotificationsSettings, userID)
 	if err != nil {
 		u.loggerService.Info(failedToExecuteUpdateQuery, map[string]any{
 			"query": query,
-			"args":  []any{userNotifications, userId},
+			"args":  []any{userNotifications, userID},
 			"err":   err.Error(),
 		})
 		return models.NewError(500, "Database", "Failed to update data in database")
@@ -136,7 +136,7 @@ func (u *UserRepository) UpdateUserNotifications(ctx context.Context, userId int
 	return nil
 }
 
-func (u *UserRepository) DeleteUser(ctx context.Context, password string, userId int) error {
+func (u *UserRepository) DeleteUser(ctx context.Context, password string, userID int) error {
 	query := `DELETE FROM users WHERE id=$1`
 	stmt, err := u.db.PrepareContext(ctx, query)
 	if err != nil {
@@ -152,11 +152,11 @@ func (u *UserRepository) DeleteUser(ctx context.Context, password string, userId
 		}
 	}()
 
-	_, err = stmt.ExecContext(ctx, userId)
+	_, err = stmt.ExecContext(ctx, userID)
 	if err != nil {
 		u.loggerService.Info(failedToExecuteDeleteQuery, map[string]any{
 			"query": query,
-			"args":  []any{password, userId},
+			"args":  []any{password, userID},
 			"err":   err.Error(),
 		})
 		return models.NewError(500, "Database", "Failed to delete data from database")
@@ -164,7 +164,7 @@ func (u *UserRepository) DeleteUser(ctx context.Context, password string, userId
 	return nil
 }
 
-func (u *UserRepository) FindUserById(ctx context.Context, userId int) (models.User, error) {
+func (u *UserRepository) FindUserByID(ctx context.Context, userID int) (models.User, error) {
 	query := `
 	SELECT * FROM users WHERE id = $1`
 	u.db.SetMaxOpenConns(1000)
@@ -182,14 +182,14 @@ func (u *UserRepository) FindUserById(ctx context.Context, userId int) (models.U
 		}
 	}()
 	var user models.User
-	err = stmt.QueryRowContext(ctx, userId).Scan(&user.ID, &user.Email, &user.Name, &user.Surname, &user.Password,
+	err = stmt.QueryRowContext(ctx, userID).Scan(&user.ID, &user.Email, &user.Name, &user.Surname, &user.Password,
 		&user.DiscordNotificationsSettings, &user.EmailNotificationsSettings, &user.SlackNotificationsSettings,
 		&user.CreatedAt,
 		&user.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			u.loggerService.Info("user not found", map[string]any{
-				"userId": userId,
+				"userID": userID,
 			})
 			return models.User{
 				ID: 0,
@@ -197,7 +197,7 @@ func (u *UserRepository) FindUserById(ctx context.Context, userId int) (models.U
 		}
 		u.loggerService.Error(failedToExecuteSelectQuery, map[string]any{
 			"query": query,
-			"args":  []any{userId},
+			"args":  []any{userID},
 			"err":   err.Error(),
 		})
 		return models.User{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
@@ -205,7 +205,7 @@ func (u *UserRepository) FindUserById(ctx context.Context, userId int) (models.U
 	return user, nil
 }
 
-func (u *UserRepository) ChangeUserPassword(ctx context.Context, userId int, newPassword string) error {
+func (u *UserRepository) ChangeUserPassword(ctx context.Context, userID int, newPassword string) error {
 	query := `UPDATE users SET password=$1 WHERE id=$2`
 	stmt, err := u.db.PrepareContext(ctx, query)
 	if err != nil {
@@ -218,11 +218,11 @@ func (u *UserRepository) ChangeUserPassword(ctx context.Context, userId int, new
 		}
 	}()
 
-	_, err = stmt.ExecContext(ctx, newPassword, userId)
+	_, err = stmt.ExecContext(ctx, newPassword, userID)
 	if err != nil {
 		u.loggerService.Info(failedToExecuteUpdateQuery, map[string]any{
 			"query": query,
-			"args":  []any{newPassword, userId},
+			"args":  []any{newPassword, userID},
 			"err":   err.Error(),
 		})
 		return models.NewError(500, "Database", "Failed to update data in database")

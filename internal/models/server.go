@@ -4,7 +4,7 @@ import "time"
 
 type ServerInfo struct {
 	ModelName     string `json:"model_name"`
-	RamToTal      uint64 `json:"ram_total"`
+	RAMToTal      uint64 `json:"ram_total"`
 	DiskTotal     uint64 `json:"disk_total"`
 	OS            string `json:"os"`
 	Platform      string `json:"platform"`
@@ -15,7 +15,7 @@ type ServerInfo struct {
 func NewServerInfo(modelName, os, platform, kernelVersion string, ramTotal, diskTotal, uptime uint64) *ServerInfo {
 	return &ServerInfo{
 		ModelName:     modelName,
-		RamToTal:      ramTotal,
+		RAMToTal:      ramTotal,
 		DiskTotal:     diskTotal,
 		OS:            os,
 		Platform:      platform,

@@ -28,11 +28,11 @@ func TestAppNotificationsService_assignNotificationToProperSendService(t *testin
 			notifications: []models.NotificationInfo{
 				{
 					DiscordNotificationsSettings: true,
-					DiscordWebhookUrl:            "https://webhook.example.com",
+					DiscordWebhookURL:            "https://webhook.example.com",
 				},
 				{
 					SlackNotificationsSettings: true,
-					SlackWebhookUrl:            "https://webhook.example.com",
+					SlackWebhookURL:            "https://webhook.example.com",
 				},
 				{
 					EmailNotificationsSettings: true,
@@ -40,20 +40,19 @@ func TestAppNotificationsService_assignNotificationToProperSendService(t *testin
 				},
 			},
 			expectedSortedNotifications: map[string][]models.NotificationInfo{
-				"Discord": []models.NotificationInfo{
+				"Discord": {
 					{
 						DiscordNotificationsSettings: true,
-						DiscordWebhookUrl:            "https://webhook.example.com",
+						DiscordWebhookURL:            "https://webhook.example.com",
 					},
 				},
-				"Slack": []models.NotificationInfo{
-
+				"Slack": {
 					{
 						SlackNotificationsSettings: true,
-						SlackWebhookUrl:            "https://webhook.example.com",
+						SlackWebhookURL:            "https://webhook.example.com",
 					},
 				},
-				"Email": []models.NotificationInfo{
+				"Email": {
 					{
 						EmailNotificationsSettings: true,
 						Email:                      "test@gmail.com",
@@ -89,19 +88,19 @@ func TestAppNotificationsService_sortNotificationsBySendToInformation(t *testing
 		{
 			name: "Properly sorted notifications by send to information",
 			sortedNotifications: map[string][]models.NotificationInfo{
-				"Discord": []models.NotificationInfo{
+				"Discord": {
 					{
 						DiscordNotificationsSettings: true,
-						DiscordWebhookUrl:            "https://webhook.example.discord.com",
+						DiscordWebhookURL:            "https://webhook.example.discord.com",
 						ID:                           "Discord",
 						Name:                         "Discord",
 						Status:                       "stopped",
 					},
 				},
-				"Slack": []models.NotificationInfo{
+				"Slack": {
 					{
 						SlackNotificationsSettings: true,
-						SlackWebhookUrl:            "https://webhook.example.slack.com",
+						SlackWebhookURL:            "https://webhook.example.slack.com",
 						ID:                         "Slack",
 						Name:                       "Slack",
 						Status:                     "stopped",
@@ -215,8 +214,8 @@ func TestAppNotificationsService_SendNotifications(t *testing.T) {
 						Status:                       "running",
 						SlackNotificationsSettings:   true,
 						DiscordNotificationsSettings: true,
-						DiscordWebhookUrl:            "",
-						SlackWebhookUrl:              "https://webhook.example.slack.com",
+						DiscordWebhookURL:            "",
+						SlackWebhookURL:              "https://webhook.example.slack.com",
 					},
 				}, nil)
 				return mApp

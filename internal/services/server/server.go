@@ -83,7 +83,6 @@ func (s *ServerService) GetServerInfo() (models.ServerInfo, error) {
 
 func (s *ServerService) InsertServerMetrics(ctx context.Context) error {
 	cpuData, err := cpu.Percent(time.Second, false)
-
 	if err != nil {
 		s.logger.Warn("Failed to read cpu data", err)
 		return err
@@ -123,6 +122,9 @@ func (s *ServerService) InsertServerMetrics(ctx context.Context) error {
 			return err
 		}
 		existingMetrics, err = utils.UnmarshalData[[]models.ServerMetrics]([]byte(serverMetricsData))
+		if err != nil {
+			return err
+		}
 	}
 
 	if existingMetrics != nil {

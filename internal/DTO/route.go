@@ -8,29 +8,29 @@ type CreateRouteData struct {
 	Routes []CreateRoute
 }
 type CreateRoute struct {
-	Path                    string            `json:"path" example:"/users"`
-	Method                  string            `json:"method" example:"GET"`
-	RequestAuthorization    string            `json:"requestAuthorization" example:"Bearer:fb43fg3487f34g78f3gu"`
-	RequestQuery            map[string]string `json:"requestQuery" example:"id=1"`
-	RequestParams           map[string]string `json:"requestParams" example:"id=1"`
-	RequestBody             map[string]any    `json:"requestBody" example:"id=1"`
-	NextRouteBody           []string          `json:"nextRouteBody"`
-	NextRouteQuery          []string          `json:"nextRouteQuery"`
-	NextRouteParams         []string          `json:"nextRouteParams"`
-	NextAuthorizationHeader string            `json:"next_authorization_header"`
-	ResponseStatusCode      int               `json:"responseStatusCode" example:"200"`
-	ResponseBody            map[string]any    `json:"responseBody" example:"id=1"`
-	ParentId                int
+	Path                         string            `json:"path" example:"/users"`
+	Method                       string            `json:"method" example:"GET"`
+	RequestAuthorization         string            `json:"requestAuthorization" example:"Bearer:fb43fg3487f34g78f3gu"`
+	RequestQuery                 map[string]string `json:"requestQuery" example:"id=1"`
+	RequestParams                map[string]string `json:"requestParams" example:"id=1"`
+	RequestBody                  map[string]any    `json:"requestBody" example:"id=1"`
+	NextRouteBody                []string          `json:"nextRouteBody"`
+	NextRouteQuery               []string          `json:"nextRouteQuery"`
+	NextRouteParams              []string          `json:"nextRouteParams"`
+	NextRouteAuthorizationHeader string            `json:"next_authorization_header"`
+	ResponseStatusCode           int               `json:"responseStatusCode" example:"200"`
+	ResponseBody                 map[string]any    `json:"responseBody" example:"id=1"`
+	ParentID                     int
 }
 
 type WorkingRoute struct {
 	Name            string
 	ParentID        int
-	AppId           string
+	AppID           string
 	RouteID         int
 	RequestID       int
 	ResponseID      int
-	NextRouteDataId int
+	NextRouteDataID int
 	Status          string
 }
 
@@ -40,11 +40,11 @@ type RouteInfo struct {
 	ParentID int    `json:"parentID"`
 }
 
-func NewRouteInfo(path, method string, parentId int) *RouteInfo {
+func NewRouteInfo(path, method string, parentID int) *RouteInfo {
 	return &RouteInfo{
 		Path:     path,
 		Method:   method,
-		ParentID: parentId,
+		ParentID: parentID,
 	}
 }
 
@@ -60,13 +60,13 @@ type RouteRequest struct {
 	ParentID            int    `json:"parentID"`
 }
 
-func NewRouteRequest(authorizationHeader, query, params, body string, parentId int) *RouteRequest {
+func NewRouteRequest(authorizationHeader, query, params, body string, parentID int) *RouteRequest {
 	return &RouteRequest{
 		AuthorizationHeader: authorizationHeader,
 		Query:               query,
 		Params:              params,
 		Body:                body,
-		ParentID:            parentId,
+		ParentID:            parentID,
 	}
 }
 
@@ -82,13 +82,13 @@ type NextRoute struct {
 	ParentID            int    `json:"parentID"`
 }
 
-func NewNextRouteData(body, query, params, authorizationHeader string, parentId int) *NextRoute {
+func NewNextRouteData(body, query, params, authorizationHeader string, parentID int) *NextRoute {
 	return &NextRoute{
 		Body:                body,
 		Query:               query,
 		Params:              params,
 		AuthorizationHeader: authorizationHeader,
-		ParentID:            parentId,
+		ParentID:            parentID,
 	}
 }
 
@@ -102,11 +102,11 @@ type RouteResponse struct {
 	ParentID   int    `json:"parentID"`
 }
 
-func NewRouteResponse(statusCode, parentId int, body string) *RouteResponse {
+func NewRouteResponse(statusCode, parentID int, body string) *RouteResponse {
 	return &RouteResponse{
 		StatusCode: statusCode,
 		Body:       body,
-		ParentID:   parentId,
+		ParentID:   parentID,
 	}
 }
 

@@ -10,7 +10,7 @@ import (
 )
 
 type wsService interface {
-	Logs(ctx context.Context, appId string, conn *websocket.Conn)
+	Logs(ctx context.Context, appID string, conn *websocket.Conn)
 }
 
 type WsController struct {
@@ -38,10 +38,10 @@ func (ws *WsController) Logs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	appId, err := request.ReadParam(r, "appId")
+	appID, err := request.ReadParam(r, "appID")
 	if err != nil {
 		ws.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
-		err := conn.WriteMessage(websocket.TextMessage, []byte("Failed to read appId"))
+		err := conn.WriteMessage(websocket.TextMessage, []byte("Failed to read appID"))
 		if err != nil {
 			return
 		}
@@ -50,5 +50,5 @@ func (ws *WsController) Logs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := context.Background()
-	ws.wsService.Logs(ctx, appId, conn)
+	ws.wsService.Logs(ctx, appID, conn)
 }

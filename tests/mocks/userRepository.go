@@ -12,28 +12,28 @@ type MockUserRepository struct {
 	mock.Mock
 }
 
-func (m *MockUserRepository) InsertUserToDb(ctx context.Context, user DTO.CreateUser, password string) error {
+func (m *MockUserRepository) InsertUserToDB(ctx context.Context, user DTO.CreateUser, password string) error {
 	args := m.Called(ctx, user, password)
 	return args.Error(0)
 }
 
-func (m *MockUserRepository) UpdateUser(ctx context.Context, user DTO.CreateUser, userId int) error {
-	args := m.Called(ctx, user, userId)
+func (m *MockUserRepository) UpdateUser(ctx context.Context, user DTO.CreateUser, userID int) error {
+	args := m.Called(ctx, user, userID)
 	return args.Error(0)
 }
 
-func (m *MockUserRepository) UpdateUserNotifications(ctx context.Context, userId int, userNotifications DTO.UpdateUserNotificationsSettings) error {
-	args := m.Called(ctx, userNotifications, userId)
+func (m *MockUserRepository) UpdateUserNotifications(ctx context.Context, userID int, userNotifications DTO.UpdateUserNotificationsSettings) error {
+	args := m.Called(ctx, userNotifications, userID)
 	return args.Error(0)
 }
 
-func (m *MockUserRepository) DeleteUser(ctx context.Context, password string, userId int) error {
-	args := m.Called(ctx, userId, password)
+func (m *MockUserRepository) DeleteUser(ctx context.Context, password string, userID int) error {
+	args := m.Called(ctx, userID, password)
 	return args.Error(0)
 }
 
-func (m *MockUserRepository) FindUserById(ctx context.Context, userId int) (models.User, error) {
-	args := m.Called(ctx, userId)
+func (m *MockUserRepository) FindUserByID(ctx context.Context, userID int) (models.User, error) {
+	args := m.Called(ctx, userID)
 	return args.Get(0).(models.User), args.Error(1)
 }
 
@@ -42,7 +42,7 @@ func (m *MockUserRepository) FindUserByEmail(ctx context.Context, email string) 
 	return args.Get(0).(models.User), args.Error(1)
 }
 
-func (m *MockUserRepository) ChangeUserPassword(ctx context.Context, userId int, newPassword string) error {
-	args := m.Called(ctx, userId, newPassword)
+func (m *MockUserRepository) ChangeUserPassword(ctx context.Context, userID int, newPassword string) error {
+	args := m.Called(ctx, userID, newPassword)
 	return args.Error(0)
 }

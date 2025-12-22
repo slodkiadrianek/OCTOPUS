@@ -3,9 +3,8 @@ package thirdPartyServices
 import (
 	"context"
 	"errors"
-	"time"
-
 	"testing"
+	"time"
 
 	"github.com/slodkiadrianek/octopus/internal/services/interfaces"
 	"github.com/slodkiadrianek/octopus/tests"
@@ -76,26 +75,26 @@ func TestDockerService_PauseContainer(t *testing.T) {
 	type args struct {
 		name          string
 		dockerHost    string
-		appId         string
+		appID         string
 		expectedError error
 	}
 	testsScenarios := []args{
 		{
 			name:          "Test with proper data",
 			expectedError: nil,
-			appId:         "",
+			appID:         "",
 			dockerHost:    "tcp://100.100.188.29:2375",
 		},
 		{
 			name:          "Invalid docker host",
 			expectedError: errors.New("unable to parse docker host"),
-			appId:         "",
+			appID:         "",
 			dockerHost:    "",
 		},
 		{
 			name:          "Invalid app ID",
 			expectedError: errors.New("No such container"),
-			appId:         "e9530eae6aa752adf79b79a2d9c1398fe59eee4a3d786734d9e2076e62415772",
+			appID:         "e9530eae6aa752adf79b79a2d9c1398fe59eee4a3d786734d9e2076e62415772",
 			dockerHost:    "tcp://100.100.188.29:2375",
 		},
 	}
@@ -105,24 +104,24 @@ func TestDockerService_PauseContainer(t *testing.T) {
 			dockerService := NewDockerService(appRepositoryMock, loggerService, testScenario.dockerHost)
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
 			defer cancel()
-			var appId string
-			if testScenario.appId == "" {
-				containerId, _ := tests.CreateTestContainer("alpine", []string{"sleep", "20"},
+			var appID string
+			if testScenario.appID == "" {
+				containerID, _ := tests.CreateTestContainer("alpine", []string{"sleep", "20"},
 					loggerService,
 					"tcp://100.100.188.29:2375")
-				appId = containerId
+				appID = containerID
 			} else {
-				appId = testScenario.appId
+				appID = testScenario.appID
 			}
-			err := dockerService.PauseContainer(ctx, appId)
+			err := dockerService.PauseContainer(ctx, appID)
 			if testScenario.expectedError == nil {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), testScenario.expectedError.Error())
 			}
-			if testScenario.appId == "" {
-				err := tests.KillAndRemoveContainer(ctx, appId, loggerService, "tcp://100.100.188.29:2375")
+			if testScenario.appID == "" {
+				err := tests.KillAndRemoveContainer(ctx, appID, loggerService, "tcp://100.100.188.29:2375")
 				if err != nil {
 					panic(err)
 				}
@@ -136,26 +135,26 @@ func TestDockerService_RestartContainer(t *testing.T) {
 	type args struct {
 		name          string
 		dockerHost    string
-		appId         string
+		appID         string
 		expectedError error
 	}
 	testsScenarios := []args{
 		{
 			name:          "Test with proper data",
 			expectedError: nil,
-			appId:         "",
+			appID:         "",
 			dockerHost:    "tcp://100.100.188.29:2375",
 		},
 		{
 			name:          "Invalid docker host",
 			expectedError: errors.New("unable to parse docker host"),
-			appId:         "",
+			appID:         "",
 			dockerHost:    "",
 		},
 		{
 			name:          "Invalid app ID",
 			expectedError: errors.New("No such container"),
-			appId:         "e9530eae6aa752adf79b79a2d9c1398fe59eee4a3d786734d9e2076e62415772",
+			appID:         "e9530eae6aa752adf79b79a2d9c1398fe59eee4a3d786734d9e2076e62415772",
 			dockerHost:    "tcp://100.100.188.29:2375",
 		},
 	}
@@ -165,24 +164,24 @@ func TestDockerService_RestartContainer(t *testing.T) {
 			dockerService := NewDockerService(appRepositoryMock, loggerService, testScenario.dockerHost)
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
 			defer cancel()
-			var appId string
-			if testScenario.appId == "" {
-				containerId, _ := tests.CreateTestContainer("alpine", []string{"sleep", "20"},
+			var appID string
+			if testScenario.appID == "" {
+				containerID, _ := tests.CreateTestContainer("alpine", []string{"sleep", "20"},
 					loggerService,
 					"tcp://100.100.188.29:2375")
-				appId = containerId
+				appID = containerID
 			} else {
-				appId = testScenario.appId
+				appID = testScenario.appID
 			}
-			err := dockerService.RestartContainer(ctx, appId)
+			err := dockerService.RestartContainer(ctx, appID)
 			if testScenario.expectedError == nil {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), testScenario.expectedError.Error())
 			}
-			if testScenario.appId == "" {
-				err := tests.KillAndRemoveContainer(ctx, appId, loggerService, "tcp://100.100.188.29:2375")
+			if testScenario.appID == "" {
+				err := tests.KillAndRemoveContainer(ctx, appID, loggerService, "tcp://100.100.188.29:2375")
 				if err != nil {
 					panic(err)
 				}
@@ -196,26 +195,26 @@ func TestDockerService_UnpauseContainer(t *testing.T) {
 	type args struct {
 		name          string
 		dockerHost    string
-		appId         string
+		appID         string
 		expectedError error
 	}
 	testsScenarios := []args{
 		{
 			name:          "Test with proper data",
 			expectedError: nil,
-			appId:         "",
+			appID:         "",
 			dockerHost:    "tcp://100.100.188.29:2375",
 		},
 		{
 			name:          "Invalid docker host",
 			expectedError: errors.New("unable to parse docker host"),
-			appId:         "",
+			appID:         "",
 			dockerHost:    "",
 		},
 		{
 			name:          "Invalid app ID",
 			expectedError: errors.New("No such container"),
-			appId:         "e9530eae6aa752adf79b79a2d9c1398fe59eee4a3d786734d9e2076e62415772",
+			appID:         "e9530eae6aa752adf79b79a2d9c1398fe59eee4a3d786734d9e2076e62415772",
 			dockerHost:    "tcp://100.100.188.29:2375",
 		},
 	}
@@ -225,25 +224,28 @@ func TestDockerService_UnpauseContainer(t *testing.T) {
 			dockerService := NewDockerService(appRepositoryMock, loggerService, testScenario.dockerHost)
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
 			defer cancel()
-			var appId string
-			if testScenario.appId == "" {
-				containerId, _ := tests.CreateTestContainer("alpine", []string{"sleep", "20"},
+			var appID string
+			if testScenario.appID == "" {
+				containerID, _ := tests.CreateTestContainer("alpine", []string{"sleep", "20"},
 					loggerService,
 					"tcp://100.100.188.29:2375")
-				appId = containerId
+				appID = containerID
 			} else {
-				appId = testScenario.appId
+				appID = testScenario.appID
 			}
-			err := dockerService.PauseContainer(ctx, appId)
-			err = dockerService.UnpauseContainer(ctx, appId)
+			err := dockerService.PauseContainer(ctx, appID)
+			if err != nil {
+				panic(err)
+			}
+			err = dockerService.UnpauseContainer(ctx, appID)
 			if testScenario.expectedError == nil {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), testScenario.expectedError.Error())
 			}
-			if testScenario.appId == "" {
-				err := tests.KillAndRemoveContainer(ctx, appId, loggerService, "tcp://100.100.188.29:2375")
+			if testScenario.appID == "" {
+				err := tests.KillAndRemoveContainer(ctx, appID, loggerService, "tcp://100.100.188.29:2375")
 				if err != nil {
 					panic(err)
 				}
@@ -257,26 +259,26 @@ func TestDockerService_StartContainer(t *testing.T) {
 	type args struct {
 		name          string
 		dockerHost    string
-		appId         string
+		appID         string
 		expectedError error
 	}
 	testsScenarios := []args{
 		{
 			name:          "Test with proper data",
 			expectedError: nil,
-			appId:         "",
+			appID:         "",
 			dockerHost:    "tcp://100.100.188.29:2375",
 		},
 		{
 			name:          "Invalid docker host",
 			expectedError: errors.New("unable to parse docker host"),
-			appId:         "",
+			appID:         "",
 			dockerHost:    "",
 		},
 		{
 			name:          "Invalid app ID",
 			expectedError: errors.New("No such container"),
-			appId:         "e9530eae6aa752adf79b79a2d9c1398fe59eee4a3d786734d9e2076e62415772",
+			appID:         "e9530eae6aa752adf79b79a2d9c1398fe59eee4a3d786734d9e2076e62415772",
 			dockerHost:    "tcp://100.100.188.29:2375",
 		},
 	}
@@ -286,25 +288,25 @@ func TestDockerService_StartContainer(t *testing.T) {
 			dockerService := NewDockerService(appRepositoryMock, loggerService, testScenario.dockerHost)
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
 			defer cancel()
-			var appId string
-			if testScenario.appId == "" {
-				containerId, _ := tests.CreateTestContainer("alpine", []string{"sleep", "20"},
+			var appID string
+			if testScenario.appID == "" {
+				containerID, _ := tests.CreateTestContainer("alpine", []string{"sleep", "20"},
 					loggerService,
 					"tcp://100.100.188.29:2375")
-				appId = containerId
+				appID = containerID
 			} else {
-				appId = testScenario.appId
+				appID = testScenario.appID
 			}
-			_ = dockerService.StopContainer(ctx, appId)
-			err := dockerService.StartContainer(ctx, appId)
+			_ = dockerService.StopContainer(ctx, appID)
+			err := dockerService.StartContainer(ctx, appID)
 			if testScenario.expectedError == nil {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), testScenario.expectedError.Error())
 			}
-			if testScenario.appId == "" {
-				err := tests.KillAndRemoveContainer(ctx, appId, loggerService, "tcp://100.100.188.29:2375")
+			if testScenario.appID == "" {
+				err := tests.KillAndRemoveContainer(ctx, appID, loggerService, "tcp://100.100.188.29:2375")
 				if err != nil {
 					panic(err)
 				}

@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewDb(t *testing.T) {
+func TestNewDB(t *testing.T) {
 	type args struct {
 		name          string
 		driver        string
@@ -40,13 +40,13 @@ func TestNewDb(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			res, err := NewDb(testCase.databaseLink, testCase.driver)
+			res, err := NewDB(testCase.databaseLink, testCase.driver)
 			if testCase.expectedError == nil {
 				assert.Nil(t, testCase.expectedError, err)
 			} else {
 				assert.Equal(t, testCase.expectedError.Error(), err.Error())
 			}
-			if res == nil || *res != (Db{}) {
+			if res == nil || *res != (DB{}) {
 				assert.Equal(t, testCase.expectedData, true)
 			} else {
 				assert.Equal(t, testCase.expectedData, false)

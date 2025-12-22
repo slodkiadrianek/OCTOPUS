@@ -15,7 +15,7 @@ import (
 )
 
 type userClaims struct {
-	Id      int    `json:"id" example:"11"`
+	ID      int    `json:"id" example:"11"`
 	Email   string `json:"email" example:"joedoe@email.com"`
 	Name    string `json:"name" example:"Joe"`
 	Surname string `json:"surname" example:"Doe"`
@@ -100,7 +100,6 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 		}
 
 		tokenWithData, user, err := j.parseClaimsFromToken(tokenString)
-
 		if err != nil {
 			j.loggerService.Info("Failed to read data properly", err.Error())
 			err := models.NewError(401, "Authorization", "Provided token is invalid")
@@ -117,7 +116,7 @@ func (j JWT) VerifyToken(next http.Handler) http.Handler {
 
 		}
 
-		r = utils.SetContext(r, "id", user.Id)
+		r = utils.SetContext(r, "id", user.ID)
 
 		r = utils.SetContext(r, "email", user.Email)
 		next.ServeHTTP(w, r)
@@ -151,7 +150,6 @@ func (j JWT) BlacklistUser(next http.Handler) http.Handler {
 		}
 
 		tokenWithData, user, err := j.parseClaimsFromToken(tokenString)
-
 		if err != nil {
 			j.loggerService.Info("Failed to read data properly", tokenString)
 			err := models.NewError(401, "Authorization", "Failed to read token")

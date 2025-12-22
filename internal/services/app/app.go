@@ -30,13 +30,13 @@ func NewAppService(appRepository interfaces.AppRepository, loggerService utils.L
 	}
 }
 
-func (a *AppService) CreateApp(ctx context.Context, app DTO.CreateApp, ownerId int) error {
-	GeneratedId, err := utils.GenerateID()
+func (a *AppService) CreateApp(ctx context.Context, app DTO.CreateApp, ownerID int) error {
+	generatedID, err := utils.GenerateID()
 	if err != nil {
 		return err
 	}
 
-	appDto := DTO.NewApp(GeneratedId, app.Name, app.Description, false, ownerId, app.IpAddress, app.Port)
+	appDto := DTO.NewApp(generatedID, app.Name, app.Description, false, ownerID, app.IPAddress, app.Port)
 	err = a.appRepository.InsertApp(ctx, []DTO.App{*appDto})
 	if err != nil {
 		return err
@@ -45,8 +45,8 @@ func (a *AppService) CreateApp(ctx context.Context, app DTO.CreateApp, ownerId i
 	return nil
 }
 
-func (a *AppService) GetApp(ctx context.Context, appId string, ownerId int) (*models.App, error) {
-	app, err := a.appRepository.GetApp(ctx, appId, ownerId)
+func (a *AppService) GetApp(ctx context.Context, appID string, ownerID int) (*models.App, error) {
+	app, err := a.appRepository.GetApp(ctx, appID, ownerID)
 	if err != nil {
 		return nil, err
 	}
@@ -54,8 +54,8 @@ func (a *AppService) GetApp(ctx context.Context, appId string, ownerId int) (*mo
 	return app, nil
 }
 
-func (a *AppService) GetApps(ctx context.Context, ownerId int) ([]models.App, error) {
-	apps, err := a.appRepository.GetApps(ctx, ownerId)
+func (a *AppService) GetApps(ctx context.Context, ownerID int) ([]models.App, error) {
+	apps, err := a.appRepository.GetApps(ctx, ownerID)
 	if err != nil {
 		return nil, err
 	}
@@ -63,8 +63,8 @@ func (a *AppService) GetApps(ctx context.Context, ownerId int) ([]models.App, er
 	return apps, nil
 }
 
-func (a *AppService) DeleteApp(ctx context.Context, appId string, ownerId int) error {
-	err := a.appRepository.DeleteApp(ctx, appId, ownerId)
+func (a *AppService) DeleteApp(ctx context.Context, appID string, ownerID int) error {
+	err := a.appRepository.DeleteApp(ctx, appID, ownerID)
 	if err != nil {
 		return err
 	}
@@ -72,8 +72,8 @@ func (a *AppService) DeleteApp(ctx context.Context, appId string, ownerId int) e
 	return nil
 }
 
-func (a *AppService) UpdateApp(ctx context.Context, appId string, app DTO.UpdateApp, ownerId int) error {
-	err := a.appRepository.UpdateApp(ctx, appId, app, ownerId)
+func (a *AppService) UpdateApp(ctx context.Context, appID string, app DTO.UpdateApp, ownerID int) error {
+	err := a.appRepository.UpdateApp(ctx, appID, app, ownerID)
 	if err != nil {
 		return err
 	}
@@ -81,8 +81,8 @@ func (a *AppService) UpdateApp(ctx context.Context, appId string, app DTO.Update
 	return nil
 }
 
-func (a *AppService) GetAppStatus(ctx context.Context, appId string, ownerId int) (DTO.AppStatus, error) {
-	return a.appStatusService.GetAppStatus(ctx, appId, ownerId)
+func (a *AppService) GetAppStatus(ctx context.Context, appID string, ownerID int) (DTO.AppStatus, error) {
+	return a.appStatusService.GetAppStatus(ctx, appID, ownerID)
 }
 
 func (a *AppService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatus, error) {

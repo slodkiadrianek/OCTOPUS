@@ -51,12 +51,12 @@ func (r *Router) Request(route string, method string, fns ...any) {
 		handler = middlewares[i](handler)
 	}
 	chainedHandler := handler
-	route = request.RemoveLastCharacterFromUrl(route)
+	route = request.RemoveLastCharacterFromURL(route)
 	r.routes[routeKey{method: method, path: route}] = chainedHandler
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	req.URL.Path = request.RemoveLastCharacterFromUrl(req.URL.Path)
+	req.URL.Path = request.RemoveLastCharacterFromURL(req.URL.Path)
 	for routeKey, handler := range r.routes {
 		if routeKey.method != req.Method {
 			continue

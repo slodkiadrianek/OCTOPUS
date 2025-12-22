@@ -5,9 +5,9 @@ import (
 	"fmt"
 )
 
-type JsonMapStringString map[string]string
+type JSONMapStringString map[string]string
 
-func (jm *JsonMapStringString) Scan(value interface{}) error {
+func (jm *JSONMapStringString) Scan(value any) error {
 	if value == nil {
 		*jm = nil
 		return nil
@@ -19,9 +19,9 @@ func (jm *JsonMapStringString) Scan(value interface{}) error {
 	return json.Unmarshal(b, jm)
 }
 
-type JsonMapStringAny map[string]any
+type JSONMapStringAny map[string]any
 
-func (ja *JsonMapStringAny) Scan(value interface{}) error {
+func (ja *JSONMapStringAny) Scan(value any) error {
 	if value == nil {
 		*ja = nil
 		return nil
@@ -33,9 +33,9 @@ func (ja *JsonMapStringAny) Scan(value interface{}) error {
 	return json.Unmarshal(b, ja)
 }
 
-type JsonStringSlice []string
+type JSONStringSlice []string
 
-func (js *JsonStringSlice) Scan(value interface{}) error {
+func (js *JSONStringSlice) Scan(value any) error {
 	if value == nil {
 		*js = nil
 		return nil
@@ -49,22 +49,22 @@ func (js *JsonStringSlice) Scan(value interface{}) error {
 
 type RouteToTest struct {
 	ID                      int
-	IpAddress               string
+	IPAddress               string
 	Port                    string
 	Name                    string              `json:"name"`
 	Path                    string              `json:"path" example:"/users"`
 	Method                  string              `json:"method" example:"GET"`
 	RequestAuthorization    string              `json:"requestAuthorization" example:"Bearer:fb43fg3487f34g78f3gu"`
-	RequestQuery            JsonMapStringString `json:"requestQuery" example:"id=1"`
-	RequestParams           JsonMapStringString `json:"requestParams" example:"id=1"`
-	RequestBody             JsonMapStringAny    `json:"requestBody" example:"id=1"`
-	NextRouteBody           JsonStringSlice     `json:"nextRouteBody"`
-	NextRouteQuery          JsonStringSlice     `json:"nextRouteQuery"`
-	NextRouteParams         JsonStringSlice     `json:"nextRouteParams"`
+	RequestQuery            JSONMapStringString `json:"requestQuery" example:"id=1"`
+	RequestParams           JSONMapStringString `json:"requestParams" example:"id=1"`
+	RequestBody             JSONMapStringAny    `json:"requestBody" example:"id=1"`
+	NextRouteBody           JSONStringSlice     `json:"nextRouteBody"`
+	NextRouteQuery          JSONStringSlice     `json:"nextRouteQuery"`
+	NextRouteParams         JSONStringSlice     `json:"nextRouteParams"`
 	NextAuthorizationHeader string              `json:"next_authorization_header"`
 	ResponseStatusCode      int                 `json:"responseStatusCode" example:"200"`
-	ResponseBody            JsonMapStringAny    `json:"responseBody" example:"id=1"`
+	ResponseBody            JSONMapStringAny    `json:"responseBody" example:"id=1"`
 	ParentID                int
 	Status                  string
-	AppId                   string
+	AppID                   string
 }

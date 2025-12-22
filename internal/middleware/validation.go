@@ -15,19 +15,21 @@ import (
 )
 
 func ValidateMiddleware[dataFromRequestType any, validationSchemaType *zog.StructSchema | *zog.SliceSchema](
-	validationType string, validationSchema validationSchemaType) func(http.Handler) http.Handler {
+	validationType string, validationSchema validationSchemaType,
+) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return validateHandler[dataFromRequestType](next, validationType, validationSchema)
 	}
 }
 
 func validateDataFromRequest[dataFromRequestType any, validationSchemaType *zog.StructSchema | *zog.SliceSchema](
-	dataFromRequest *dataFromRequestType, validationSchema validationSchemaType) error {
+	dataFromRequest *dataFromRequestType, validationSchema validationSchemaType,
+) error {
 	typeOfDataFromRequest := reflect.TypeOf(dataFromRequest)
 	var errMap zog.ZogIssueMap
 	if typeOfDataFromRequest.Kind() == reflect.Slice {
-		//schema, _ := any(validationSchema).(*zog.SliceSchema)
-		//errMap = validation.ValidateInputStruct(schema, dataFromRequest)
+		// schema, _ := any(validationSchema).(*zog.SliceSchema)
+		// errMap = validation.ValidateInputStruct(schema, dataFromRequest)
 	} else {
 		schema, _ := any(validationSchema).(*zog.StructSchema)
 		errMap = validation.ValidateInputStruct(schema, dataFromRequest)
@@ -46,7 +48,8 @@ func validateDataFromRequest[dataFromRequestType any, validationSchemaType *zog.
 
 func validateHandler[dataFromRequestType any, validationSchemaType *zog.StructSchema | *zog.SliceSchema](next http.Handler,
 	validationType string,
-	validationSchema validationSchemaType) http.Handler {
+	validationSchema validationSchemaType,
+) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch validationType {
 		case "body":
@@ -86,6 +89,10 @@ func validateHandler[dataFromRequestType any, validationSchemaType *zog.StructSc
 
 			var dataFromRequest *dataFromRequestType
 			dataFromRequest, err = utils.UnmarshalData[dataFromRequestType](paramBytes)
+			if err != nil {
+				response.SetError(w, r, err)
+				return
+			}
 			err = validateDataFromRequest[dataFromRequestType, validationSchemaType](dataFromRequest, validationSchema)
 			if err != nil {
 				response.SetError(w, r, err)

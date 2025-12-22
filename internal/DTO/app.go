@@ -8,18 +8,18 @@ type App struct {
 	Description string
 	IsDocker    bool
 	OwnerID     int
-	IpAddress   string
+	IPAddress   string
 	Port        string
 }
 
-func NewApp(id, name, description string, isDocker bool, ownerId int, ipAddress, port string) *App {
+func NewApp(id, name, description string, isDocker bool, ownerID int, IPAddress, port string) *App {
 	return &App{
 		ID:          id,
 		Name:        name,
 		Description: description,
 		IsDocker:    isDocker,
-		OwnerID:     ownerId,
-		IpAddress:   ipAddress,
+		OwnerID:     ownerID,
+		IPAddress:   IPAddress,
 		Port:        port,
 	}
 }
@@ -27,21 +27,21 @@ func NewApp(id, name, description string, isDocker bool, ownerId int, ipAddress,
 type CreateApp struct {
 	Name              string `json:"name" example:"My App"`
 	Description       string `json:"description" example:"This is my app"`
-	IpAddress         string `json:"ipAddress" example:"192.168.0.100"`
+	IPAddress         string `json:"ipAddress" example:"192.168.0.100"`
 	Port              string `json:"port" example:"3030"`
-	DiscordWebhookUrl string `json:"discordWebhookUrl" example:"https://discord.com/api/webhooks/1234567890/abcdefghijklmnopqrstuvwxyz"`
-	SlackWebhookUrl   string `json:"slackWebhookUrl" example:"https://hooks.slack.com/services/1234567890/abcdefghijklmnopqrstuvwxyz"`
+	DiscordWebhookURL string `json:"discordWebhookUrl" example:"https://discord.com/api/webhooks/1234567890/abcdefghijklmnopqrstuvwxyz"`
+	SlackWebhookURL   string `json:"slackWebhookUrl" example:"https://hooks.slack.com/services/1234567890/abcdefghijklmnopqrstuvwxyz"`
 }
 type UpdateApp struct {
 	Name              string `json:"name" example:"My App"`
 	Description       string `json:"description" example:"This is my app"`
-	IpAddress         string `json:"ipAddress" example:"192.168.0.100"`
+	IPAddress         string `json:"ipAddress" example:"192.168.0.100"`
 	Port              string `json:"port" example:"3030"`
-	DiscordWebhookUrl string `json:"discordWebhookUrl" example:"https://discord.com/api/webhooks/1234567890/abcdefghijklmnopqrstuvwxyz"`
-	SlackWebhookUrl   string `json:"slackWebhookUrl" example:"https://hooks.slack.com/services/1234567890/abcdefghijklmnopqrstuvwxyz"`
+	DiscordWebhookURL string `json:"discordWebhookUrl" example:"https://discord.com/api/webhooks/1234567890/abcdefghijklmnopqrstuvwxyz"`
+	SlackWebhookURL   string `json:"slackWebhookUrl" example:"https://hooks.slack.com/services/1234567890/abcdefghijklmnopqrstuvwxyz"`
 }
 
-type AppId struct {
+type AppID struct {
 	AppID string `json:"appId" example:"nd3289dh23934382"`
 }
 type AppStatus struct {
@@ -51,9 +51,9 @@ type AppStatus struct {
 	Duration  time.Duration `json:"duration"`
 }
 
-func NewAppStatus(appId, status string, changedAt time.Time, duration time.Duration) *AppStatus {
+func NewAppStatus(appID, status string, changedAt time.Time, duration time.Duration) *AppStatus {
 	return &AppStatus{
-		AppID:     appId,
+		AppID:     appID,
 		Status:    status,
 		ChangedAt: changedAt,
 		Duration:  duration,

@@ -32,21 +32,21 @@ func TestRouteService_prepareDataAboutRouteToInsertToDb(t *testing.T) {
 						"id":     1,
 						"body":   "quia et suscipit suscipit recusandae consequuntur expedita et cum reprehenderit molestiae ut ut quas totam nostrum rerum est autem sunt rem eveniet architecto",
 						"title":  "sunt aut facere repellat provident occaecati excepturi optio reprehenderit",
-						"userId": 1,
+						"userID": 1,
 					},
-					ParentId: 0,
+					ParentID: 0,
 					RequestParams: map[string]string{
-						"postId": "1",
+						"postID": "1",
 					},
-					RequestQuery:            map[string]string{},
-					RequestBody:             map[string]any{},
-					RequestAuthorization:    "",
-					NextRouteBody:           make([]string, 0),
-					NextRouteParams:         make([]string, 0),
-					NextRouteQuery:          make([]string, 0),
-					NextAuthorizationHeader: "",
-					Path:                    "/posts/{postId}",
-					Method:                  "GET",
+					RequestQuery:                 map[string]string{},
+					RequestBody:                  map[string]any{},
+					RequestAuthorization:         "",
+					NextRouteBody:                make([]string, 0),
+					NextRouteParams:              make([]string, 0),
+					NextRouteQuery:               make([]string, 0),
+					NextRouteAuthorizationHeader: "",
+					Path:                         "/posts/{postID}",
+					Method:                       "GET",
 				},
 			},
 			expectedNextRoutes: []*DTO.NextRoute{
@@ -58,19 +58,19 @@ func TestRouteService_prepareDataAboutRouteToInsertToDb(t *testing.T) {
 			},
 			expectedRouteRequest: []*DTO.RouteRequest{
 				{
-					Params: "{\"postId\":\"1\"}",
+					Params: "{\"postID\":\"1\"}",
 					Query:  "{}",
 					Body:   "{}",
 				},
 			},
 			expectedRouteResponse: []*DTO.RouteResponse{
 				{
-					Body: "{\"body\":\"quia et suscipit suscipit recusandae consequuntur expedita et cum reprehenderit molestiae ut ut quas totam nostrum rerum est autem sunt rem eveniet architecto\",\"id\":1,\"title\":\"sunt aut facere repellat provident occaecati excepturi optio reprehenderit\",\"userId\":1}",
+					Body: "{\"body\":\"quia et suscipit suscipit recusandae consequuntur expedita et cum reprehenderit molestiae ut ut quas totam nostrum rerum est autem sunt rem eveniet architecto\",\"id\":1,\"title\":\"sunt aut facere repellat provident occaecati excepturi optio reprehenderit\",\"userID\":1}",
 				},
 			},
 			expectedRouteInfo: []*DTO.RouteInfo{
 				{
-					Path:   "/posts/{postId}",
+					Path:   "/posts/{postID}",
 					Method: "GET",
 				},
 			},
@@ -99,10 +99,10 @@ func TestRouteService_saveRouteComponents(t *testing.T) {
 		routeRequest               []*DTO.RouteRequest
 		routeResponse              []*DTO.RouteResponse
 		routeInfo                  []*DTO.RouteInfo
-		expectedRoutesInfoIds      []int
-		expectedRouteRequestsIds   []int
-		expectedRoutesResponsesIds []int
-		expectedNextRouteDataIds   []int
+		expectedRoutesInfoIDs      []int
+		expectedRouteRequestsIDs   []int
+		expectedRoutesResponsesIDs []int
+		expectedNextRouteDataIDs   []int
 		expectedError              error
 		setupMocks                 func() interfaces.RouteRepository
 	}
@@ -119,19 +119,19 @@ func TestRouteService_saveRouteComponents(t *testing.T) {
 			},
 			routeRequest: []*DTO.RouteRequest{
 				{
-					Params: "{\"postId\":\"1\"}",
+					Params: "{\"postID\":\"1\"}",
 					Query:  "{}",
 					Body:   "{}",
 				},
 			},
 			routeResponse: []*DTO.RouteResponse{
 				{
-					Body: "{\"body\":\"quia et suscipit suscipit recusandae consequuntur expedita et cum reprehenderit molestiae ut ut quas totam nostrum rerum est autem sunt rem eveniet architecto\",\"id\":1,\"title\":\"sunt aut facere repellat provident occaecati excepturi optio reprehenderit\",\"userId\":1}",
+					Body: "{\"body\":\"quia et suscipit suscipit recusandae consequuntur expedita et cum reprehenderit molestiae ut ut quas totam nostrum rerum est autem sunt rem eveniet architecto\",\"id\":1,\"title\":\"sunt aut facere repellat provident occaecati excepturi optio reprehenderit\",\"userID\":1}",
 				},
 			},
 			routeInfo: []*DTO.RouteInfo{
 				{
-					Path:   "/posts/{postId}",
+					Path:   "/posts/{postID}",
 					Method: "GET",
 				},
 			},
@@ -145,10 +145,10 @@ func TestRouteService_saveRouteComponents(t *testing.T) {
 				return mRouteRepository
 			},
 			expectedError:              nil,
-			expectedRouteRequestsIds:   []int{0},
-			expectedRoutesResponsesIds: []int{0},
-			expectedRoutesInfoIds:      []int{0},
-			expectedNextRouteDataIds:   []int{0},
+			expectedRouteRequestsIDs:   []int{0},
+			expectedRoutesResponsesIDs: []int{0},
+			expectedRoutesInfoIDs:      []int{0},
+			expectedNextRouteDataIDs:   []int{0},
 		},
 	}
 	for _, testScenario := range testsScenarios {
@@ -157,12 +157,12 @@ func TestRouteService_saveRouteComponents(t *testing.T) {
 			loggerService := tests.CreateLogger()
 			routeRepository := testScenario.setupMocks()
 			routeService := NewRouteService(loggerService, routeRepository)
-			routesInfoIds, routesRequestsIds, routesResponsesIds, nextRoutesDataIds, err := routeService.saveRouteComponents(ctx, testScenario.nextRoutes, testScenario.routeRequest, testScenario.routeResponse, testScenario.routeInfo)
-			assert.Equal(t, testScenario.expectedNextRouteDataIds, nextRoutesDataIds)
+			routesInfoIDs, routesRequestsIDs, routesResponsesIDs, nextRoutesDataIDs, err := routeService.saveRouteComponents(ctx, testScenario.nextRoutes, testScenario.routeRequest, testScenario.routeResponse, testScenario.routeInfo)
+			assert.Equal(t, testScenario.expectedNextRouteDataIDs, nextRoutesDataIDs)
 			assert.Equal(t, testScenario.expectedError, err)
-			assert.Equal(t, testScenario.expectedRoutesInfoIds, routesInfoIds)
-			assert.Equal(t, testScenario.expectedRoutesResponsesIds, routesResponsesIds)
-			assert.Equal(t, testScenario.expectedRouteRequestsIds, routesRequestsIds)
+			assert.Equal(t, testScenario.expectedRoutesInfoIDs, routesInfoIDs)
+			assert.Equal(t, testScenario.expectedRoutesResponsesIDs, routesResponsesIDs)
+			assert.Equal(t, testScenario.expectedRouteRequestsIDs, routesRequestsIDs)
 		})
 	}
 }
@@ -171,12 +171,12 @@ func TestRouteService_saveWorkingRoutes(t *testing.T) {
 	type args struct {
 		name                  string
 		routes                *[]DTO.CreateRoute
-		appId                 string
+		appID                 string
 		nameOfTheWorkingRoute string
-		routesInfoIds         []int
-		routeRequestsIds      []int
-		routesResponsesIds    []int
-		nextRouteDataIds      []int
+		routesInfoIDs         []int
+		routeRequestsIDs      []int
+		routesResponsesIDs    []int
+		nextRouteDataIDs      []int
 		expectedError         error
 		setupMocks            func() interfaces.RouteRepository
 	}
@@ -184,16 +184,16 @@ func TestRouteService_saveWorkingRoutes(t *testing.T) {
 	testsScenarios := []args{
 		{
 			name:                  "Properly saved working routes",
-			appId:                 "27cf4966c158762ceb9495fbdd044a73325efd3bd2a4f9646fc45662ef59490d",
+			appID:                 "27cf4966c158762ceb9495fbdd044a73325efd3bd2a4f9646fc45662ef59490d",
 			nameOfTheWorkingRoute: "test",
 			routes: &[]DTO.CreateRoute{{
-				ParentId: 0,
+				ParentID: 0,
 			}},
 			expectedError:      nil,
-			routeRequestsIds:   []int{0},
-			routesResponsesIds: []int{0},
-			routesInfoIds:      []int{0},
-			nextRouteDataIds:   []int{0},
+			routeRequestsIDs:   []int{0},
+			routesResponsesIDs: []int{0},
+			routesInfoIDs:      []int{0},
+			nextRouteDataIDs:   []int{0},
 			setupMocks: func() interfaces.RouteRepository {
 				mRouteRepository := new(mocks.MockRouteRepository)
 				mRouteRepository.On("InsertWorkingRoute", mock.Anything, mock.Anything).Return(0, nil)
@@ -207,7 +207,7 @@ func TestRouteService_saveWorkingRoutes(t *testing.T) {
 			loggerService := tests.CreateLogger()
 			routeRepository := testScenario.setupMocks()
 			routeService := NewRouteService(loggerService, routeRepository)
-			err := routeService.saveWorkingRoutes(ctx, testScenario.routes, testScenario.appId, testScenario.nameOfTheWorkingRoute, testScenario.nextRouteDataIds, testScenario.routeRequestsIds, testScenario.routesResponsesIds, testScenario.routesInfoIds)
+			err := routeService.saveWorkingRoutes(ctx, testScenario.routes, testScenario.appID, testScenario.nameOfTheWorkingRoute, testScenario.nextRouteDataIDs, testScenario.routeRequestsIDs, testScenario.routesResponsesIDs, testScenario.routesInfoIDs)
 			assert.Equal(t, testScenario.expectedError, err)
 		})
 	}
@@ -217,7 +217,7 @@ func TestRouteService_AddWorkingRoutes(t *testing.T) {
 	type args struct {
 		name                  string
 		routes                *[]DTO.CreateRoute
-		appId                 string
+		appID                 string
 		nameOfTheWorkingRoute string
 		expectedError         error
 		setupMocks            func() interfaces.RouteRepository
@@ -232,7 +232,7 @@ func TestRouteService_AddWorkingRoutes(t *testing.T) {
 				ResponseStatusCode: 200,
 			},
 		},
-		appId:                 "27cf4966c158762ceb9495fbdd044a73325efd3bd2a4f9646fc45662ef59490d",
+		appID:                 "27cf4966c158762ceb9495fbdd044a73325efd3bd2a4f9646fc45662ef59490d",
 		nameOfTheWorkingRoute: "test",
 		expectedError:         nil,
 		setupMocks: func() interfaces.RouteRepository {
@@ -252,9 +252,8 @@ func TestRouteService_AddWorkingRoutes(t *testing.T) {
 			loggerService := tests.CreateLogger()
 			routeRepository := testScenario.setupMocks()
 			routeService := NewRouteService(loggerService, routeRepository)
-			err := routeService.AddWorkingRoutes(ctx, testScenario.routes, testScenario.appId, testScenario.nameOfTheWorkingRoute)
+			err := routeService.AddWorkingRoutes(ctx, testScenario.routes, testScenario.appID, testScenario.nameOfTheWorkingRoute)
 			assert.Equal(t, testScenario.expectedError, err)
 		})
 	}
-
 }

@@ -28,7 +28,7 @@ func (a *AppRepository) InsertApp(ctx context.Context, app []DTO.App) error {
 	args := make([]any, 0, len(app))
 	for i := range app {
 		preparedValues := fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d)", i*6+1, i*6+2, i*6+3, i*6+4, i*6+5, i*6+6)
-		args = append(args, app[i].ID, app[i].Name, app[i].IsDocker, app[i].OwnerID, app[i].IpAddress, app[i].Port)
+		args = append(args, app[i].ID, app[i].Name, app[i].IsDocker, app[i].OwnerID, app[i].IPAddress, app[i].Port)
 		placeholders = append(placeholders, preparedValues)
 	}
 
@@ -69,7 +69,7 @@ func (a *AppRepository) InsertApp(ctx context.Context, app []DTO.App) error {
 	return nil
 }
 
-func (a *AppRepository) GetApp(ctx context.Context, appId string, ownerId int) (*models.App, error) {
+func (a *AppRepository) GetApp(ctx context.Context, appID string, ownerID int) (*models.App, error) {
 	query := `SELECT  
 		id,
 		name,
@@ -87,8 +87,8 @@ func (a *AppRepository) GetApp(ctx context.Context, appId string, ownerId int) (
 		a.loggerService.Error(failedToPrepareQuery, map[string]any{
 			"query": query,
 			"args": map[string]any{
-				"appId":   appId,
-				"ownerId": ownerId,
+				"appID":   appID,
+				"ownerID": ownerID,
 			},
 			"err": err.Error(),
 		})
@@ -101,13 +101,13 @@ func (a *AppRepository) GetApp(ctx context.Context, appId string, ownerId int) (
 	}()
 
 	var app models.App
-	row := stmt.QueryRowContext(ctx, appId, ownerId)
-	err = row.Scan(&app.ID, &app.Name, &app.Description, &app.IsDocker, &app.OwnerID, &app.SlackWebhookUrl,
-		&app.DiscordWebhookUrl, &app.IpAddress, &app.Port)
+	row := stmt.QueryRowContext(ctx, appID, ownerID)
+	err = row.Scan(&app.ID, &app.Name, &app.Description, &app.IsDocker, &app.OwnerID, &app.SlackWebhookURL,
+		&app.DiscordWebhookURL, &app.IPAddress, &app.Port)
 	if err != nil {
 		a.loggerService.Error(failedToExecuteSelectQuery, map[string]any{
 			"query": query,
-			"args":  appId,
+			"args":  appID,
 			"err":   err.Error(),
 		})
 		return nil, models.NewError(500, "Database", failedToGetDataFromDatabase)
@@ -116,7 +116,7 @@ func (a *AppRepository) GetApp(ctx context.Context, appId string, ownerId int) (
 	return &app, nil
 }
 
-func (a *AppRepository) GetApps(ctx context.Context, ownerId int) ([]models.App, error) {
+func (a *AppRepository) GetApps(ctx context.Context, ownerID int) ([]models.App, error) {
 	query := `SELECT 
 		id, 
 		name, 
@@ -134,7 +134,7 @@ func (a *AppRepository) GetApps(ctx context.Context, ownerId int) ([]models.App,
 		a.loggerService.Error(failedToPrepareQuery, map[string]any{
 			"query": query,
 			"args": map[string]any{
-				"ownerId": ownerId,
+				"ownerID": ownerID,
 			},
 			"err": err.Error(),
 		})
@@ -146,7 +146,7 @@ func (a *AppRepository) GetApps(ctx context.Context, ownerId int) ([]models.App,
 		}
 	}()
 
-	rows, err := stmt.QueryContext(ctx, ownerId)
+	rows, err := stmt.QueryContext(ctx, ownerID)
 	if err != nil {
 		a.loggerService.Error(failedToExecuteSelectQuery, map[string]any{
 			"query": query,
@@ -169,9 +169,9 @@ func (a *AppRepository) GetApps(ctx context.Context, ownerId int) ([]models.App,
 			&app.Description,
 			&app.IsDocker,
 			&app.OwnerID,
-			&app.SlackWebhookUrl,
-			&app.DiscordWebhookUrl,
-			&app.IpAddress,
+			&app.SlackWebhookURL,
+			&app.DiscordWebhookURL,
+			&app.IPAddress,
 			&app.Port,
 		)
 		if err != nil {
@@ -183,7 +183,7 @@ func (a *AppRepository) GetApps(ctx context.Context, ownerId int) ([]models.App,
 	return apps, nil
 }
 
-func (a *AppRepository) DeleteApp(ctx context.Context, appId string, ownerId int) error {
+func (a *AppRepository) DeleteApp(ctx context.Context, appID string, ownerID int) error {
 	query := `DELETE FROM apps WHERE id = $1 AND owner_id = $2 `
 	stmt, err := a.db.PrepareContext(ctx, query)
 	if err != nil {
@@ -199,11 +199,11 @@ func (a *AppRepository) DeleteApp(ctx context.Context, appId string, ownerId int
 		}
 	}()
 
-	_, err = stmt.ExecContext(ctx, appId, ownerId)
+	_, err = stmt.ExecContext(ctx, appID, ownerID)
 	if err != nil {
 		a.loggerService.Error(failedToExecuteDeleteQuery, map[string]any{
 			"query": query,
-			"args":  appId,
+			"args":  appID,
 			"err":   err.Error(),
 		})
 		return models.NewError(500, "Database", "Failed to delete app from database")
@@ -212,7 +212,7 @@ func (a *AppRepository) DeleteApp(ctx context.Context, appId string, ownerId int
 	return nil
 }
 
-func (a *AppRepository) GetAppStatus(ctx context.Context, appId string, ownerId int) (DTO.AppStatus, error) {
+func (a *AppRepository) GetAppStatus(ctx context.Context, appID string, ownerID int) (DTO.AppStatus, error) {
 	query := "SELECT * FROM apps_statuses WHERE apps_statuses.app_id = $1 AND owner_id = $2	"
 	stmt, err := a.db.PrepareContext(ctx, query)
 	if err != nil {
@@ -229,12 +229,12 @@ func (a *AppRepository) GetAppStatus(ctx context.Context, appId string, ownerId 
 	}()
 
 	var appStatus DTO.AppStatus
-	err = stmt.QueryRowContext(ctx, appId, ownerId).Scan(&appStatus.AppID, &appStatus.Status, &appStatus.ChangedAt,
+	err = stmt.QueryRowContext(ctx, appID, ownerID).Scan(&appStatus.AppID, &appStatus.Status, &appStatus.ChangedAt,
 		&appStatus.Duration)
 	if err != nil {
 		a.loggerService.Error(failedToExecuteSelectQuery, map[string]any{
 			"query": query,
-			"args":  appId,
+			"args":  appID,
 			"err":   err.Error(),
 		})
 		return DTO.AppStatus{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
@@ -286,7 +286,7 @@ func (a *AppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppToChec
 	apps := make([]*models.AppToCheck, 0)
 	for rows.Next() {
 		app := &models.AppToCheck{}
-		err := rows.Scan(&app.ID, &app.Name, &app.OwnerID, &app.IsDocker, &app.IpAddress, &app.Port, &app.Status)
+		err := rows.Scan(&app.ID, &app.Name, &app.OwnerID, &app.IsDocker, &app.IPAddress, &app.Port, &app.Status)
 		if err != nil {
 			a.loggerService.Error(failedToScanRows, map[string]any{
 				"query": query,
@@ -308,7 +308,7 @@ func (a *AppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppToChec
 	return apps, nil
 }
 
-func (a *AppRepository) UpdateApp(ctx context.Context, appId string, app DTO.UpdateApp, ownerId int) error {
+func (a *AppRepository) UpdateApp(ctx context.Context, appID string, app DTO.UpdateApp, ownerID int) error {
 	query := `
 	UPDATE apps SET 
         name = $1,
@@ -334,13 +334,13 @@ func (a *AppRepository) UpdateApp(ctx context.Context, appId string, app DTO.Upd
 		}
 	}()
 
-	_, err = stmt.ExecContext(ctx, app.Name, app.Description, app.IpAddress, app.Port, app.DiscordWebhookUrl,
-		app.SlackWebhookUrl, appId, ownerId)
+	_, err = stmt.ExecContext(ctx, app.Name, app.Description, app.IPAddress, app.Port, app.DiscordWebhookURL,
+		app.SlackWebhookURL, appID, ownerID)
 	if err != nil {
 		a.loggerService.Error(failedToExecuteUpdateQuery, map[string]any{
 			"query": query,
 			"args": map[string]any{
-				"appId":   appId,
+				"appID":   appID,
 				"appInfo": app,
 			},
 			"err": err.Error(),
@@ -465,8 +465,8 @@ func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsSta
 	var notifications []models.NotificationInfo
 	for rows.Next() {
 		var notification models.NotificationInfo
-		err := rows.Scan(&notification.ID, &notification.Name, &notification.Status, &notification.DiscordWebhookUrl,
-			&notification.SlackWebhookUrl, &notification.Email, &notification.EmailNotificationsSettings,
+		err := rows.Scan(&notification.ID, &notification.Name, &notification.Status, &notification.DiscordWebhookURL,
+			&notification.SlackWebhookURL, &notification.Email, &notification.EmailNotificationsSettings,
 			&notification.DiscordNotificationsSettings, &notification.SlackNotificationsSettings)
 		if err != nil {
 			a.loggerService.Error(failedToScanRows, map[string]any{

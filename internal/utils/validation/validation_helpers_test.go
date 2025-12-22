@@ -77,32 +77,31 @@ func TestValidateSchema(t *testing.T) {
 	}
 }
 
-func TestValidateUsersIds(t *testing.T) {
+func TestValidateUsersIDs(t *testing.T) {
 	type args struct {
 		name            string
-		userId          int
-		userIdFromToken int
+		userID          int
+		userIDFromToken int
 		expectedError   error
 	}
 	testsScenarios := []args{
 		{
 			name:            "Different ids",
-			userId:          2,
-			userIdFromToken: 1,
-			expectedError:   errors.New("Provided user id's are different"),
+			userID:          2,
+			userIDFromToken: 1,
+			expectedError:   errors.New("provided user id's are different"),
 		},
 		{
 			name:            "Proper data",
-			userId:          1,
-			userIdFromToken: 1,
+			userID:          1,
+			userIDFromToken: 1,
 			expectedError:   nil,
 		},
 	}
 	for _, testScenario := range testsScenarios {
 		t.Run(testScenario.name, func(t *testing.T) {
-			err := ValidateUsersIds(testScenario.userId, testScenario.userIdFromToken)
+			err := ValidateUsersIDs(testScenario.userID, testScenario.userIDFromToken)
 			if testScenario.expectedError != nil {
-
 				assert.Equal(t, testScenario.expectedError.Error(), err.Error())
 			} else {
 				assert.Nil(t, err)

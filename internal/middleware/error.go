@@ -19,12 +19,8 @@ func ErrorHandler(next http.Handler) http.Handler {
 		if errVal == nil {
 			return
 		}
-		err, ok := errVal.(error)
-		if !ok || err == nil {
-			return
-		}
 		var customErr *models.Error
-		isCustomErr := errors.As(err, &customErr)
+		isCustomErr := errors.As(errVal, &customErr)
 		if isCustomErr {
 			if customErr == nil {
 				response.Send(w, 500, map[string]string{

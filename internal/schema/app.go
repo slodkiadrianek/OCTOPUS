@@ -11,9 +11,10 @@ var CreateAppSchema = z.Struct(z.Shape{
 	"slackWebhookUrl":   z.String().Optional().Max(256),
 })
 
-var AppIdSchema = z.Struct(z.Shape{
+var AppIDSchema = z.Struct(z.Shape{
 	"appId": z.String().Required().Max(64),
 })
+
 var UpdateAppSchema = z.Struct(z.Shape{
 	"name":              z.String().Required().Max(64),
 	"description":       z.String().Optional().Max(256),

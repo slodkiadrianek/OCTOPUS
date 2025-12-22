@@ -3,6 +3,7 @@ package servicesApp
 import (
 	"context"
 	"errors"
+	"testing"
 
 	"github.com/slodkiadrianek/octopus/internal/config"
 	"github.com/slodkiadrianek/octopus/internal/models"
@@ -12,8 +13,6 @@ import (
 	"github.com/slodkiadrianek/octopus/tests/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-
-	"testing"
 )
 
 func TestRouteStatusService_sortRoutesToTest(t *testing.T) {
@@ -33,17 +32,17 @@ func TestRouteStatusService_sortRoutesToTest(t *testing.T) {
 				{
 					ParentID: 0,
 					Name:     "First Route",
-					AppId:    "1",
+					AppID:    "1",
 				},
 				{
 					ParentID: 1,
 					Name:     "First Route",
-					AppId:    "1",
+					AppID:    "1",
 				},
 				{
 					ParentID: 0,
 					Name:     "Third Route",
-					AppId:    "3",
+					AppID:    "3",
 				},
 			},
 			expectedData: map[string][]models.RouteToTest{
@@ -51,19 +50,19 @@ func TestRouteStatusService_sortRoutesToTest(t *testing.T) {
 					{
 						ParentID: 0,
 						Name:     "First Route",
-						AppId:    "1",
+						AppID:    "1",
 					},
 					{
 						ParentID: 1,
 						Name:     "First Route",
-						AppId:    "1",
+						AppID:    "1",
 					},
 				},
 				"Third Route3": {
 					{
 						ParentID: 0,
 						Name:     "Third Route",
-						AppId:    "3",
+						AppID:    "3",
 					},
 				},
 			},
@@ -73,11 +72,11 @@ func TestRouteStatusService_sortRoutesToTest(t *testing.T) {
 	for _, testScenario := range testsScenarios {
 		t.Run(testScenario.name, func(t *testing.T) {
 			loggerService := tests.CreateLogger()
-			db, err := config.NewDb(env.DbLink, "postgres")
+			db, err := config.NewDB(env.DBLink, "postgres")
 			if err != nil {
 				panic(err)
 			}
-			routeRepository := repository.NewRouteRepository(db.DbConnection, loggerService)
+			routeRepository := repository.NewRouteRepository(db.DBConnection, loggerService)
 			routeStatusService := NewRouteStatusService(routeRepository, loggerService)
 			sortedData := routeStatusService.sortRoutesToTest(testScenario.routeToTest)
 			assert.Equal(t, testScenario.expectedData, sortedData)
@@ -89,7 +88,7 @@ func TestRouteStatusService_addParamsToThePath(t *testing.T) {
 	type args struct {
 		name         string
 		path         string
-		params       models.JsonMapStringString
+		params       models.JSONMapStringString
 		expectedData string
 	}
 	env, err := config.SetConfig(tests.EnvFileLocationForServices)
@@ -99,21 +98,21 @@ func TestRouteStatusService_addParamsToThePath(t *testing.T) {
 	testsScenarios := []args{
 		{
 			name: "Properly added params to the path",
-			path: "/users/{userId}",
-			params: models.JsonMapStringString{
-				"userId": "userId",
+			path: "/users/{userID}",
+			params: models.JSONMapStringString{
+				"userID": "userID",
 			},
-			expectedData: "/users/userId",
+			expectedData: "/users/userID",
 		},
 	}
 	for _, testScenario := range testsScenarios {
 		t.Run(testScenario.name, func(t *testing.T) {
 			loggerService := tests.CreateLogger()
-			db, err := config.NewDb(env.DbLink, "postgres")
+			db, err := config.NewDB(env.DBLink, "postgres")
 			if err != nil {
 				panic(err)
 			}
-			routeRepository := repository.NewRouteRepository(db.DbConnection, loggerService)
+			routeRepository := repository.NewRouteRepository(db.DBConnection, loggerService)
 			routeStatusService := NewRouteStatusService(routeRepository, loggerService)
 			pathWithParamsIncluded := routeStatusService.addParamsToThePath(testScenario.path, testScenario.params)
 			assert.Equal(t, testScenario.expectedData, pathWithParamsIncluded)
@@ -127,7 +126,7 @@ func TestRouteStatusService_prepareDataForTestRequest(t *testing.T) {
 		route                       models.RouteToTest
 		expectedAuthorizationHeader string
 		expectedUrl                 string
-		expectedJsonData            []byte
+		expectedJSONData            []byte
 		expectedError               error
 	}
 	env, err := config.SetConfig(tests.EnvFileLocationForServices)
@@ -139,34 +138,34 @@ func TestRouteStatusService_prepareDataForTestRequest(t *testing.T) {
 			name: "Properly prepared route for the test request",
 			route: models.RouteToTest{
 				RequestAuthorization: "fj349f83hf893h9834fh834",
-				RequestQuery:         map[string]string{"userId": "userId"},
-				Path:                 "/users/{userId}",
+				RequestQuery:         map[string]string{"userID": "userID"},
+				Path:                 "/users/{userID}",
 				RequestParams: map[string]string{
-					"userId": "userId",
+					"userID": "userID",
 				},
-				RequestBody: map[string]any{"appId": "appId"},
-				IpAddress:   "127.0.0.1",
+				RequestBody: map[string]any{"appID": "appID"},
+				IPAddress:   "127.0.0.1",
 				Port:        "8080",
 			},
 			expectedAuthorizationHeader: "Bearer fj349f83hf893h9834fh834",
-			expectedUrl:                 "http://127.0.0.1:8080/users/userId?userId=userId",
-			expectedJsonData:            []uint8([]byte{0x7b, 0x22, 0x61, 0x70, 0x70, 0x49, 0x64, 0x22, 0x3a, 0x22, 0x61, 0x70, 0x70, 0x49, 0x64, 0x22, 0x7d}),
+			expectedUrl:                 "http://127.0.0.1:8080/users/userID?userID=userID",
+			expectedJSONData:            []uint8([]byte{0x7b, 0x22, 0x61, 0x70, 0x70, 0x49, 0x64, 0x22, 0x3a, 0x22, 0x61, 0x70, 0x70, 0x49, 0x64, 0x22, 0x7d}),
 			expectedError:               nil,
 		},
 	}
 	for _, testScenario := range testsScenarios {
 		t.Run(testScenario.name, func(t *testing.T) {
 			loggerService := tests.CreateLogger()
-			db, err := config.NewDb(env.DbLink, "postgres")
+			db, err := config.NewDB(env.DBLink, "postgres")
 			if err != nil {
 				panic(err)
 			}
-			routeRepository := repository.NewRouteRepository(db.DbConnection, loggerService)
+			routeRepository := repository.NewRouteRepository(db.DBConnection, loggerService)
 			routeStatusService := NewRouteStatusService(routeRepository, loggerService)
 			authorizationHeader, url, jsonData, err := routeStatusService.prepareRouteDataForTestRequest(testScenario.route)
 			assert.Equal(t, testScenario.expectedAuthorizationHeader, authorizationHeader)
 			assert.Equal(t, testScenario.expectedUrl, url)
-			assert.Equal(t, testScenario.expectedJsonData, jsonData)
+			assert.Equal(t, testScenario.expectedJSONData, jsonData)
 			assert.Equal(t, testScenario.expectedError, err)
 		})
 	}
@@ -192,11 +191,11 @@ func TestRouteStatusService_prepareRouteDataForTheNextRoute(t *testing.T) {
 		{
 			name: "Properly prepared route for the next request and checked routeStatus with nextRouteBody",
 			route: models.RouteToTest{
-				NextRouteBody: models.JsonStringSlice{"userId"},
+				NextRouteBody: models.JSONStringSlice{"userID"},
 			},
-			key:                              "userId",
-			val:                              "userId",
-			expectedNextRouteBody:            map[string]any{"userId": "userId"},
+			key:                              "userID",
+			val:                              "userID",
+			expectedNextRouteBody:            map[string]any{"userID": "userID"},
 			expectedNextRouteParams:          map[string]string{},
 			expectedRouteQuery:               map[string]string{},
 			expectedRouteAuthorizationHeader: "",
@@ -205,12 +204,12 @@ func TestRouteStatusService_prepareRouteDataForTheNextRoute(t *testing.T) {
 		{
 			name: "Properly prepared route for the next request and checked routeStatus with nextRouteParams",
 			route: models.RouteToTest{
-				NextRouteParams: models.JsonStringSlice{"userId"},
+				NextRouteParams: models.JSONStringSlice{"userID"},
 			},
-			key:                              "userId",
-			val:                              "userId",
+			key:                              "userID",
+			val:                              "userID",
 			expectedNextRouteBody:            map[string]any{},
-			expectedNextRouteParams:          map[string]string{"userId": "userId"},
+			expectedNextRouteParams:          map[string]string{"userID": "userID"},
 			expectedRouteQuery:               map[string]string{},
 			expectedRouteAuthorizationHeader: "",
 			expectedRouteStatus:              "unknown",
@@ -218,35 +217,35 @@ func TestRouteStatusService_prepareRouteDataForTheNextRoute(t *testing.T) {
 		{
 			name: "Properly prepared route for the next request and checked routeStatus with nextRouteQuery",
 			route: models.RouteToTest{
-				NextRouteQuery: models.JsonStringSlice{"userId"},
+				NextRouteQuery: models.JSONStringSlice{"userID"},
 			},
-			key:                              "userId",
-			val:                              "userId",
+			key:                              "userID",
+			val:                              "userID",
 			expectedNextRouteBody:            map[string]any{},
 			expectedNextRouteParams:          map[string]string{},
-			expectedRouteQuery:               map[string]string{"userId": "userId"},
+			expectedRouteQuery:               map[string]string{"userID": "userID"},
 			expectedRouteAuthorizationHeader: "",
 			expectedRouteStatus:              "unknown",
 		},
 		{
 			name: "Properly prepared route for the next request and checked routeStatus with nextRouteAuthorizationHeader",
 			route: models.RouteToTest{
-				NextAuthorizationHeader: "userId",
+				NextAuthorizationHeader: "userID",
 			},
-			key:                              "userId",
-			val:                              "userId",
+			key:                              "userID",
+			val:                              "userID",
 			expectedNextRouteBody:            map[string]any{},
 			expectedNextRouteParams:          map[string]string{},
 			expectedRouteQuery:               map[string]string{},
-			expectedRouteAuthorizationHeader: "userId",
+			expectedRouteAuthorizationHeader: "userID",
 			expectedRouteStatus:              "unknown",
 		},
 		{
 			name: "Failed to assign value to the nexRouteQuery",
 			route: models.RouteToTest{
-				NextRouteQuery: models.JsonStringSlice{"userId"},
+				NextRouteQuery: models.JSONStringSlice{"userID"},
 			},
-			key:                              "userId",
+			key:                              "userID",
 			val:                              2,
 			expectedNextRouteBody:            nil,
 			expectedNextRouteParams:          nil,
@@ -257,9 +256,9 @@ func TestRouteStatusService_prepareRouteDataForTheNextRoute(t *testing.T) {
 		{
 			name: "Failed to assign value to the nexRouteParams",
 			route: models.RouteToTest{
-				NextRouteParams: models.JsonStringSlice{"userId"},
+				NextRouteParams: models.JSONStringSlice{"userID"},
 			},
-			key:                              "userId",
+			key:                              "userID",
 			val:                              2,
 			expectedNextRouteBody:            nil,
 			expectedNextRouteParams:          nil,
@@ -270,9 +269,9 @@ func TestRouteStatusService_prepareRouteDataForTheNextRoute(t *testing.T) {
 		{
 			name: "Failed to assign value to the nexRouteAuthorizationHeader",
 			route: models.RouteToTest{
-				NextAuthorizationHeader: "userId",
+				NextAuthorizationHeader: "userID",
 			},
-			key:                              "userId",
+			key:                              "userID",
 			val:                              2,
 			expectedNextRouteBody:            nil,
 			expectedNextRouteParams:          nil,
@@ -283,13 +282,12 @@ func TestRouteStatusService_prepareRouteDataForTheNextRoute(t *testing.T) {
 	}
 	for _, testScenario := range testsScenarios {
 		t.Run(testScenario.name, func(t *testing.T) {
-
 			loggerService := tests.CreateLogger()
-			db, err := config.NewDb(env.DbLink, "postgres")
+			db, err := config.NewDB(env.DBLink, "postgres")
 			if err != nil {
 				panic(err)
 			}
-			routeRepository := repository.NewRouteRepository(db.DbConnection, loggerService)
+			routeRepository := repository.NewRouteRepository(db.DBConnection, loggerService)
 			routeStatusService := NewRouteStatusService(routeRepository, loggerService)
 			nextRouteBody, nextRouteParams, nextRouteQuery, nextRouteAuthorizationHeader, routeStatus := routeStatusService.prepareDataForTheNextRoute(testScenario.route, testScenario.key, testScenario.val)
 			assert.Equal(t, testScenario.expectedNextRouteBody, nextRouteBody)
@@ -332,18 +330,18 @@ func TestRouteStatusService_CheckRoutesStatus(t *testing.T) {
 				mRouteRepository := new(mocks.MockRouteRepository)
 				mRouteRepository.On("GetWorkingRoutesToTest", mock.Anything).Return([]models.RouteToTest{
 					{
-						IpAddress: "jsonplaceholder.typicode.com",
+						IPAddress: "jsonplaceholder.typicode.com",
 						Port:      "80",
-						Path:      "/posts/{postId}",
+						Path:      "/posts/{postID}",
 						Method:    "GET",
 						RequestParams: map[string]string{
-							"postId": "1",
+							"postID": "1",
 						},
 						ResponseBody: map[string]any{
 							"id":     1,
 							"body":   "quia et suscipit suscipit recusandae consequuntur expedita et cum reprehenderit molestiae ut ut quas totam nostrum rerum est autem sunt rem eveniet architecto",
 							"title":  "sunt aut facere repellat provident occaecati excepturi optio reprehenderit",
-							"userId": 1,
+							"userID": 1,
 						},
 					},
 				}, nil)
@@ -358,18 +356,18 @@ func TestRouteStatusService_CheckRoutesStatus(t *testing.T) {
 				mRouteRepository := new(mocks.MockRouteRepository)
 				mRouteRepository.On("GetWorkingRoutesToTest", mock.Anything).Return([]models.RouteToTest{
 					{
-						IpAddress: "jsonplaceholder.typicode.com",
+						IPAddress: "jsonplaceholder.typicode.com",
 						Port:      "80",
-						Path:      "/posts/{postId}",
+						Path:      "/posts/{postID}",
 						Method:    "GET",
 						RequestParams: map[string]string{
-							"postId": "1",
+							"postID": "1",
 						},
 						ResponseBody: map[string]any{
 							"id":     1,
 							"body":   "quia et suscipit suscipit recusandae consequuntur expedita et cum reprehenderit molestiae ut ut quas totam nostrum rerum est autem sunt rem eveniet architecto",
 							"title":  "sunt aut facere repellat provident occaecati excepturi optio reprehenderit",
-							"userId": 1,
+							"userID": 1,
 						},
 					},
 				}, nil)
@@ -384,7 +382,7 @@ func TestRouteStatusService_CheckRoutesStatus(t *testing.T) {
 				mRouteRepository := new(mocks.MockRouteRepository)
 				mRouteRepository.On("GetWorkingRoutesToTest", mock.Anything).Return([]models.RouteToTest{
 					{
-						IpAddress:          "192.168.0.100",
+						IPAddress:          "192.168.0.100",
 						Port:               "3040",
 						Path:               "/api/v1/auth/login",
 						Method:             "POST",
@@ -403,13 +401,13 @@ func TestRouteStatusService_CheckRoutesStatus(t *testing.T) {
 					{
 						ParentID:           72,
 						ID:                 73,
-						IpAddress:          "192.168.0.100",
+						IPAddress:          "192.168.0.100",
 						Port:               "3040",
-						Path:               "/api/v1/users/{userId}",
+						Path:               "/api/v1/users/{userID}",
 						Method:             "GET",
 						ResponseStatusCode: 200,
 						RequestParams: map[string]string{
-							"userId": "17",
+							"userID": "17",
 						},
 						ResponseBody: map[string]any{
 							"id":                   "17",
@@ -436,7 +434,7 @@ func TestRouteStatusService_CheckRoutesStatus(t *testing.T) {
 				mRouteRepository := new(mocks.MockRouteRepository)
 				mRouteRepository.On("GetWorkingRoutesToTest", mock.Anything).Return([]models.RouteToTest{
 					{
-						IpAddress:          "192.168.0.100",
+						IPAddress:          "192.168.0.100",
 						Port:               "3040",
 						Path:               "/api/v1/auth/login",
 						Method:             "POST",
@@ -455,13 +453,13 @@ func TestRouteStatusService_CheckRoutesStatus(t *testing.T) {
 					{
 						ParentID:           72,
 						ID:                 73,
-						IpAddress:          "192.168.0.100",
+						IPAddress:          "192.168.0.100",
 						Port:               "3040",
-						Path:               "/api/v1/users/{userId}",
+						Path:               "/api/v1/users/{userID}",
 						Method:             "GET",
 						ResponseStatusCode: 200,
 						RequestParams: map[string]string{
-							"userId": "17",
+							"userID": "17",
 						},
 						ResponseBody: map[string]any{
 							"id":                   "17",
@@ -488,7 +486,7 @@ func TestRouteStatusService_CheckRoutesStatus(t *testing.T) {
 				mRouteRepository := new(mocks.MockRouteRepository)
 				mRouteRepository.On("GetWorkingRoutesToTest", mock.Anything).Return([]models.RouteToTest{
 					{
-						IpAddress:          "192.168.0.100",
+						IPAddress:          "192.168.0.100",
 						Port:               "3040",
 						Path:               "/api/v1/auth/login",
 						Method:             "POST",
@@ -507,13 +505,13 @@ func TestRouteStatusService_CheckRoutesStatus(t *testing.T) {
 					{
 						ParentID:           72,
 						ID:                 73,
-						IpAddress:          "192.168.0.100",
+						IPAddress:          "192.168.0.100",
 						Port:               "3040",
-						Path:               "/api/v1/users/{userId}",
+						Path:               "/api/v1/users/{userID}",
 						Method:             "GET",
 						ResponseStatusCode: 200,
 						RequestParams: map[string]string{
-							"userId": "17",
+							"userID": "17",
 						},
 						ResponseBody: map[string]any{
 							"id":                   "17",

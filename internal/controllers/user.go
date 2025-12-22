@@ -17,12 +17,12 @@ import (
 )
 
 type userService interface {
-	GetUser(ctx context.Context, userId int) (models.User, error)
+	GetUser(ctx context.Context, userID int) (models.User, error)
 	InsertUserToDb(ctx context.Context, user DTO.CreateUser, password string) error
-	UpdateUser(ctx context.Context, user DTO.CreateUser, userId int) error
-	UpdateUserNotifications(ctx context.Context, userId int, userNotifications DTO.UpdateUserNotificationsSettings) error
-	DeleteUser(ctx context.Context, userId int, password string) error
-	ChangeUserPassword(ctx context.Context, userId int, currentPassword string, newPassword string) error
+	UpdateUser(ctx context.Context, user DTO.CreateUser, userID int) error
+	UpdateUserNotifications(ctx context.Context, userID int, userNotifications DTO.UpdateUserNotificationsSettings) error
+	DeleteUser(ctx context.Context, userID int, password string) error
+	ChangeUserPassword(ctx context.Context, userID int, currentPassword string, newPassword string) error
 }
 type UserController struct {
 	userService   userService
@@ -37,32 +37,37 @@ func NewUserController(userService userService, loggerService utils.LoggerServic
 }
 
 func (u *UserController) GetUserInfo(w http.ResponseWriter, r *http.Request) {
-	userIdString, err := request.ReadParam(r, "userId")
+	userIDString, err := request.ReadParam(r, "userID")
 	if err != nil {
 		u.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
 		response.SetError(w, r, err)
 		return
 	}
 
-	userId, err := strconv.Atoi(userIdString)
-	userIdFromJwt, err := request.ReadUserIdFromToken(r)
+	userID, err := strconv.Atoi(userIDString)
+	if err != nil {
+		u.loggerService.Error("failed to covnert string to int", err)
+		response.SetError(w, r, err)
+		return
+	}
+	userIDFromJwt, err := request.ReadUserIDFromToken(r)
 	if err != nil {
 		u.loggerService.Error(failedToReadDataFromToken)
 		response.SetError(w, r, err)
 		return
 	}
 
-	err = validation.ValidateUsersIds(userId, userIdFromJwt)
+	err = validation.ValidateUsersIDs(userID, userIDFromJwt)
 	if err != nil {
 		u.loggerService.Error("You are not allowed to do this action", map[string]any{
 			"path":        r.URL.Path,
-			"userIdToken": userIdFromJwt,
+			"userIDToken": userIDFromJwt,
 		})
 		response.SetError(w, r, err)
 		return
 	}
 
-	user, err := u.userService.GetUser(r.Context(), userId)
+	user, err := u.userService.GetUser(r.Context(), userID)
 	if err != nil {
 		response.SetError(w, r, err)
 		return
@@ -97,38 +102,38 @@ func (u *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userIdString, err := request.ReadParam(r, "userId")
+	userIDString, err := request.ReadParam(r, "userID")
 	if err != nil {
 		u.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
 		response.SetError(w, r, err)
 		return
 	}
 
-	userId, err := strconv.Atoi(userIdString)
+	userID, err := strconv.Atoi(userIDString)
 	if err != nil {
 		response.SetError(w, r, err)
 		return
 	}
 
-	userIdFromJwt, err := request.ReadUserIdFromToken(r)
+	userIDFromJwt, err := request.ReadUserIDFromToken(r)
 	if err != nil {
 		u.loggerService.Error(failedToReadDataFromToken)
 		response.SetError(w, r, err)
 		return
 	}
 
-	err = validation.ValidateUsersIds(userId, userIdFromJwt)
+	err = validation.ValidateUsersIDs(userID, userIDFromJwt)
 	if err != nil {
 		u.loggerService.Error("You are not allowed to do this action", map[string]any{
 			"path":        r.URL.Path,
-			"userIdToken": userIdFromJwt,
+			"userIDToken": userIDFromJwt,
 		})
 		response.SetError(w, r, err)
 		return
 	}
 
 	userDto := DTO.NewCreateUser(userBody.Email, userBody.Name, userBody.Surname)
-	err = u.userService.UpdateUser(r.Context(), *userDto, userId)
+	err = u.userService.UpdateUser(r.Context(), *userDto, userID)
 	if err != nil {
 		response.SetError(w, r, err)
 		return
@@ -145,37 +150,37 @@ func (u *UserController) UpdateUserNotifications(w http.ResponseWriter, r *http.
 		return
 	}
 
-	userIdString, err := request.ReadParam(r, "userId")
+	userIDString, err := request.ReadParam(r, "userID")
 	if err != nil {
 		u.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
 		response.SetError(w, r, err)
 		return
 	}
 
-	userId, err := strconv.Atoi(userIdString)
+	userID, err := strconv.Atoi(userIDString)
 	if err != nil {
 		response.SetError(w, r, err)
 		return
 	}
 
-	userIdFromJwt, err := request.ReadUserIdFromToken(r)
+	userIDFromJwt, err := request.ReadUserIDFromToken(r)
 	if err != nil {
 		u.loggerService.Error(failedToReadDataFromToken)
 		response.SetError(w, r, err)
 		return
 	}
 
-	err = validation.ValidateUsersIds(userId, userIdFromJwt)
+	err = validation.ValidateUsersIDs(userID, userIDFromJwt)
 	if err != nil {
 		u.loggerService.Error("You are not allowed to do this action", map[string]any{
 			"path":        r.URL.Path,
-			"userIdToken": userIdFromJwt,
+			"userIDToken": userIDFromJwt,
 		})
 		response.SetError(w, r, err)
 		return
 	}
 
-	err = u.userService.UpdateUserNotifications(r.Context(), userId, *userBody)
+	err = u.userService.UpdateUserNotifications(r.Context(), userID, *userBody)
 	if err != nil {
 		response.SetError(w, r, err)
 		return
@@ -192,32 +197,37 @@ func (u *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userIdString, err := request.ReadParam(r, "userId")
+	userIDString, err := request.ReadParam(r, "userID")
 	if err != nil {
 		u.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
 		response.SetError(w, r, err)
 		return
 	}
 
-	userId, err := strconv.Atoi(userIdString)
-	userIdFromJwt, err := request.ReadUserIdFromToken(r)
+	userID, err := strconv.Atoi(userIDString)
+	if err != nil {
+		u.loggerService.Error("failed to covnert string to int", err)
+		response.SetError(w, r, err)
+		return
+	}
+	userIDFromJwt, err := request.ReadUserIDFromToken(r)
 	if err != nil {
 		u.loggerService.Error(failedToReadDataFromToken)
 		response.SetError(w, r, err)
 		return
 	}
 
-	err = validation.ValidateUsersIds(userId, userIdFromJwt)
+	err = validation.ValidateUsersIDs(userID, userIDFromJwt)
 	if err != nil {
 		u.loggerService.Error("You are not allowed to do this action", map[string]any{
 			"path":        r.URL.Path,
-			"userIdToken": userIdFromJwt,
+			"userIDToken": userIDFromJwt,
 		})
 		response.SetError(w, r, err)
 		return
 	}
 
-	err = u.userService.DeleteUser(r.Context(), userId, userBody.Password)
+	err = u.userService.DeleteUser(r.Context(), userID, userBody.Password)
 	if err != nil {
 		response.SetError(w, r, err)
 		return
@@ -234,26 +244,31 @@ func (u *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	userIdString, err := request.ReadParam(r, "userId")
+	userIDString, err := request.ReadParam(r, "userID")
 	if err != nil {
 		u.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
 		response.SetError(w, r, err)
 		return
 	}
 
-	userId, err := strconv.Atoi(userIdString)
-	userIdFromJwt, err := request.ReadUserIdFromToken(r)
+	userID, err := strconv.Atoi(userIDString)
+	if err != nil {
+		u.loggerService.Error("failed to covnert string to int", err)
+		response.SetError(w, r, err)
+		return
+	}
+	userIDFromJwt, err := request.ReadUserIDFromToken(r)
 	if err != nil {
 		u.loggerService.Error(failedToReadDataFromToken)
 		response.SetError(w, r, err)
 		return
 	}
 
-	err = validation.ValidateUsersIds(userId, userIdFromJwt)
+	err = validation.ValidateUsersIDs(userID, userIDFromJwt)
 	if err != nil {
 		u.loggerService.Error("You are not allowed to do this action", map[string]any{
 			"path":        r.URL.Path,
-			"userIdToken": userIdFromJwt,
+			"userIDToken": userIDFromJwt,
 		})
 		response.SetError(w, r, err)
 		return
@@ -265,7 +280,7 @@ func (u *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	err = u.userService.ChangeUserPassword(r.Context(), userId, userBody.CurrentPassword, userBody.NewPassword)
+	err = u.userService.ChangeUserPassword(r.Context(), userID, userBody.CurrentPassword, userBody.NewPassword)
 	if err != nil {
 		response.SetError(w, r, err)
 	}

@@ -6,22 +6,22 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type Db struct {
-	DbConnection *sql.DB
+type DB struct {
+	DBConnection *sql.DB
 }
 
-func NewDb(databaseLink, driver string) (*Db, error) {
+func NewDB(databaseLink, driver string) (*DB, error) {
 	dbConnection, err := sql.Open(driver, databaseLink)
 	if err != nil {
-		return &Db{}, err
+		return &DB{}, err
 	}
 
 	err = dbConnection.Ping()
 	if err != nil {
-		return &Db{}, err
+		return &DB{}, err
 	}
 
-	return &Db{
-		DbConnection: dbConnection,
+	return &DB{
+		DBConnection: dbConnection,
 	}, nil
 }

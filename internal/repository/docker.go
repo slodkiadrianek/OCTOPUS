@@ -16,10 +16,9 @@ func NewDockerRepository(db *sql.DB, loggerService utils.LoggerService) *DockerR
 		db:            db,
 		loggerService: loggerService,
 	}
-	
 }
 
-func (dr *DockerRepository) ImportContainers(ownerId int) error {
+func (dr *DockerRepository) ImportContainers(ownerID int) error {
 	// Implementation of importing docker containers
 	return nil
 }

@@ -36,7 +36,7 @@ var UpdateUserSchema = z.Struct(z.Shape{
 	}),
 })
 
-var UserIdSchema = z.Struct(z.Shape{
+var UserIDSchema = z.Struct(z.Shape{
 	"userId": z.String().Required(),
 })
 

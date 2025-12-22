@@ -62,7 +62,7 @@ func TestAppService_CreateApp(t *testing.T) {
 			app := DTO.CreateApp{
 				Name:        "test",
 				Description: "",
-				IpAddress:   "192.168.2.22",
+				IPAddress:   "192.168.2.22",
 				Port:        "3020",
 			}
 			err := appService.CreateApp(ctx, app, 345)
@@ -190,6 +190,7 @@ func TestAppService_GetApps(t *testing.T) {
 		})
 	}
 }
+
 func TestAppService_DeleteApp(t *testing.T) {
 	env, err := config.SetConfig(tests.EnvFileLocationForServices)
 	if err != nil {
@@ -243,6 +244,7 @@ func TestAppService_DeleteApp(t *testing.T) {
 		})
 	}
 }
+
 func TestAppService_UpdateApp(t *testing.T) {
 	env, err := config.SetConfig(tests.EnvFileLocationForServices)
 	if err != nil {
@@ -285,7 +287,7 @@ func TestAppService_UpdateApp(t *testing.T) {
 			appNotificationsService := NewAppNotificationsService(appRepository, loggerService)
 			routeStatusService := NewRouteStatusService(routeRepository, loggerService)
 			appService := NewAppService(appRepository, loggerService, appStatusService, appNotificationsService, routeStatusService)
-			app := DTO.UpdateApp{Name: "Test", Description: "test", Port: "3020", IpAddress: "192.168.20.10"}
+			app := DTO.UpdateApp{Name: "Test", Description: "test", Port: "3020", IPAddress: "192.168.20.10"}
 			err := appService.UpdateApp(ctx,
 				"delete", app, 21)
 			if testScenario.expectedError == nil {
@@ -384,7 +386,7 @@ func TestAppService_CheckAppsStatus(t *testing.T) {
 					{
 						ID:        "r32r23r",
 						IsDocker:  false,
-						IpAddress: "192.168.0.100",
+						IPAddress: "192.168.0.100",
 						Port:      env.Port,
 					},
 				},
@@ -407,7 +409,7 @@ func TestAppService_CheckAppsStatus(t *testing.T) {
 					{
 						ID:        "r32r23r",
 						IsDocker:  false,
-						IpAddress: "192.168.0.100",
+						IPAddress: "192.168.0.100",
 						Port:      env.Port,
 					},
 				},
@@ -430,7 +432,7 @@ func TestAppService_CheckAppsStatus(t *testing.T) {
 					{
 						ID:        "r32r23r",
 						IsDocker:  false,
-						IpAddress: "192.168.0.100",
+						IPAddress: "192.168.0.100",
 						Port:      "9999",
 					},
 				},
@@ -453,7 +455,7 @@ func TestAppService_CheckAppsStatus(t *testing.T) {
 					{
 						ID:        "r32r23r",
 						IsDocker:  false,
-						IpAddress: "192.168.0.100",
+						IPAddress: "192.168.0.100",
 						Port:      env.Port,
 					},
 				},
@@ -491,7 +493,6 @@ func TestAppService_CheckAppsStatus(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-
 		})
 	}
 }

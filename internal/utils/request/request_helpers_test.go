@@ -5,20 +5,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
-	"github.com/slodkiadrianek/octopus/internal/utils"
-	"github.com/slodkiadrianek/octopus/tests"
-
 	"io"
 	"net/http"
 	"net/url"
 	"testing"
 
+	"github.com/slodkiadrianek/octopus/internal/utils"
+	"github.com/slodkiadrianek/octopus/tests"
+
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestRemoveLastCharacterFromUrl(t *testing.T) {
+func TestRemoveLastCharacterFromURL(t *testing.T) {
 	type args struct {
 		name         string
 		urlPath      string
@@ -31,7 +30,7 @@ func TestRemoveLastCharacterFromUrl(t *testing.T) {
 	}
 
 	t.Run(testScenario.name, func(t *testing.T) {
-		res := RemoveLastCharacterFromUrl(testScenario.urlPath)
+		res := RemoveLastCharacterFromURL(testScenario.urlPath)
 		assert.Equal(t, testScenario.expectedData, res)
 	})
 }
@@ -40,7 +39,7 @@ func TestReadParam(t *testing.T) {
 	type args struct {
 		name          string
 		urlPath       string
-		routeKeyUrl   any
+		routeKeyURL   any
 		paramToRead   string
 		expectedError error
 		expectedData  string
@@ -49,32 +48,32 @@ func TestReadParam(t *testing.T) {
 		{
 			name:          "Proper urlPath and expectedData with 1 param in path",
 			urlPath:       "/users/1",
-			routeKeyUrl:   "/users/:userId",
-			paramToRead:   "userId",
+			routeKeyURL:   "/users/:userID",
+			paramToRead:   "userID",
 			expectedError: nil,
 			expectedData:  "1",
 		},
 		{
 			name:          "Proper urlPath and expectedData with 2 params in path",
 			urlPath:       "/users/1/posts/1",
-			routeKeyUrl:   "/users/:userId/posts/:postId",
-			paramToRead:   "postId",
+			routeKeyURL:   "/users/:userID/posts/:postID",
+			paramToRead:   "postID",
 			expectedError: nil,
 			expectedData:  "1",
 		},
 		{
 			name:          "lack off the requested param",
 			urlPath:       "/users/1",
-			routeKeyUrl:   "/users/:userId",
-			paramToRead:   "postId",
-			expectedError: errors.New("The is no parameter called: postId"),
+			routeKeyURL:   "/users/:userID",
+			paramToRead:   "postID",
+			expectedError: errors.New("The is no parameter called: postID"),
 			expectedData:  "",
 		},
 		{
 			name:          "Wrong type for value stored in context",
 			urlPath:       "/users/1",
-			routeKeyUrl:   1,
-			paramToRead:   "postId",
+			routeKeyURL:   1,
+			paramToRead:   "postID",
 			expectedError: errors.New("failed to read context routeKeyPath, must be type string"),
 			expectedData:  "",
 		},
@@ -85,7 +84,7 @@ func TestReadParam(t *testing.T) {
 			var r http.Request
 			r.URL = &url.URL{}
 			r.URL.Path = testScenario.urlPath
-			ctx := context.WithValue(r.Context(), "routeKeyPath", testScenario.routeKeyUrl)
+			ctx := context.WithValue(r.Context(), "routeKeyPath", testScenario.routeKeyURL)
 			r = *r.WithContext(ctx)
 			res, err := ReadParam(&r, testScenario.paramToRead)
 			if testScenario.expectedError != nil {
@@ -153,7 +152,7 @@ func TestReadBody(t *testing.T) {
 func TestMatchRoutes(t *testing.T) {
 	type args struct {
 		name         string
-		routeKeyUrl  string
+		routeKeyURL  string
 		urlPath      string
 		expectedData bool
 	}
@@ -161,31 +160,31 @@ func TestMatchRoutes(t *testing.T) {
 	testsScenarios := []args{
 		{
 			name:         "testScenario same urls",
-			routeKeyUrl:  "/url/v1/v1",
+			routeKeyURL:  "/url/v1/v1",
 			urlPath:      "/url/v1/v1",
 			expectedData: true,
 		},
 		{
 			name:         "testScenario different urls but with the same length",
-			routeKeyUrl:  "/ur2",
+			routeKeyURL:  "/ur2",
 			urlPath:      "/ur1",
 			expectedData: false,
 		},
 		{
 			name:         "testScenario urls with different lengths",
-			routeKeyUrl:  "/url",
+			routeKeyURL:  "/url",
 			urlPath:      "/url/12232",
 			expectedData: false,
 		},
 		{
 			name:         "testScenario urls with different lengths",
-			routeKeyUrl:  "/url1",
+			routeKeyURL:  "/url1",
 			urlPath:      "/url1",
 			expectedData: true,
 		},
 		{
 			name:         "testScenario urls with parameters included in path",
-			routeKeyUrl:  "/url1/:id/123",
+			routeKeyURL:  "/url1/:id/123",
 			urlPath:      "/url1/1/123",
 			expectedData: true,
 		},
@@ -193,7 +192,7 @@ func TestMatchRoutes(t *testing.T) {
 
 	for _, testScenario := range testsScenarios {
 		t.Run(testScenario.name, func(t *testing.T) {
-			res := MatchRoute(testScenario.routeKeyUrl, testScenario.urlPath)
+			res := MatchRoute(testScenario.routeKeyURL, testScenario.urlPath)
 			assert.Equal(t, testScenario.expectedData, res)
 		})
 	}
@@ -239,24 +238,24 @@ func TestCheckRouteParams(t *testing.T) {
 		{
 			name: "Proper data provided",
 			actualRoute: DTO.CreateRoute{
-				RequestParams: map[string]string{"appId": "1232131", "userId": "329dfhb329"},
-				Path:          "/{appId}/{userId}",
+				RequestParams: map[string]string{"appID": "1232131", "userID": "329dfhb329"},
+				Path:          "/{appID}/{userID}",
 			},
 			expectedResult: true,
 		},
 		{
 			name: "Wrong path provided",
 			actualRoute: DTO.CreateRoute{
-				RequestParams: map[string]string{"appId": "1232131", "userId": "329dfhb329"},
-				Path:          "/{appId}",
+				RequestParams: map[string]string{"appID": "1232131", "userID": "329dfhb329"},
+				Path:          "/{appID}",
 			},
 			expectedResult: false,
 		},
 		{
 			name: "Wrong  request params provided",
 			actualRoute: DTO.CreateRoute{
-				RequestParams: map[string]string{"userId": "329dfhb329"},
-				Path:          "/{appId}",
+				RequestParams: map[string]string{"userID": "329dfhb329"},
+				Path:          "/{appID}",
 			},
 			expectedResult: false,
 		},
@@ -279,7 +278,7 @@ func TestReadAllParams(t *testing.T) {
 	testsScenarios := []args{
 		{
 			name:          "Proper data provided",
-			routeKeyPath:  tests.Ptr("/:appId/:userId"),
+			routeKeyPath:  tests.Ptr("/:appID/:userID"),
 			url:           "/f234f3f43/3",
 			expectedError: nil,
 		},
@@ -300,7 +299,6 @@ func TestReadAllParams(t *testing.T) {
 				r = utils.SetContext(r, "routeKeyPath", *testScenario.routeKeyPath)
 			} else {
 				r = utils.SetContext(r, "routeKeyPath", testScenario.routeKeyPath)
-
 			}
 			res, err := ReadAllParams(r)
 			fmt.Println(err)
@@ -311,7 +309,6 @@ func TestReadAllParams(t *testing.T) {
 				assert.NotEmpty(t, res)
 				assert.Nil(t, err)
 			}
-
 		})
 	}
 }
@@ -327,7 +324,6 @@ func TestSendHttp(t *testing.T) {
 		expectedError       error
 	}
 	testsScenarios := []args{
-
 		{
 			name:                "Proper data provided without read body from response",
 			url:                 "https://jsonplaceholder.typicode.com/todos/1",
@@ -386,7 +382,7 @@ func TestSendHttp(t *testing.T) {
 	for _, testScenario := range testsScenarios {
 		t.Run(testScenario.name, func(t *testing.T) {
 			ctx := context.Background()
-			statusCode, bodyFromResponse, err := SendHttp(ctx, testScenario.url, testScenario.authorizationHeader,
+			statusCode, bodyFromResponse, err := SendHTTP(ctx, testScenario.url, testScenario.authorizationHeader,
 				testScenario.method, testScenario.body, testScenario.bodyFromResponse)
 			fmt.Println(err)
 			if testScenario.expectedError != nil {
@@ -403,7 +399,7 @@ func TestSendHttp(t *testing.T) {
 	}
 }
 
-func TestReadUserIdFromToken(t *testing.T) {
+func TestReadUserIDFromToken(t *testing.T) {
 	type args struct {
 		name          string
 		id            *int
@@ -431,9 +427,8 @@ func TestReadUserIdFromToken(t *testing.T) {
 				r = utils.SetContext(r, "id", *testScenario.id)
 			} else {
 				r = utils.SetContext(r, "id", testScenario.id)
-
 			}
-			res, err := ReadUserIdFromToken(r)
+			res, err := ReadUserIDFromToken(r)
 			if testScenario.expectedError != nil {
 				assert.Equal(t, err.Error(), testScenario.expectedError.Error())
 				assert.Equal(t, 0, res)
@@ -441,7 +436,6 @@ func TestReadUserIdFromToken(t *testing.T) {
 				assert.Nil(t, testScenario.expectedError)
 				assert.NotEqual(t, 0, res)
 			}
-
 		})
 	}
 }

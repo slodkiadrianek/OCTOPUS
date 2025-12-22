@@ -108,7 +108,7 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 			cacheService := tests.CreateCacheService(loggerService)
 			userService := NewUserService(loggerService, userRepository, cacheService)
 			user := DTO.NewCreateUser("adikurek@cos.com", "Adrian", "Kurek")
-			err := userService.InsertUserToDb(ctx, *user, testScenario.password)
+			err := userService.InsertUserToDB(ctx, *user, testScenario.password)
 			if testScenario.expectedError == nil {
 				assert.NoError(t, err)
 			} else {
@@ -321,7 +321,6 @@ func TestUserService_GetUser(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestUserService_DeleteUser(t *testing.T) {

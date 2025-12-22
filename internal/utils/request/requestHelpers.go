@@ -12,11 +12,11 @@ import (
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 )
 
-func SendHttp(ctx context.Context, url, authorizationHeader, method string, body []byte, readBody bool) (int,
+func SendHTTP(ctx context.Context, URL, authorizationHeader, method string, body []byte, readBody bool) (int,
 	map[string]any, error,
 ) {
 	httpClient := &http.Client{}
-	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(ctx, method, URL, bytes.NewBuffer(body))
 	if err != nil {
 		return 0, map[string]any{}, err
 	}
@@ -41,13 +41,13 @@ func SendHttp(ctx context.Context, url, authorizationHeader, method string, body
 	return response.StatusCode, bodyFromResponse, nil
 }
 
-func ReadUserIdFromToken(r *http.Request) (int, error) {
-	userId, ok := r.Context().Value("id").(int)
-	if !ok || userId == 0 {
+func ReadUserIDFromToken(r *http.Request) (int, error) {
+	userID, ok := r.Context().Value("id").(int)
+	if !ok || userID == 0 {
 		err := errors.New("Failed to read user from context")
 		return 0, err
 	}
-	return userId, nil
+	return userID, nil
 }
 
 func ReadBody[T any](r *http.Request) (*T, error) {
@@ -71,19 +71,19 @@ func ReadQueryParam(r *http.Request, QueryName string) string {
 	return name
 }
 
-func MatchRoute(routeUrl, urlPath string) bool {
-	splittedRouteUrl := strings.Split(strings.Trim(routeUrl, "/"), "/")
-	splittedUrlPath := strings.Split(strings.Trim(urlPath, "/"), "/")
+func MatchRoute(routeURL, URLPath string) bool {
+	splittedRouteURL := strings.Split(strings.Trim(routeURL, "/"), "/")
+	splittedURLPath := strings.Split(strings.Trim(URLPath, "/"), "/")
 
-	if len(splittedRouteUrl) != len(splittedUrlPath) {
+	if len(splittedRouteURL) != len(splittedURLPath) {
 		return false
 	}
 
-	for i := 0; i < len(splittedRouteUrl); i++ {
-		if strings.Contains(splittedRouteUrl[i], ":") {
+	for i := 0; i < len(splittedRouteURL); i++ {
+		if strings.Contains(splittedRouteURL[i], ":") {
 			continue
 		}
-		if splittedUrlPath[i] != splittedRouteUrl[i] {
+		if splittedURLPath[i] != splittedRouteURL[i] {
 			return false
 		}
 	}
@@ -154,7 +154,7 @@ func CheckRouteParams(actualRoute DTO.CreateRoute) bool {
 	return true
 }
 
-func RemoveLastCharacterFromUrl(route string) string {
+func RemoveLastCharacterFromURL(route string) string {
 	if string(route[len(route)-1]) == "/" {
 		route = route[:len(route)-1]
 	}

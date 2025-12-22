@@ -135,8 +135,8 @@ WHERE aps.status = 'running'
 	var routesToTest []models.RouteToTest
 	for rows.Next() {
 		var routeToTest models.RouteToTest
-		err := rows.Scan(&routeToTest.ID, &routeToTest.IpAddress, &routeToTest.Port, &routeToTest.Name,
-			&routeToTest.AppId,
+		err := rows.Scan(&routeToTest.ID, &routeToTest.IPAddress, &routeToTest.Port, &routeToTest.Name,
+			&routeToTest.AppID,
 			&routeToTest.ParentID, &routeToTest.Status,
 			&routeToTest.Path,
 			&routeToTest.Method, &routeToTest.RequestAuthorization, &routeToTest.RequestQuery, &routeToTest.RequestParams, &routeToTest.RequestBody, &routeToTest.NextRouteBody, &routeToTest.NextRouteParams, &routeToTest.NextRouteQuery, &routeToTest.NextAuthorizationHeader, &routeToTest.ResponseStatusCode, &routeToTest.ResponseBody)
@@ -200,10 +200,10 @@ func (r *RouteRepository) InsertRoutesInfo(ctx context.Context, routesInfo []*DT
 		}
 	}()
 
-	routesInfoIds := make([]int, 0, len(routesInfo))
+	routesInfoIDs := make([]int, 0, len(routesInfo))
 	for rows.Next() {
-		var routeInfoId int
-		err := rows.Scan(&routeInfoId)
+		var routeInfoID int
+		err := rows.Scan(&routeInfoID)
 		if err != nil {
 			r.loggerService.Error(failedToScanRow, map[string]any{
 				"query": insertQuery,
@@ -211,9 +211,9 @@ func (r *RouteRepository) InsertRoutesInfo(ctx context.Context, routesInfo []*DT
 			})
 			return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 		}
-		routesInfoIds = append(routesInfoIds, routeInfoId)
+		routesInfoIDs = append(routesInfoIDs, routeInfoID)
 	}
-	return routesInfoIds, nil
+	return routesInfoIDs, nil
 }
 
 func (r *RouteRepository) InsertRoutesRequests(ctx context.Context,
@@ -271,10 +271,10 @@ func (r *RouteRepository) InsertRoutesRequests(ctx context.Context,
 		}
 	}()
 
-	routesRequestsIds := make([]int, 0, len(routesRequests))
+	routesRequestsIDs := make([]int, 0, len(routesRequests))
 	for rows.Next() {
-		var routeRequestId int
-		err := rows.Scan(&routeRequestId)
+		var routeRequestID int
+		err := rows.Scan(&routeRequestID)
 		if err != nil {
 			r.loggerService.Error(failedToScanRow, map[string]any{
 				"query": insertQuery,
@@ -282,9 +282,9 @@ func (r *RouteRepository) InsertRoutesRequests(ctx context.Context,
 			})
 			return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 		}
-		routesRequestsIds = append(routesRequestsIds, routeRequestId)
+		routesRequestsIDs = append(routesRequestsIDs, routeRequestID)
 	}
-	return routesRequestsIds, nil
+	return routesRequestsIDs, nil
 }
 
 func (r *RouteRepository) InsertRoutesResponses(ctx context.Context,
@@ -338,10 +338,10 @@ func (r *RouteRepository) InsertRoutesResponses(ctx context.Context,
 		}
 	}()
 
-	routesResponsesIds := make([]int, 0, len(routesResponses))
+	routesResponsesIDs := make([]int, 0, len(routesResponses))
 	for rows.Next() {
-		var routeResponseId int
-		err := rows.Scan(&routeResponseId)
+		var routeResponseID int
+		err := rows.Scan(&routeResponseID)
 		if err != nil {
 			r.loggerService.Error(failedToScanRow, map[string]any{
 				"query": insertQuery,
@@ -349,9 +349,9 @@ func (r *RouteRepository) InsertRoutesResponses(ctx context.Context,
 			})
 			return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 		}
-		routesResponsesIds = append(routesResponsesIds, routeResponseId)
+		routesResponsesIDs = append(routesResponsesIDs, routeResponseID)
 	}
-	return routesResponsesIds, nil
+	return routesResponsesIDs, nil
 }
 
 func (r *RouteRepository) InsertNextRoutesData(ctx context.Context,
@@ -414,10 +414,10 @@ JOIN upserted u USING (body,params,query,authorization_header);
 		}
 	}()
 
-	nextRoutesDataIds := make([]int, 0, len(nextRoutes))
+	nextRoutesDataIDs := make([]int, 0, len(nextRoutes))
 	for rows.Next() {
-		var nextRouteDataId int
-		err := rows.Scan(&nextRouteDataId)
+		var nextRouteDataID int
+		err := rows.Scan(&nextRouteDataID)
 		if err != nil {
 			r.loggerService.Error(failedToScanRow, map[string]any{
 				"query": insertQuery,
@@ -425,9 +425,9 @@ JOIN upserted u USING (body,params,query,authorization_header);
 			})
 			return []int{}, models.NewError(500, "Database", failedToGetDataFromDatabase)
 		}
-		nextRoutesDataIds = append(nextRoutesDataIds, nextRouteDataId)
+		nextRoutesDataIDs = append(nextRoutesDataIDs, nextRouteDataID)
 	}
-	return nextRoutesDataIds, nil
+	return nextRoutesDataIDs, nil
 }
 
 func (r *RouteRepository) InsertWorkingRoute(ctx context.Context, workingRoute DTO.WorkingRoute) (int,
@@ -469,8 +469,8 @@ RETURNING id`
 	}()
 
 	var id int
-	err = stmt.QueryRowContext(ctx, workingRoute.Name, workingRoute.AppId, workingRoute.ParentID, workingRoute.RouteID,
-		workingRoute.RequestID, workingRoute.ResponseID, workingRoute.NextRouteDataId, workingRoute.Status).Scan(&id)
+	err = stmt.QueryRowContext(ctx, workingRoute.Name, workingRoute.AppID, workingRoute.ParentID, workingRoute.RouteID,
+		workingRoute.RequestID, workingRoute.ResponseID, workingRoute.NextRouteDataID, workingRoute.Status).Scan(&id)
 	if err != nil {
 		r.loggerService.Error(failedToExecuteInsertQuery, map[string]any{
 			"query": insertQuery,

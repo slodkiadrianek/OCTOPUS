@@ -17,7 +17,8 @@ type RouteStatusService struct {
 }
 
 func NewRouteStatusService(routeRepository interfaces.RouteRepository,
-	loggerService utils.LoggerService) *RouteStatusService {
+	loggerService utils.LoggerService,
+) *RouteStatusService {
 	return &RouteStatusService{
 		routeRepository: routeRepository,
 		loggerService:   loggerService,
@@ -27,7 +28,7 @@ func NewRouteStatusService(routeRepository interfaces.RouteRepository,
 func (rs *RouteStatusService) sortRoutesToTest(routesToTest []models.RouteToTest) map[string][]models.RouteToTest {
 	sortedRoutesToTests := make(map[string][]models.RouteToTest, len(routesToTest))
 	for _, routeToTest := range routesToTest {
-		key := routeToTest.Name + routeToTest.AppId
+		key := routeToTest.Name + routeToTest.AppID
 		if routeToTest.ParentID == 0 {
 			sortedRoutesToTests[key] = append([]models.RouteToTest{routeToTest},
 				sortedRoutesToTests[key]...)
@@ -39,7 +40,7 @@ func (rs *RouteStatusService) sortRoutesToTest(routesToTest []models.RouteToTest
 	return sortedRoutesToTests
 }
 
-func (rs *RouteStatusService) addParamsToThePath(path string, params models.JsonMapStringString) string {
+func (rs *RouteStatusService) addParamsToThePath(path string, params models.JSONMapStringString) string {
 	splittedPath := strings.Split(path, "/")
 	for i := 0; i < len(splittedPath); i++ {
 		partOfPath := splittedPath[i]
@@ -64,7 +65,7 @@ func (rs *RouteStatusService) prepareRouteDataForTestRequest(route models.RouteT
 	}
 
 	path := rs.addParamsToThePath(route.Path, route.RequestParams)
-	url = "http://" + route.IpAddress + ":" + route.Port + path + "?" + strings.Join(query, "&")
+	url = "http://" + route.IPAddress + ":" + route.Port + path + "?" + strings.Join(query, "&")
 
 	preparedBody, err = utils.MarshalData(route.RequestBody)
 	if err != nil {
@@ -162,9 +163,8 @@ func (rs *RouteStatusService) CheckRoutesStatus(ctx context.Context) error {
 				return err
 			}
 
-			responseStatusCode, responseBody, err := request.SendHttp(ctx, url, authorizationHeader, route.Method,
+			responseStatusCode, responseBody, err := request.SendHTTP(ctx, url, authorizationHeader, route.Method,
 				body, true)
-
 			if err != nil {
 				rs.loggerService.Info("Failed to check route", map[string]any{
 					"url":    url,

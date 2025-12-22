@@ -13,7 +13,7 @@ import (
 )
 
 type routeService interface {
-	AddWorkingRoutes(ctx context.Context, routes *[]DTO.CreateRoute, appId string, name string) error
+	AddWorkingRoutes(ctx context.Context, routes *[]DTO.CreateRoute, appID string, name string) error
 }
 type RouteController struct {
 	routeService  routeService
@@ -28,7 +28,7 @@ func NewRouteController(routeService routeService, loggerService utils.LoggerSer
 }
 
 func (rc *RouteController) AddWorkingRoutes(w http.ResponseWriter, r *http.Request) {
-	appId, err := request.ReadParam(r, "appId")
+	appID, err := request.ReadParam(r, "appID")
 	if err != nil {
 		rc.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
 		response.SetError(w, r, err)
@@ -112,10 +112,10 @@ func (rc *RouteController) AddWorkingRoutes(w http.ResponseWriter, r *http.Reque
 			return
 		}
 
-		routes[i].ParentId = i
+		routes[i].ParentID = i
 	}
 
-	err = rc.routeService.AddWorkingRoutes(r.Context(), &routes, appId, body.Name)
+	err = rc.routeService.AddWorkingRoutes(r.Context(), &routes, appID, body.Name)
 	if err != nil {
 		response.SetError(w, r, err)
 		return

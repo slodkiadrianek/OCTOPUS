@@ -17,23 +17,23 @@ func (m *MockAppRepository) InsertApp(ctx context.Context, app []DTO.App) error 
 	return args.Error(0)
 }
 
-func (m *MockAppRepository) GetApp(ctx context.Context, id string, ownerId int) (*models.App, error) {
-	args := m.Called(ctx, id, ownerId)
+func (m *MockAppRepository) GetApp(ctx context.Context, id string, ownerID int) (*models.App, error) {
+	args := m.Called(ctx, id, ownerID)
 	return args.Get(0).(*models.App), args.Error(1)
 }
 
-func (m *MockAppRepository) GetApps(ctx context.Context, ownerId int) ([]models.App, error) {
-	args := m.Called(ctx, ownerId)
+func (m *MockAppRepository) GetApps(ctx context.Context, ownerID int) ([]models.App, error) {
+	args := m.Called(ctx, ownerID)
 	return args.Get(0).([]models.App), args.Error(1)
 }
 
-func (m *MockAppRepository) DeleteApp(ctx context.Context, id string, ownerId int) error {
-	args := m.Called(ctx, id, ownerId)
+func (m *MockAppRepository) DeleteApp(ctx context.Context, id string, ownerID int) error {
+	args := m.Called(ctx, id, ownerID)
 	return args.Error(0)
 }
 
-func (m *MockAppRepository) GetAppStatus(ctx context.Context, id string, ownerId int) (DTO.AppStatus, error) {
-	args := m.Called(ctx, id, ownerId)
+func (m *MockAppRepository) GetAppStatus(ctx context.Context, id string, ownerID int) (DTO.AppStatus, error) {
+	args := m.Called(ctx, id, ownerID)
 	return args.Get(0).(DTO.AppStatus), args.Error(1)
 }
 
@@ -42,8 +42,8 @@ func (m *MockAppRepository) GetAppsToCheck(ctx context.Context) ([]*models.AppTo
 	return args.Get(0).([]*models.AppToCheck), args.Error(1)
 }
 
-func (m *MockAppRepository) UpdateApp(ctx context.Context, appId string, app DTO.UpdateApp, ownerId int) error {
-	args := m.Called(ctx, appId, app, ownerId)
+func (m *MockAppRepository) UpdateApp(ctx context.Context, appID string, app DTO.UpdateApp, ownerID int) error {
+	args := m.Called(ctx, appID, app, ownerID)
 	return args.Error(0)
 }
 

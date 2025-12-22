@@ -44,7 +44,7 @@ func (a AuthController) LoginUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a AuthController) VerifyUser(w http.ResponseWriter, r *http.Request) {
-	userId, err := request.ReadUserIdFromToken(r)
+	userID, err := request.ReadUserIDFromToken(r)
 	if err != nil {
 		a.loggerService.Error(failedToReadDataFromToken)
 		response.SetError(w, r, err)
@@ -52,7 +52,7 @@ func (a AuthController) VerifyUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.Send(w, 204, map[string]int{
-		"userId": userId,
+		"userID": userID,
 	})
 }
 

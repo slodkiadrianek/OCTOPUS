@@ -2,13 +2,14 @@ package validation
 
 import (
 	"errors"
+
 	z "github.com/Oudwins/zog"
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 )
 
-func ValidateUsersIds(userId, userIdFromToken int) error {
-	if userIdFromToken != userId {
-		err := errors.New("Provided user id's are different")
+func ValidateUsersIDs(userID, userIDFromToken int) error {
+	if userIDFromToken != userID {
+		err := errors.New("provided user id's are different")
 		return err
 	}
 	return nil

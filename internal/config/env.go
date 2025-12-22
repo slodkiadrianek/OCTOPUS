@@ -11,7 +11,7 @@ import (
 type Env struct {
 	Port       string
 	JWTSecret  string
-	DbLink     string
+	DBLink     string
 	CacheLink  string
 	DockerHost string
 }
@@ -59,8 +59,8 @@ func (e *Env) Validate() error {
 		return errors.New("JWT_SECRET is required")
 	}
 
-	if e.DbLink == "" {
-		return errors.New("DbLink is required")
+	if e.DBLink == "" {
+		return errors.New("DBLink is required")
 	}
 
 	if e.CacheLink == "" {
@@ -83,7 +83,7 @@ func SetConfig(filepath string) (*Env, error) {
 	return &Env{
 		Port:       envVariables["Port"],
 		JWTSecret:  envVariables["JWTSecret"],
-		DbLink:     envVariables["DbLink"],
+		DBLink:     envVariables["DBLink"],
 		CacheLink:  envVariables["CacheLink"],
 		DockerHost: envVariables["DockerHost"],
 	}, nil
