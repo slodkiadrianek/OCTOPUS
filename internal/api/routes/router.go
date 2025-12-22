@@ -69,7 +69,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 	}
-	response.SendResponse(w, 404, map[string]string{"errorDescription": "Route not found"})
+	response.Send(w, 404, map[string]string{"errorDescription": "Route not found"})
 }
 
 func (r *Router) Group(prefix string) *GroupRouter {

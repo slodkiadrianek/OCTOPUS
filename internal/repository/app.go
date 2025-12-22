@@ -27,7 +27,7 @@ func (a *AppRepository) InsertApp(ctx context.Context, app []DTO.App) error {
 	placeholders := make([]string, 0, len(app))
 	args := make([]any, 0, len(app))
 	for i := range app {
-		preparedValues := fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d),", i*6+1, i*6+2, i*6+3, i*6+4, i*6+5, i*6+6)
+		preparedValues := fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d)", i*6+1, i*6+2, i*6+3, i*6+4, i*6+5, i*6+6)
 		args = append(args, app[i].ID, app[i].Name, app[i].IsDocker, app[i].OwnerID, app[i].IpAddress, app[i].Port)
 		placeholders = append(placeholders, preparedValues)
 	}

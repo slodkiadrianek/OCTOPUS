@@ -9,7 +9,6 @@ type AppController interface {
 	UpdateApp(w http.ResponseWriter, r *http.Request)
 	DeleteApp(w http.ResponseWriter, r *http.Request)
 	GetAppStatus(w http.ResponseWriter, r *http.Request)
-	GetDbStatus(w http.ResponseWriter, r *http.Request)
 }
 
 type DockerController interface {

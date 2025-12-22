@@ -2,12 +2,15 @@ package thirdPartyServices
 
 import (
 	"context"
+	"fmt"
 	"runtime"
+	"strings"
 	"sync"
 
 	containerTypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/slodkiadrianek/octopus/internal/DTO"
+	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/services/interfaces"
 	"github.com/slodkiadrianek/octopus/internal/utils"
 )
@@ -89,7 +92,8 @@ func (dc *DockerService) StopContainer(ctx context.Context, appId string) error 
 
 	return err
 }
-func (dc *DockerService) prepareContainersDataToInert(containers []containerTypes.Summary, ownerId int) []DTO.App {
+
+func (dc *DockerService) prepareContainersDataToInsert(containers []containerTypes.Summary, ownerId int, importedApps []models.App) []DTO.App {
 	workerCount := runtime.NumCPU()
 	jobs := make(chan containerTypes.Summary, len(containers))
 	appsChan := make(chan DTO.App, len(containers))
@@ -99,9 +103,20 @@ func (dc *DockerService) prepareContainersDataToInert(containers []containerType
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+		outer:
 			for job := range jobs {
+				for _, app := range importedApps {
+					if app.ID == job.ID {
+						break outer
+					}
+				}
 				preparedAppName := job.Names[0][1:]
-				appsChan <- *DTO.NewApp(job.ID, preparedAppName, "", true, ownerId, "", "")
+				if len(job.Ports) > 0 {
+					preparedPort := fmt.Sprintf("%d", job.Ports[0].PrivatePort)
+					splittedDockerHost := strings.Split(dc.dockerHost, "//")[1]
+					preparedIpAddress := strings.Split(splittedDockerHost, ":")[0]
+					appsChan <- *DTO.NewApp(job.ID, preparedAppName, "", true, ownerId, preparedIpAddress, preparedPort)
+				}
 			}
 		}()
 	}
@@ -120,6 +135,11 @@ func (dc *DockerService) prepareContainersDataToInert(containers []containerType
 }
 
 func (dc *DockerService) ImportContainers(ctx context.Context, ownerId int) error {
+	importedApps, err := dc.appRepository.GetApps(ctx, ownerId)
+	if err != nil {
+		return err
+	}
+
 	cli, err := client.NewClientWithOpts(client.WithHost(dc.dockerHost), client.WithAPIVersionNegotiation())
 	if err != nil {
 		return err
@@ -132,7 +152,10 @@ func (dc *DockerService) ImportContainers(ctx context.Context, ownerId int) erro
 		return err
 	}
 
-	appsToInsert := dc.prepareContainersDataToInert(containers, ownerId)
+	appsToInsert := dc.prepareContainersDataToInsert(containers, ownerId, importedApps)
+	if len(appsToInsert) == 0 {
+		return nil
+	}
 	err = dc.appRepository.InsertApp(ctx, appsToInsert)
 	if err != nil {
 		return err
