@@ -102,14 +102,14 @@ func (u *UserService) InsertUserToDB(ctx context.Context, user DTO.CreateUser, p
 	doesUserExists, err := u.userRepository.FindUserByEmail(ctx, user.Email)
 	if err != nil {
 		if err.Error() == "User not found" {
-			u.loggerService.Info("User not found", user.Email)
-			return models.NewError(400, "NotFound", "User not found")
+			u.loggerService.Info("user not found", user.Email)
+			return models.NewError(400, "NotFound", "user not found")
 		}
 		return models.NewError(500, "InternalError", err.Error())
 	}
 	if doesUserExists.ID > 0 {
-		u.loggerService.Info("User with this email already exists", user.Email)
-		return models.NewError(400, "Verification", "User with this email already exists")
+		u.loggerService.Info("user with this email already exists", user.Email)
+		return models.NewError(400, "Verification", "user with this email already exists")
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -167,14 +167,14 @@ func (u *UserService) DeleteUser(ctx context.Context, userID int, password strin
 	}
 
 	if user.ID == 0 {
-		u.loggerService.Info("User with this id does not exist", userID)
-		return models.NewError(400, "Verification", "User with this id does not exist")
+		u.loggerService.Info("user with this id does not exist", userID)
+		return models.NewError(400, "Verification", "user with this id does not exist")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		u.loggerService.Info("Wrong password provided", userID)
-		return models.NewError(401, "Authorization", "Wrong password provided")
+		u.loggerService.Info("wrong password provided", userID)
+		return models.NewError(401, "Authorization", "wrong password provided")
 	}
 
 	err = u.userRepository.DeleteUser(ctx, password, userID)
@@ -211,13 +211,13 @@ func (u *UserService) ChangeUserPassword(ctx context.Context, userID int, curren
 		}
 	}
 	if user.ID == 0 {
-		u.loggerService.Info("User with this id does not exist", userID)
-		return models.NewError(400, "Verification", "User with this id does not exist")
+		u.loggerService.Info("user with this id does not exist", userID)
+		return models.NewError(400, "Verification", "user with this id does not exist")
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(currentPassword))
 	if err != nil {
-		u.loggerService.Info("Wrong current password provided", userID)
-		return models.NewError(401, "Authorization", "Wrong current password provided")
+		u.loggerService.Info("wrong current password provided", userID)
+		return models.NewError(401, "Authorization", "wrong current password provided")
 	}
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {

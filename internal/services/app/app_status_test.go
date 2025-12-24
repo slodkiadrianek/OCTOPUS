@@ -58,7 +58,7 @@ func TestAppService_GetAppStatus(t *testing.T) {
 		},
 		{
 			name:          "failed to get data from cache",
-			expectedError: errors.New("Internal server error"),
+			expectedError: errors.New("internal server error"),
 			setupMock: func() (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)
@@ -70,7 +70,7 @@ func TestAppService_GetAppStatus(t *testing.T) {
 		},
 		{
 			name:          "Wrong data format provided from cache",
-			expectedError: errors.New("Internal server error"),
+			expectedError: errors.New("internal server error"),
 			setupMock: func() (interfaces.AppRepository, interfaces.CacheService) {
 				mCache := new(mocks.MockCacheService)
 				mApp := new(mocks.MockAppRepository)

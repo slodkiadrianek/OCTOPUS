@@ -310,10 +310,10 @@ func TestRouteStatusService_CheckRoutesStatus(t *testing.T) {
 			name: "Failed to get data from db",
 			setupMock: func() interfaces.RouteRepository {
 				mRouteRepository := new(mocks.MockRouteRepository)
-				mRouteRepository.On("GetWorkingRoutesToTest", mock.Anything).Return([]models.RouteToTest{}, errors.New("Failed to get data from db"))
+				mRouteRepository.On("GetWorkingRoutesToTest", mock.Anything).Return([]models.RouteToTest{}, errors.New("failed to get data from db"))
 				return mRouteRepository
 			},
-			expectedError: errors.New("Failed to get data from db"),
+			expectedError: errors.New("failed to get data from db"),
 		},
 		{
 			name: "Lack of routes to test",
@@ -371,7 +371,7 @@ func TestRouteStatusService_CheckRoutesStatus(t *testing.T) {
 						},
 					},
 				}, nil)
-				mRouteRepository.On("UpdateWorkingRoutesStatuses", mock.Anything, mock.Anything).Return(errors.New("Failed to update working route status"))
+				mRouteRepository.On("UpdateWorkingRoutesStatuses", mock.Anything, mock.Anything).Return(errors.New("failed to update working route status"))
 				return mRouteRepository
 			},
 			expectedError: errors.New("Failed to update working route status"),

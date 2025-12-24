@@ -50,7 +50,7 @@ func (r *RouteRepository) UpdateWorkingRoutesStatuses(ctx context.Context, route
 			"args":  routesStatuses,
 			"err":   err.Error(),
 		})
-		return models.NewError(500, "Database", "Failed to update routes statuses")
+		return models.NewError(500, "Database", "failed to update routes statuses")
 	}
 	defer func() {
 		if err != nil {
@@ -66,7 +66,7 @@ func (r *RouteRepository) UpdateWorkingRoutesStatuses(ctx context.Context, route
 			"query": query,
 			"err":   err.Error(),
 		})
-		return models.NewError(500, "Database", "Failed to update routes statuses")
+		return models.NewError(500, "Database", "failed to update routes statuses")
 	}
 
 	return nil

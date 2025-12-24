@@ -78,7 +78,7 @@ func (l *Logger) InitializeLogger() {
 
 	_, err = l.file.Write([]byte(fileRes))
 	if err != nil {
-		fmt.Println("Something went wrong during writing to data to the file")
+		fmt.Println("something went wrong during writing to data to the file")
 	}
 }
 
@@ -99,7 +99,7 @@ func (l *Logger) Info(msg string, data ...any) {
 
 	_, err := l.file.WriteString(fileRes)
 	if err != nil {
-		fmt.Println("Something went wrong during writing to data to the file", err)
+		fmt.Println("something went wrong during writing to data to the file", err)
 	}
 }
 
@@ -120,7 +120,7 @@ func (l *Logger) Warn(msg string, data ...any) {
 
 	_, err := l.file.Write([]byte(fileRes))
 	if err != nil {
-		fmt.Println("Something went wrong during writing to data to the file")
+		fmt.Println("something went wrong during writing to data to the file")
 	}
 }
 
@@ -140,7 +140,7 @@ func (l *Logger) Error(msg string, data ...any) {
 	fileRes := fmt.Sprintf("date:%s,type:error,message:%s,data:%v\n", fileName, msg, data)
 	_, err := l.file.Write([]byte(fileRes))
 	if err != nil {
-		fmt.Println("Something went wrong during writing to data to the file")
+		fmt.Println("something went wrong during writing to data to the file")
 	}
 }
 
@@ -148,11 +148,11 @@ func (l *Logger) Validate() {
 	actualDateFormat := l.getActualDate()
 	if actualDateFormat != l.startTime {
 
-		fmt.Println("Closing old file and creating the new one for new date")
+		fmt.Println("closing old file and creating the new one for new date")
 
 		err := l.file.Close()
 		if err != nil {
-			fmt.Println("Something went wrong during writing to data to the file")
+			fmt.Println("something went wrong during writing to data to the file")
 		}
 
 		l.startTime = actualDateFormat

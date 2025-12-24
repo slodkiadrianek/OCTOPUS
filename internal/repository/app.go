@@ -48,7 +48,7 @@ func (a *AppRepository) InsertApp(ctx context.Context, app []DTO.App) error {
 			"args":  app,
 			"err":   err.Error(),
 		})
-		return models.NewError(500, "Database", "Failed to add new app to the database")
+		return models.NewError(500, "Database", "failed to add new app to the database")
 	}
 	defer func() {
 		if closeErr := stmt.Close(); closeErr != nil {
@@ -63,7 +63,7 @@ func (a *AppRepository) InsertApp(ctx context.Context, app []DTO.App) error {
 			"args":  app,
 			"err":   err.Error(),
 		})
-		return models.NewError(500, "Database", "Failed to add new app to the database")
+		return models.NewError(500, "Database", "failed to add new app to the database")
 	}
 
 	return nil
@@ -191,7 +191,7 @@ func (a *AppRepository) DeleteApp(ctx context.Context, appID string, ownerID int
 			"query": query,
 			"err":   err.Error(),
 		})
-		return models.NewError(500, "Database", "Failed to delete app from the database")
+		return models.NewError(500, "Database", "failed to delete app from the database")
 	}
 	defer func() {
 		if closeErr := stmt.Close(); closeErr != nil {
@@ -206,7 +206,7 @@ func (a *AppRepository) DeleteApp(ctx context.Context, appID string, ownerID int
 			"args":  appID,
 			"err":   err.Error(),
 		})
-		return models.NewError(500, "Database", "Failed to delete app from database")
+		return models.NewError(500, "Database", "failed to delete app from database")
 	}
 
 	return nil
@@ -326,7 +326,7 @@ func (a *AppRepository) UpdateApp(ctx context.Context, appID string, app DTO.Upd
 			"query": query,
 			"err":   err.Error(),
 		})
-		return models.NewError(500, "Database", "Failed to update app settings")
+		return models.NewError(500, "Database", "failed to update app settings")
 	}
 	defer func() {
 		if closeErr := stmt.Close(); closeErr != nil {
@@ -345,7 +345,7 @@ func (a *AppRepository) UpdateApp(ctx context.Context, appID string, app DTO.Upd
 			},
 			"err": err.Error(),
 		})
-		return models.NewError(500, "Database", "Failed to update app settings")
+		return models.NewError(500, "Database", "failed to update app settings")
 	}
 
 	return nil
@@ -382,7 +382,7 @@ func (a *AppRepository) InsertAppStatuses(ctx context.Context, appsStatuses []DT
 			"args":  appsStatuses,
 			"err":   err.Error(),
 		})
-		return models.NewError(500, "Database", "Failed to add app statuses to the database")
+		return models.NewError(500, "Database", "failed to add app statuses to the database")
 	}
 	defer func() {
 		if closeErr := stmt.Close(); closeErr != nil {
@@ -397,7 +397,7 @@ func (a *AppRepository) InsertAppStatuses(ctx context.Context, appsStatuses []DT
 			"args":  appsStatuses,
 			"err":   err.Error(),
 		})
-		return models.NewError(500, "Database", "Failed to add app statuses to the database")
+		return models.NewError(500, "Database", "failed to add app statuses to the database")
 	}
 
 	return nil
@@ -440,7 +440,7 @@ func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsSta
 			"args":  appsStatuses,
 			"err":   err.Error(),
 		})
-		return []models.NotificationInfo{}, models.NewError(500, "Database", "Failed to get app from the database")
+		return []models.NotificationInfo{}, models.NewError(500, "Database", "failed to get app from the database")
 	}
 	defer func() {
 		if closeErr := stmt.Close(); closeErr != nil {
@@ -473,7 +473,7 @@ func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsSta
 				"query": query,
 				"err":   err.Error(),
 			})
-			return nil, models.NewError(500, "Database", "Failed to get app from the database")
+			return nil, models.NewError(500, "Database", "failed to get app from the database")
 		}
 		notifications = append(notifications, notification)
 	}
@@ -483,7 +483,7 @@ func (a *AppRepository) GetUsersToSendNotifications(ctx context.Context, appsSta
 			"query": query,
 			"err":   err.Error(),
 		})
-		return nil, models.NewError(500, "Database", "Failed to get app from the database")
+		return nil, models.NewError(500, "Database", "failed to get app from the database")
 	}
 
 	return notifications, nil

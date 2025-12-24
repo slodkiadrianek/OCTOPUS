@@ -36,12 +36,12 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 		},
 		{
 			name:          "User not found",
-			expectedError: errors.New("User not found"),
+			expectedError: errors.New("user not found"),
 			password:      "fdEW4$#f4303",
 			setupMock: func() interfaces.UserRepository {
 				mUserRepository := new(mocks.MockUserRepository)
 				mUserRepository.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
-					models.User{}, errors.New("User not found"))
+					models.User{}, errors.New("user not found"))
 				return mUserRepository
 			},
 		},
@@ -58,7 +58,7 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 		},
 		{
 			name:          "User already exists",
-			expectedError: errors.New("User with this email already exists"),
+			expectedError: errors.New("user with this email already exists"),
 			password:      "fdEW4$#f4303",
 			setupMock: func() interfaces.UserRepository {
 				mUserRepository := new(mocks.MockUserRepository)
@@ -401,7 +401,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 		},
 		{
 			name:          "User does not exist",
-			expectedError: errors.New("User with this id does not exist"),
+			expectedError: errors.New("user with this id does not exist"),
 			password:      "ci$#fm43980faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
@@ -414,7 +414,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 		},
 		{
 			name:          "Wrong password provided",
-			expectedError: errors.New("Wrong password provided"),
+			expectedError: errors.New("wrong password provided"),
 			password:      "ci$#fm43980faz2",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
@@ -523,7 +523,7 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 
 		{
 			name:          "User with this id does not exist",
-			expectedError: errors.New("User with this id does not exist"),
+			expectedError: errors.New("user with this id does not exist"),
 			password:      "ci$#fm43980faz",
 			newPassword:   "ci$#fm43980faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
@@ -537,7 +537,7 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 		},
 		{
 			name:          "Wrong password provided",
-			expectedError: errors.New("Wrong current password provided"),
+			expectedError: errors.New("wrong current password provided"),
 			password:      "ci$#fm43980faz2",
 			newPassword:   "ci$#fm43980faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {

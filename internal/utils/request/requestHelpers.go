@@ -44,7 +44,7 @@ func SendHTTP(ctx context.Context, URL, authorizationHeader, method string, body
 func ReadUserIDFromToken(r *http.Request) (int, error) {
 	userID, ok := r.Context().Value("id").(int)
 	if !ok || userID == 0 {
-		err := errors.New("Failed to read user from context")
+		err := errors.New("failed to read user from context")
 		return 0, err
 	}
 	return userID, nil
@@ -108,7 +108,7 @@ func ReadParam(r *http.Request, paramToRead string) (string, error) {
 		}
 	}
 	if param == "" {
-		return "", errors.New("The is no parameter called: " + paramToRead)
+		return "", errors.New("the is no parameter called: " + paramToRead)
 	}
 	return param, nil
 }
@@ -148,10 +148,7 @@ func CheckRouteParams(actualRoute DTO.CreateRoute) bool {
 			countParamsFromPath++
 		}
 	}
-	if countParamsFromPath != len(actualRoute.RequestParams) {
-		return false
-	}
-	return true
+	return countParamsFromPath != len(actualRoute.RequestParams)
 }
 
 func RemoveLastCharacterFromURL(route string) string {

@@ -64,7 +64,7 @@ func (u *UserRepository) InsertUserToDB(ctx context.Context, user DTO.CreateUser
 	stmt, err := u.db.PrepareContext(ctx, query)
 	if err != nil {
 		u.loggerService.Info(failedToPrepareQuery, err)
-		return models.NewError(500, "Database", "Failed to insert data to the database")
+		return models.NewError(500, "Database", "failed to insert data to the database")
 	}
 	defer func() {
 		if closeErr := stmt.Close(); closeErr != nil {
@@ -79,7 +79,7 @@ func (u *UserRepository) InsertUserToDB(ctx context.Context, user DTO.CreateUser
 			"args":  []any{user.Name, user.Surname, user.Email, password},
 			"err":   err.Error(),
 		})
-		return models.NewError(500, "Database", "Failed to insert data to the database")
+		return models.NewError(500, "Database", "failed to insert data to the database")
 	}
 
 	return nil
@@ -90,7 +90,7 @@ func (u *UserRepository) UpdateUser(ctx context.Context, user DTO.CreateUser, us
 	stmt, err := u.db.PrepareContext(ctx, query)
 	if err != nil {
 		u.loggerService.Info(failedToPrepareQuery, query)
-		return models.NewError(500, "Database", "Failed to update data in database")
+		return models.NewError(500, "Database", "failed to update data in database")
 	}
 	defer func() {
 		if closeErr := stmt.Close(); closeErr != nil {
@@ -105,7 +105,7 @@ func (u *UserRepository) UpdateUser(ctx context.Context, user DTO.CreateUser, us
 			"args":  []any{user.Name, user.Surname, user.Email, userID},
 			"err":   err.Error(),
 		})
-		return models.NewError(500, "Database", "Failed to update data in database")
+		return models.NewError(500, "Database", "failed to update data in database")
 	}
 	return nil
 }
@@ -116,7 +116,7 @@ func (u *UserRepository) UpdateUserNotifications(ctx context.Context, userID int
 	stmt, err := u.db.PrepareContext(ctx, query)
 	if err != nil {
 		u.loggerService.Info(failedToPrepareQuery, query)
-		return models.NewError(500, "Database", "Failed to update data in database")
+		return models.NewError(500, "Database", "failed to update data in database")
 	}
 	defer func() {
 		if closeErr := stmt.Close(); closeErr != nil {
@@ -131,7 +131,7 @@ func (u *UserRepository) UpdateUserNotifications(ctx context.Context, userID int
 			"args":  []any{userNotifications, userID},
 			"err":   err.Error(),
 		})
-		return models.NewError(500, "Database", "Failed to update data in database")
+		return models.NewError(500, "Database", "failed to update data in database")
 	}
 	return nil
 }
@@ -144,7 +144,7 @@ func (u *UserRepository) DeleteUser(ctx context.Context, password string, userID
 			"query": query,
 			"err":   err.Error(),
 		})
-		return models.NewError(500, "Database", "Failed to delete data from database")
+		return models.NewError(500, "Database", "failed to delete data from database")
 	}
 	defer func() {
 		if closeErr := stmt.Close(); closeErr != nil {
@@ -159,7 +159,7 @@ func (u *UserRepository) DeleteUser(ctx context.Context, password string, userID
 			"args":  []any{password, userID},
 			"err":   err.Error(),
 		})
-		return models.NewError(500, "Database", "Failed to delete data from database")
+		return models.NewError(500, "Database", "failed to delete data from database")
 	}
 	return nil
 }
@@ -210,7 +210,7 @@ func (u *UserRepository) ChangeUserPassword(ctx context.Context, userID int, new
 	stmt, err := u.db.PrepareContext(ctx, query)
 	if err != nil {
 		u.loggerService.Info(failedToPrepareQuery, query)
-		return models.NewError(500, "Database", "Failed to update data in database")
+		return models.NewError(500, "Database", "failed to update data in database")
 	}
 	defer func() {
 		if closeErr := stmt.Close(); closeErr != nil {
@@ -225,7 +225,7 @@ func (u *UserRepository) ChangeUserPassword(ctx context.Context, userID int, new
 			"args":  []any{newPassword, userID},
 			"err":   err.Error(),
 		})
-		return models.NewError(500, "Database", "Failed to update data in database")
+		return models.NewError(500, "Database", "failed to update data in database")
 	}
 	return nil
 }

@@ -18,7 +18,8 @@ type AuthService struct {
 }
 
 func NewAuthService(loggerService utils.LoggerService, userRepository interfaces.UserRepository,
-	jwt *middleware.JWT) *AuthService {
+	jwt *middleware.JWT,
+) *AuthService {
 	return &AuthService{
 		loggerService:  loggerService,
 		userRepository: userRepository,
@@ -32,21 +33,21 @@ func (a AuthService) LoginUser(ctx context.Context, loginData DTO.LoginUser) (st
 		return "", err
 	}
 	if user.ID == 0 {
-		a.loggerService.Info("User with this email does not exist", loginData.Email)
-		return "", models.NewError(400, "Verification", "User with this email does not exist")
+		a.loggerService.Info("user with this email does not exist", loginData.Email)
+		return "", models.NewError(400, "Verification", "user with this email does not exist")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginData.Password))
 	if err != nil {
-		a.loggerService.Info("Wrong password provided", loginData)
-		return "", models.NewError(401, "Authorization", "Wrong password provided")
+		a.loggerService.Info("wrong password provided", loginData)
+		return "", models.NewError(401, "Authorization", "wrong password provided")
 	}
 
 	loggedUser := DTO.NewLoggedUser(user.ID, user.Email, user.Name, user.Surname)
 	authorizationToken, err := a.jwt.GenerateToken(*loggedUser)
 	if err != nil {
-		a.loggerService.Info("Error generating token", loginData)
-		return "", models.NewError(500, "Internal", "Error generating token")
+		a.loggerService.Info("error generating token", loginData)
+		return "", models.NewError(500, "Internal", "error generating token")
 	}
 
 	return authorizationToken, nil

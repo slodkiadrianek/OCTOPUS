@@ -34,14 +34,14 @@ var upgrader = websocket.Upgrader{
 func (ws *WsController) Logs(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		ws.loggerService.Error("Failed to upgrade connection", err)
+		ws.loggerService.Error("failed to upgrade connection", err)
 		return
 	}
 
 	appID, err := request.ReadParam(r, "appID")
 	if err != nil {
 		ws.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
-		err := conn.WriteMessage(websocket.TextMessage, []byte("Failed to read appID"))
+		err := conn.WriteMessage(websocket.TextMessage, []byte("failed to read appID"))
 		if err != nil {
 			return
 		}

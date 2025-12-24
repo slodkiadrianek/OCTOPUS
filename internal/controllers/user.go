@@ -59,7 +59,7 @@ func (u *UserController) GetUserInfo(w http.ResponseWriter, r *http.Request) {
 
 	err = validation.ValidateUsersIDs(userID, userIDFromJwt)
 	if err != nil {
-		u.loggerService.Error("You are not allowed to do this action", map[string]any{
+		u.loggerService.Error("you are not allowed to do this action", map[string]any{
 			"path":        r.URL.Path,
 			"userIDToken": userIDFromJwt,
 		})
@@ -124,7 +124,7 @@ func (u *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	err = validation.ValidateUsersIDs(userID, userIDFromJwt)
 	if err != nil {
-		u.loggerService.Error("You are not allowed to do this action", map[string]any{
+		u.loggerService.Error("you are not allowed to do this action", map[string]any{
 			"path":        r.URL.Path,
 			"userIDToken": userIDFromJwt,
 		})
@@ -172,7 +172,7 @@ func (u *UserController) UpdateUserNotifications(w http.ResponseWriter, r *http.
 
 	err = validation.ValidateUsersIDs(userID, userIDFromJwt)
 	if err != nil {
-		u.loggerService.Error("You are not allowed to do this action", map[string]any{
+		u.loggerService.Error("you are not allowed to do this action", map[string]any{
 			"path":        r.URL.Path,
 			"userIDToken": userIDFromJwt,
 		})
@@ -219,7 +219,7 @@ func (u *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	err = validation.ValidateUsersIDs(userID, userIDFromJwt)
 	if err != nil {
-		u.loggerService.Error("You are not allowed to do this action", map[string]any{
+		u.loggerService.Error("you are not allowed to do this action", map[string]any{
 			"path":        r.URL.Path,
 			"userIDToken": userIDFromJwt,
 		})
@@ -266,7 +266,7 @@ func (u *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Reque
 
 	err = validation.ValidateUsersIDs(userID, userIDFromJwt)
 	if err != nil {
-		u.loggerService.Error("You are not allowed to do this action", map[string]any{
+		u.loggerService.Error("you are not allowed to do this action", map[string]any{
 			"path":        r.URL.Path,
 			"userIDToken": userIDFromJwt,
 		})

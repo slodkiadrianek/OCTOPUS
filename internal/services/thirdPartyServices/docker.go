@@ -152,7 +152,7 @@ func (dc *DockerService) ImportContainers(ctx context.Context, ownerID int) erro
 
 	containers, err := cli.ContainerList(ctx, containerTypes.ListOptions{})
 	if err != nil {
-		dc.logger.Error("Failed to list containers", err)
+		dc.logger.Error("failed to list containers", err)
 		return err
 	}
 

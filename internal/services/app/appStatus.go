@@ -36,14 +36,14 @@ func NewAppStatusService(appRepository interfaces.AppRepository, cacheService in
 func (as *AppStatusService) readAppStatusFromCache(ctx context.Context, cacheKey string) (DTO.AppStatus, error) {
 	appStatusAsJSON, err := as.cacheService.GetData(ctx, cacheKey)
 	if err != nil {
-		as.loggerService.Warn("Failed to get data from cache", err)
-		return DTO.AppStatus{}, models.NewError(500, "Server", "Internal server error")
+		as.loggerService.Warn("failed to get data from cache", err)
+		return DTO.AppStatus{}, models.NewError(500, "Server", "internal server error")
 	}
 
 	appStatus, err := utils.UnmarshalData[DTO.AppStatus]([]byte(appStatusAsJSON))
 	if err != nil {
-		as.loggerService.Warn("Failed to unmarshal  data", err)
-		return DTO.AppStatus{}, models.NewError(500, "Server", "Internal server error")
+		as.loggerService.Warn("failed to unmarshal  data", err)
+		return DTO.AppStatus{}, models.NewError(500, "Server", "internal server error")
 	}
 
 	return *appStatus, nil
@@ -105,13 +105,13 @@ func (as *AppStatusService) checkAndCompareAppStatuses(ctx context.Context, cli 
 
 				appStatusBytes, err := utils.MarshalData(appStatus)
 				if err != nil {
-					as.loggerService.Error("Failed to marshal app status", map[string]any{"data": appStatus, "error": err.Error()})
+					as.loggerService.Error("failed to marshal app status", map[string]any{"data": appStatus, "error": err.Error()})
 					continue
 				}
 
 				if err := as.cacheService.SetData(ctx, "status-"+job.ID, string(appStatusBytes),
 					2*time.Minute); err != nil {
-					as.loggerService.Error("Failed to set cache", map[string]any{"data": appStatus, "error": err.Error()})
+					as.loggerService.Error("failed to set cache", map[string]any{"data": appStatus, "error": err.Error()})
 				}
 			}
 		}()
@@ -154,7 +154,7 @@ func (as *AppStatusService) CheckAppsStatus(ctx context.Context) ([]DTO.AppStatu
 	appsStatuses, appsToSendNotification := as.checkAndCompareAppStatuses(ctx, cli, appsToCheck)
 	if len(appsStatuses) > 0 {
 		if err := as.appRepository.InsertAppStatuses(ctx, appsStatuses); err != nil {
-			as.loggerService.Error("Failed to insert app statuses", err)
+			as.loggerService.Error("failed to insert app statuses", err)
 			return appsToSendNotification, err
 		}
 	}
@@ -167,7 +167,7 @@ func (as *AppStatusService) GetAppStatus(ctx context.Context, appID string, owne
 
 	doesAppStatusExists, err := as.cacheService.ExistsData(ctx, cacheKey)
 	if err != nil {
-		as.loggerService.Warn("Failed to get info about data in cache", err)
+		as.loggerService.Warn("failed to get info about data in cache", err)
 	}
 
 	if doesAppStatusExists > 0 {

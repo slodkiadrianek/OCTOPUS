@@ -69,7 +69,7 @@ func (rs *RouteStatusService) prepareRouteDataForTestRequest(route models.RouteT
 
 	preparedBody, err = utils.MarshalData(route.RequestBody)
 	if err != nil {
-		rs.loggerService.Error("Failed to marshal webhook payload", err)
+		rs.loggerService.Error("failed to marshal webhook payload", err)
 		return "", "", nil, err
 	}
 
@@ -119,7 +119,7 @@ func (rs *RouteStatusService) prepareDataForTheNextRoute(route models.RouteToTes
 }
 
 func (rs *RouteStatusService) CheckRoutesStatus(ctx context.Context) error {
-	rs.loggerService.Info("Started checking statuses of the routes")
+	rs.loggerService.Info("started checking statuses of the routes")
 
 	routesToTest, err := rs.routeRepository.GetWorkingRoutesToTest(ctx)
 	if err != nil {
@@ -198,14 +198,14 @@ func (rs *RouteStatusService) CheckRoutesStatus(ctx context.Context) error {
 		}
 
 	}
-	rs.loggerService.Info("The routes statuses have started inserting into database", routesStatuses)
+	rs.loggerService.Info("the routes statuses have started inserting into database", routesStatuses)
 
 	err = rs.routeRepository.UpdateWorkingRoutesStatuses(ctx, routesStatuses)
 	if err != nil {
 		return err
 	}
 
-	rs.loggerService.Info("The route statuses have finished inserting into the database.", routesStatuses)
+	rs.loggerService.Info("the route statuses have finished inserting into the database.", routesStatuses)
 
 	return nil
 }

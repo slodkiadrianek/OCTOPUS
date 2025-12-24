@@ -96,20 +96,20 @@ func (an *AppNotificationsService) sendWebhook(ctx context.Context, notification
 
 				body, err := utils.MarshalData(payload)
 				if err != nil {
-					an.loggerService.Error("Failed to unmarshal a data", err)
+					an.loggerService.Error("failed to unmarshal a data", err)
 					errorChan <- err
 					continue
 				}
 
 				responseStatusCode, _, err := request.SendHTTP(ctx, job.url, "", "POST", body, false)
 				if err != nil {
-					an.loggerService.Info("Failed to send a webhook", err)
+					an.loggerService.Info("failed to send a webhook", err)
 					errorChan <- err
 					continue
 				}
 
 				if responseStatusCode >= 300 {
-					an.loggerService.Info("Webhook returned non-success status", "status", responseStatusCode)
+					an.loggerService.Info("webhook returned non-success status", "status", responseStatusCode)
 					continue
 				}
 			}
@@ -133,7 +133,7 @@ func (an *AppNotificationsService) SendNotifications(ctx context.Context, appsSt
 		return nil
 	}
 
-	an.loggerService.Info("Started sending notifications to users")
+	an.loggerService.Info("started sending notifications to users")
 
 	notificationsInfo, err := an.appRepository.GetUsersToSendNotifications(ctx, appsStatuses)
 	if err != nil {
@@ -162,7 +162,7 @@ func (an *AppNotificationsService) SendNotifications(ctx context.Context, appsSt
 	if slackWebhookError != nil {
 		return slackWebhookError
 	}
-	an.loggerService.Info("Successfully sent notifications to user")
+	an.loggerService.Info("successfully sent notifications to user")
 
 	return nil
 }

@@ -66,7 +66,7 @@ func TestReadParam(t *testing.T) {
 			urlPath:       "/users/1",
 			routeKeyURL:   "/users/:userID",
 			paramToRead:   "postID",
-			expectedError: errors.New("The is no parameter called: postID"),
+			expectedError: errors.New("the is no parameter called: postID"),
 			expectedData:  "",
 		},
 		{
@@ -358,7 +358,7 @@ func TestSendHttp(t *testing.T) {
 			authorizationHeader: "testScenario",
 			method:              "GET",
 			body:                []byte{},
-			expectedError:       errors.New("Get \"\": unsupported protocol scheme \"\""),
+			expectedError:       errors.New("get \"\": unsupported protocol scheme \"\""),
 		},
 		{
 			name:                "Failed to create the reuquest",
@@ -410,7 +410,7 @@ func TestReadUserIDFromToken(t *testing.T) {
 		{
 			name:          "Not valid id",
 			id:            nil,
-			expectedError: errors.New("Failed to read user from context"),
+			expectedError: errors.New("failed to read user from context"),
 		},
 		{
 			name:          "Proper data",

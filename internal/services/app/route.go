@@ -224,8 +224,12 @@ func (rs *RouteService) AddWorkingRoutes(ctx context.Context, routes *[]DTO.Crea
 	if err != nil {
 		return err
 	}
+
 	err = rs.saveWorkingRoutes(ctx, routes, appID, name, nextRoutesDataIDs, routesRequestsIDs,
 		routesResponsesIDs, routesInfoIDs)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

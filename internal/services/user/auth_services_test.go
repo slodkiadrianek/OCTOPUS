@@ -24,7 +24,6 @@ func TestAuthService_LoginUser(t *testing.T) {
 		setupMock     func() interfaces.UserRepository
 	}
 	env, err := config.SetConfig(tests.EnvFileLocationForServices)
-
 	if err != nil {
 		panic(err)
 	}
@@ -57,7 +56,7 @@ func TestAuthService_LoginUser(t *testing.T) {
 		{
 			name:          "User with this email does not exist",
 			password:      "ci$#fm43980faz",
-			expectedError: errors.New("User with this email does not exist"),
+			expectedError: errors.New("user with this email does not exist"),
 			setupMock: func() interfaces.UserRepository {
 				mUserRepository := new(mocks.MockUserRepository)
 				mUserRepository.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
@@ -68,7 +67,7 @@ func TestAuthService_LoginUser(t *testing.T) {
 		{
 			name:          "Wrong password provided",
 			password:      "ci$#fm43980faz",
-			expectedError: errors.New("Wrong password provided"),
+			expectedError: errors.New("wrong password provided"),
 			setupMock: func() interfaces.UserRepository {
 				mUserRepository := new(mocks.MockUserRepository)
 				mUserRepository.On("FindUserByEmail", mock.Anything, mock.Anything).Return(

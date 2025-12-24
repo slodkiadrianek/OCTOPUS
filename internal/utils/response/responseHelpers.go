@@ -15,7 +15,7 @@ func SetError(w http.ResponseWriter, r *http.Request, err error) {
 	}
 	Send(w, 500, map[string]string{
 		"errorCategory":    "Server",
-		"errorDescription": "Internal server error",
+		"errorDescription": "internal server error",
 	})
 }
 
