@@ -113,6 +113,7 @@ func TestMarshalData(t *testing.T) {
 		})
 	}
 }
+
 func TestGenerateID(t *testing.T) {
 	type args struct {
 		name          string
@@ -126,12 +127,12 @@ func TestGenerateID(t *testing.T) {
 	}
 	for _, testScenario := range testsScenarios {
 		t.Run(testScenario.name, func(t *testing.T) {
-			generatedId, err := GenerateID()
+			generatedID, err := GenerateID()
 			if testScenario.expectedError != nil {
 				assert.Equal(t, testScenario.expectedError.Error(), err.Error())
-				assert.Equal(t, "", generatedId)
+				assert.Equal(t, "", generatedID)
 			} else {
-				assert.NotEqual(t, "", generatedId)
+				assert.NotEqual(t, "", generatedID)
 				assert.Nil(t, err)
 			}
 		})
@@ -153,7 +154,6 @@ func TestInsertionSortForRoutes(t *testing.T) {
 				DTO.NewRouteInfo("", "", 1),
 			},
 			sortedRouteData: []DTO.RoutesParentID{
-
 				DTO.NewRouteInfo("", "", 1),
 				DTO.NewRouteInfo("", "", 2),
 			},
