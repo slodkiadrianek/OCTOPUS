@@ -26,6 +26,8 @@ tags:
     description: WebSocket operations
   - name: user
     description: Operations related to users
+  - name: route
+    description: Operations related to route checking
 
 paths:
   /apps/{appId}/logs:
@@ -213,7 +215,6 @@ paths:
         - app
       summary: Get status of an app
       description: Retrieve the current status of an application.
-      operationId: statusApp
       parameters:
         - name: appId
           in: path
@@ -221,6 +222,7 @@ paths:
           required: true
           schema:
             type: string
+      
       responses:
         '200':
           description: Status retrieved successfully
@@ -228,6 +230,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StatusApp"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /apps/{appId}/routes:
+    post:
+      security:
+        - bearerAuth: []
+      tags:
+        - route
+      summary: Add route to checking
+      description: Add route to the checking system which is done by worker
+      operationId: createRoute
+      parameters:
+        - name: appId
+          in: path
+          description: The ID of the app
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Update app object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoute'
+      responses:
+        '201':
+          description: Route added successfully
         default:
           description: Unexpected error
           content:
@@ -846,6 +880,83 @@ components:
           example: 231213
       xml:
         name: serverInfo
+    CreateRoute:
+      type: object
+      properties:
+        name:
+          type: string
+          description: A required name for the configuration.
+        routes:
+          type: array
+          description: A slice of route definitions.
+          items:
+            $ref: '#/components/schemas/RouteDefinition'
+      xml:
+        name: createRoute
+    RouteDefinition:
+      type: object
+      required:
+        - path
+        - method
+        - responseStatusCode
+      properties:
+        path:
+          type: string
+          description: The URL path for the route.
+          maxLength: 256
+        method:
+          type: string
+          description: The HTTP method for the route.
+          enum:
+            - POST
+            - GET
+            - PUT
+            - PATCH
+            - DELETE
+        requestAuthorization:
+          type: string
+          description: Optional authorization configuration string.
+        requestQuery:
+          type: object
+          description: A map representing the expected query parameters. (Schema defined as CustomFunc).
+          additionalProperties:
+            type: string 
+        requestParams:
+          type: object
+          description: A map representing the expected path parameters. (Schema defined as CustomFunc).
+          additionalProperties:
+            type: string 
+        requestBody:
+          type: object
+          description: A map representing the expected request body structure. (Schema defined as CustomFunc).
+          additionalProperties:
+            type: object
+            nullable: true
+        nextRouteBody:
+          type: array
+          description: Optional list of fields to pass to the next route from the current request body.
+          items:
+            type: string
+        nextRouteQuery:
+          type: array
+          description: Optional list of fields to pass to the next route from the current request query.
+          items:
+            type: string
+        nextRouteParams:
+          type: array
+          description: Optional list of fields to pass to the next route from the current request parameters.
+          items:
+            type: string
+        responseStatusCode:
+          type: integer
+          description: The expected HTTP status code for the response.
+          format: int32
+        responseBody:
+          type: object
+          description: A map representing the expected response body structure. (Schema defined as CustomFunc).
+          additionalProperties:
+            type: object
+            nullable: true
     Error:
       type: object
       properties:

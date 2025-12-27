@@ -33,16 +33,16 @@ func main() {
 		return
 	}
 
-	db, err := config.NewDb(cfg.DbLink, "postgres")
+	db, err := config.NewDB(cfg.DBLink, "postgres")
 	if err != nil {
 		loggerService.Error("Failed to connect to database", err)
 		return
 	}
 	// Route
-	routeRepository := repository.NewRouteRepository(db.DbConnection, loggerService)
+	routeRepository := repository.NewRouteRepository(db.DBConnection, loggerService)
 	routeStatusService := servicesApp.NewRouteStatusService(routeRepository, loggerService)
 	// App
-	appRepository := repository.NewAppRepository(db.DbConnection, loggerService)
+	appRepository := repository.NewAppRepository(db.DBConnection, loggerService)
 	appStatusService := servicesApp.NewAppStatusService(appRepository, cacheService, loggerService, cfg.DockerHost)
 	appNotificationsService := servicesApp.NewAppNotificationsService(appRepository, loggerService)
 	appService := servicesApp.NewAppService(appRepository, loggerService, appStatusService, appNotificationsService, routeStatusService)

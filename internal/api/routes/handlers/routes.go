@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"github.com/Oudwins/zog"
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/api/interfaces"
 	"github.com/slodkiadrianek/octopus/internal/api/routes"
@@ -23,7 +22,7 @@ func (rh *RouteHandlers) SetupRouteHandler(router routes.Router) {
 	routeGroup := router.Group("/api/v1/apps/:appId/routes")
 
 	// routeGroup.GET("/", rh.routeController.GetRoutes)
-	routeGroup.POST("/", middleware.ValidateMiddleware[DTO.CreateRouteData, *zog.StructSchema]("body", schema.CreateRouteSchema),
+	routeGroup.POST("/", middleware.ValidateMiddleware[DTO.CreateRouteData]("body", schema.CreateRouteSchema),
 		rh.routeController.AddWorkingRoutes)
 	// routeGroup.PUT("/:routeId", rh.routeController.UpdateRoute)
 	// routeGroup.DELETE("/:routeId", rh.routeController.DeleteRoute)
