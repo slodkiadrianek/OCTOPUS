@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/slodkiadrianek/octopus/internal/models"
 	"github.com/slodkiadrianek/octopus/internal/services/interfaces"
 	"github.com/slodkiadrianek/octopus/tests"
 	"github.com/slodkiadrianek/octopus/tests/mocks"
@@ -28,6 +29,7 @@ func TestDockerService_ImportContainers(t *testing.T) {
 			dockerHost:    "tcp://100.100.188.29:2375",
 			setupMock: func() interfaces.AppRepository {
 				m := new(mocks.MockAppRepository)
+				m.On("GetApps", mock.Anything, mock.Anything).Return([]models.App{}, nil)
 				m.On("InsertApp", mock.Anything, mock.Anything).Return(nil)
 				return m
 			},
@@ -38,6 +40,7 @@ func TestDockerService_ImportContainers(t *testing.T) {
 			dockerHost:    "",
 			setupMock: func() interfaces.AppRepository {
 				m := new(mocks.MockAppRepository)
+				m.On("GetApps", mock.Anything, mock.Anything).Return([]models.App{}, nil)
 				m.On("InsertApp", mock.Anything, mock.Anything).Return(nil)
 				return m
 			},
@@ -48,6 +51,7 @@ func TestDockerService_ImportContainers(t *testing.T) {
 			dockerHost:    "tcp://100.100.188.29:2375",
 			setupMock: func() interfaces.AppRepository {
 				m := new(mocks.MockAppRepository)
+				m.On("GetApps", mock.Anything, mock.Anything).Return([]models.App{}, nil)
 				m.On("InsertApp", mock.Anything, mock.Anything).Return(errors.New("failed to insert data to db"))
 				return m
 			},
@@ -234,9 +238,7 @@ func TestDockerService_UnpauseContainer(t *testing.T) {
 				appID = testScenario.appID
 			}
 			err := dockerService.PauseContainer(ctx, appID)
-			if err != nil {
-				panic(err)
-			}
+
 			err = dockerService.UnpauseContainer(ctx, appID)
 			if testScenario.expectedError == nil {
 				assert.NoError(t, err)

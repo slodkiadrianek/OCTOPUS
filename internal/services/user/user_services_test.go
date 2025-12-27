@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestUserService_InsertUserToDb(t *testing.T) {
+func TestUserService_InsertUserToDB(t *testing.T) {
 	type args struct {
 		name          string
 		expectedError error
@@ -30,7 +30,7 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 				mUserRepository := new(mocks.MockUserRepository)
 				mUserRepository.On("FindUserByEmail", mock.Anything, mock.Anything).Return(
 					models.User{}, nil)
-				mUserRepository.On("InsertUserToDb", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				mUserRepository.On("InsertUserToDB", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				return mUserRepository
 			},
 		},
@@ -93,7 +93,7 @@ func TestUserService_InsertUserToDb(t *testing.T) {
 						ID: 0,
 					}, nil)
 
-				mUserRepository.On("InsertUserToDb", mock.Anything, mock.Anything,
+				mUserRepository.On("InsertUserToDB", mock.Anything, mock.Anything,
 					mock.Anything).Return(errors.New("failed to insert user to db"))
 				return mUserRepository
 			},
@@ -230,7 +230,7 @@ func TestUserService_GetUser(t *testing.T) {
 			expectedError: nil,
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
-				mUserRepository.On("FindUserById", mock.Anything, mock.Anything).Return(
+				mUserRepository.On("FindUserByID", mock.Anything, mock.Anything).Return(
 					models.User{ID: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
 				mCacheService := new(mocks.MockCacheService)
 				mCacheService.On("ExistsData", mock.Anything, mock.Anything).Return(int64(0), nil)
@@ -243,7 +243,7 @@ func TestUserService_GetUser(t *testing.T) {
 			expectedError: nil,
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
-				mUserRepository.On("FindUserById", mock.Anything, mock.Anything).Return(
+				mUserRepository.On("FindUserByID", mock.Anything, mock.Anything).Return(
 					models.User{ID: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
 				mCacheService := new(mocks.MockCacheService)
 				mCacheService.On("ExistsData", mock.Anything, mock.Anything).Return(int64(1), nil)
@@ -269,7 +269,7 @@ func TestUserService_GetUser(t *testing.T) {
 			expectedError: errors.New("failed to read data from cache"),
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
-				mUserRepository.On("FindUserById", mock.Anything, mock.Anything).Return(
+				mUserRepository.On("FindUserByID", mock.Anything, mock.Anything).Return(
 					models.User{ID: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
 				mCacheService := new(mocks.MockCacheService)
 				mCacheService.On("ExistsData", mock.Anything, mock.Anything).Return(int64(1), nil)
@@ -294,7 +294,7 @@ func TestUserService_GetUser(t *testing.T) {
 			expectedError: errors.New("failed to set data in cache"),
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
-				mUserRepository.On("FindUserById", mock.Anything, mock.Anything).Return(
+				mUserRepository.On("FindUserByID", mock.Anything, mock.Anything).Return(
 					models.User{ID: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
 				mCacheService := new(mocks.MockCacheService)
 				mCacheService.On("ExistsData", mock.Anything, mock.Anything).Return(int64(0), nil)
@@ -337,7 +337,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 			password:      "ci$#fm43980faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
-				mUserRepository.On("FindUserById", mock.Anything, mock.Anything).Return(
+				mUserRepository.On("FindUserByID", mock.Anything, mock.Anything).Return(
 					models.User{ID: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
 				mUserRepository.On("DeleteUser", mock.Anything, mock.Anything, mock.Anything).Return(
 					nil)
@@ -405,7 +405,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 			password:      "ci$#fm43980faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
-				mUserRepository.On("FindUserById", mock.Anything, mock.Anything).Return(
+				mUserRepository.On("FindUserByID", mock.Anything, mock.Anything).Return(
 					models.User{ID: 0}, nil)
 				mCacheService := new(mocks.MockCacheService)
 				mCacheService.On("ExistsData", mock.Anything, mock.Anything).Return(int64(0), nil)
@@ -418,7 +418,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 			password:      "ci$#fm43980faz2",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
-				mUserRepository.On("FindUserById", mock.Anything, mock.Anything).Return(
+				mUserRepository.On("FindUserByID", mock.Anything, mock.Anything).Return(
 					models.User{ID: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
 				mCacheService := new(mocks.MockCacheService)
 				mCacheService.On("ExistsData", mock.Anything, mock.Anything).Return(int64(0), nil)
@@ -432,7 +432,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 			password:      "ci$#fm43980faz2",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
-				mUserRepository.On("FindUserById", mock.Anything, mock.Anything).Return(
+				mUserRepository.On("FindUserByID", mock.Anything, mock.Anything).Return(
 					models.User{}, errors.New("failed to find a user"))
 				mCacheService := new(mocks.MockCacheService)
 				mCacheService.On("ExistsData", mock.Anything, mock.Anything).Return(int64(0), nil)
@@ -446,7 +446,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 			password:      "ci$#fm43980faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
-				mUserRepository.On("FindUserById", mock.Anything, mock.Anything).Return(
+				mUserRepository.On("FindUserByID", mock.Anything, mock.Anything).Return(
 					models.User{ID: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
 				mUserRepository.On("DeleteUser", mock.Anything, mock.Anything, mock.Anything).Return(
 					errors.New("failed to delete a user from database"))
@@ -462,7 +462,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 			password:      "ci$#fm43980faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
-				mUserRepository.On("FindUserById", mock.Anything, mock.Anything).Return(
+				mUserRepository.On("FindUserByID", mock.Anything, mock.Anything).Return(
 					models.User{ID: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
 				mUserRepository.On("DeleteUser", mock.Anything, mock.Anything, mock.Anything).Return(
 					nil)
@@ -509,7 +509,7 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 			newPassword:   "ci$#fm43980faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
-				mUserRepository.On("FindUserById", mock.Anything, mock.Anything).Return(
+				mUserRepository.On("FindUserByID", mock.Anything, mock.Anything).Return(
 					models.User{ID: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
 				mUserRepository.On("ChangeUserPassword", mock.Anything, mock.Anything, mock.Anything).Return(
 					nil)
@@ -528,7 +528,7 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 			newPassword:   "ci$#fm43980faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
-				mUserRepository.On("FindUserById", mock.Anything, mock.Anything).Return(
+				mUserRepository.On("FindUserByID", mock.Anything, mock.Anything).Return(
 					models.User{ID: 0}, nil)
 				mCacheService := new(mocks.MockCacheService)
 				mCacheService.On("ExistsData", mock.Anything, mock.Anything).Return(int64(0), nil)
@@ -542,7 +542,7 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 			newPassword:   "ci$#fm43980faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
-				mUserRepository.On("FindUserById", mock.Anything, mock.Anything).Return(
+				mUserRepository.On("FindUserByID", mock.Anything, mock.Anything).Return(
 					models.User{ID: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
 				mCacheService := new(mocks.MockCacheService)
 				mCacheService.On("ExistsData", mock.Anything, mock.Anything).Return(int64(0), nil)
@@ -557,7 +557,7 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 			newPassword:   "ci$#fm4398d432-89m52348-$#@rt43t43tZ#4t43t39ty4343324fn87634c8-t734tct43t430faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
-				mUserRepository.On("FindUserById", mock.Anything, mock.Anything).Return(
+				mUserRepository.On("FindUserByID", mock.Anything, mock.Anything).Return(
 					models.User{ID: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
 				mCacheService := new(mocks.MockCacheService)
 				mCacheService.On("ExistsData", mock.Anything, mock.Anything).Return(int64(0), nil)
@@ -572,7 +572,7 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 			newPassword:   "ci$#fm43980faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
-				mUserRepository.On("FindUserById", mock.Anything, mock.Anything).Return(models.User{},
+				mUserRepository.On("FindUserByID", mock.Anything, mock.Anything).Return(models.User{},
 					errors.New("failed to find a user"))
 				mCacheService := new(mocks.MockCacheService)
 				mCacheService.On("ExistsData", mock.Anything, mock.Anything).Return(int64(0), nil)
@@ -587,7 +587,7 @@ func TestUserService_ChangeUserPassword(t *testing.T) {
 			newPassword:   "ci$#fm43980faz",
 			setupMock: func() (interfaces.UserRepository, interfaces.CacheService) {
 				mUserRepository := new(mocks.MockUserRepository)
-				mUserRepository.On("FindUserById", mock.Anything, mock.Anything).Return(
+				mUserRepository.On("FindUserByID", mock.Anything, mock.Anything).Return(
 					models.User{ID: 1, Password: "$2a$10$0f4BED0dDgYCE8xVREwhUeyjpKTtBIm4eO.xrPC/H8kvsBVM2gpdq"}, nil)
 				mUserRepository.On("ChangeUserPassword", mock.Anything, mock.Anything, mock.Anything).Return(
 					errors.New("failed to change password"))

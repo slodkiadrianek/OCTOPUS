@@ -79,7 +79,7 @@ func MatchRoute(routeURL, URLPath string) bool {
 		return false
 	}
 
-	for i := 0; i < len(splittedRouteURL); i++ {
+	for i := range len(splittedRouteURL) {
 		if strings.Contains(splittedRouteURL[i], ":") {
 			continue
 		}
@@ -101,7 +101,7 @@ func ReadParam(r *http.Request, paramToRead string) (string, error) {
 	splittedRouteKeyPath := strings.Split(strings.Trim(s, "/"), "/")
 
 	param := ""
-	for i := 0; i < len(splittedPath); i++ {
+	for i := range len(splittedPath) {
 		if strings.Contains(splittedRouteKeyPath[i], ":") && splittedRouteKeyPath[i][1:] == paramToRead {
 			param = splittedPath[i]
 			break
@@ -125,7 +125,7 @@ func ReadAllParams(r *http.Request) (map[string]string, error) {
 	splittedRouteKeyPath := strings.Split(strings.Trim(s, "/"), "/")
 
 	params := make(map[string]string)
-	for i := 0; i < len(splittedPath); i++ {
+	for i := range len(splittedPath) {
 		if strings.Contains(splittedRouteKeyPath[i], ":") {
 			paramName := splittedRouteKeyPath[i][1:]
 			params[paramName] = splittedPath[i]
@@ -136,19 +136,18 @@ func ReadAllParams(r *http.Request) (map[string]string, error) {
 
 func CheckRouteParams(actualRoute DTO.CreateRoute) bool {
 	countParamsFromPath := 0
-	splittedPath := strings.Split(actualRoute.Path, "/")
-	for _, val := range splittedPath {
-		leftBrace := strings.Contains(val, "{")
-		rightBrace := strings.Contains(val, "}")
+	for seq := range strings.SplitSeq(actualRoute.Path, "/") {
+		leftBrace := strings.Contains(seq, "{")
+		rightBrace := strings.Contains(seq, "}")
 		if leftBrace && rightBrace {
-			param := val[1 : len(val)-1]
+			param := seq[1 : len(seq)-1]
 			if _, exist := actualRoute.RequestParams[param]; !exist {
 				return false
 			}
 			countParamsFromPath++
 		}
 	}
-	return countParamsFromPath != len(actualRoute.RequestParams)
+	return countParamsFromPath == len(actualRoute.RequestParams)
 }
 
 func RemoveLastCharacterFromURL(route string) string {

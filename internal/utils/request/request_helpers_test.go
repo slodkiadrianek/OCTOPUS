@@ -358,7 +358,7 @@ func TestSendHttp(t *testing.T) {
 			authorizationHeader: "testScenario",
 			method:              "GET",
 			body:                []byte{},
-			expectedError:       errors.New("get \"\": unsupported protocol scheme \"\""),
+			expectedError:       errors.New("Get \"\": unsupported protocol scheme \"\""),
 		},
 		{
 			name:                "Failed to create the reuquest",

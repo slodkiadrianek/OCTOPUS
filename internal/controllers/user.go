@@ -18,7 +18,7 @@ import (
 
 type userService interface {
 	GetUser(ctx context.Context, userID int) (models.User, error)
-	InsertUserToDb(ctx context.Context, user DTO.CreateUser, password string) error
+	InsertUserToDB(ctx context.Context, user DTO.CreateUser, password string) error
 	UpdateUser(ctx context.Context, user DTO.CreateUser, userID int) error
 	UpdateUserNotifications(ctx context.Context, userID int, userNotifications DTO.UpdateUserNotificationsSettings) error
 	DeleteUser(ctx context.Context, userID int, password string) error
@@ -85,7 +85,7 @@ func (u *UserController) InsertUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userDto := DTO.NewCreateUser(userBody.Email, userBody.Name, userBody.Surname)
-	err = u.userService.InsertUserToDb(r.Context(), *userDto, userBody.Password)
+	err = u.userService.InsertUserToDB(r.Context(), *userDto, userBody.Password)
 	if err != nil {
 		response.SetError(w, r, err)
 		return

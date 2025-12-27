@@ -21,10 +21,6 @@ func TestRouteStatusService_sortRoutesToTest(t *testing.T) {
 		routeToTest  []models.RouteToTest
 		expectedData map[string][]models.RouteToTest
 	}
-	env, err := config.SetConfig(tests.EnvFileLocationForServices)
-	if err != nil {
-		panic(err)
-	}
 	testsScenarios := []args{
 		{
 			name: "Properly sorted routes",
@@ -72,12 +68,8 @@ func TestRouteStatusService_sortRoutesToTest(t *testing.T) {
 	for _, testScenario := range testsScenarios {
 		t.Run(testScenario.name, func(t *testing.T) {
 			loggerService := tests.CreateLogger()
-			db, err := config.NewDB(env.DBLink, "postgres")
-			if err != nil {
-				panic(err)
-			}
-			routeRepository := repository.NewRouteRepository(db.DBConnection, loggerService)
-			routeStatusService := NewRouteStatusService(routeRepository, loggerService)
+			routeRepositoryMock := new(mocks.MockRouteRepository)
+			routeStatusService := NewRouteStatusService(routeRepositoryMock, loggerService)
 			sortedData := routeStatusService.sortRoutesToTest(testScenario.routeToTest)
 			assert.Equal(t, testScenario.expectedData, sortedData)
 		})
@@ -90,10 +82,6 @@ func TestRouteStatusService_addParamsToThePath(t *testing.T) {
 		path         string
 		params       models.JSONMapStringString
 		expectedData string
-	}
-	env, err := config.SetConfig(tests.EnvFileLocationForServices)
-	if err != nil {
-		panic(err)
 	}
 	testsScenarios := []args{
 		{
@@ -108,12 +96,8 @@ func TestRouteStatusService_addParamsToThePath(t *testing.T) {
 	for _, testScenario := range testsScenarios {
 		t.Run(testScenario.name, func(t *testing.T) {
 			loggerService := tests.CreateLogger()
-			db, err := config.NewDB(env.DBLink, "postgres")
-			if err != nil {
-				panic(err)
-			}
-			routeRepository := repository.NewRouteRepository(db.DBConnection, loggerService)
-			routeStatusService := NewRouteStatusService(routeRepository, loggerService)
+			routeRepositoryMock := new(mocks.MockRouteRepository)
+			routeStatusService := NewRouteStatusService(routeRepositoryMock, loggerService)
 			pathWithParamsIncluded := routeStatusService.addParamsToThePath(testScenario.path, testScenario.params)
 			assert.Equal(t, testScenario.expectedData, pathWithParamsIncluded)
 		})
@@ -125,7 +109,7 @@ func TestRouteStatusService_prepareDataForTestRequest(t *testing.T) {
 		name                        string
 		route                       models.RouteToTest
 		expectedAuthorizationHeader string
-		expectedUrl                 string
+		expectedURL                 string
 		expectedJSONData            []byte
 		expectedError               error
 	}
@@ -148,8 +132,8 @@ func TestRouteStatusService_prepareDataForTestRequest(t *testing.T) {
 				Port:        "8080",
 			},
 			expectedAuthorizationHeader: "Bearer fj349f83hf893h9834fh834",
-			expectedUrl:                 "http://127.0.0.1:8080/users/userID?userID=userID",
-			expectedJSONData:            []uint8([]byte{0x7b, 0x22, 0x61, 0x70, 0x70, 0x49, 0x64, 0x22, 0x3a, 0x22, 0x61, 0x70, 0x70, 0x49, 0x64, 0x22, 0x7d}),
+			expectedURL:                 "http://127.0.0.1:8080/users/userID?userID=userID",
+			expectedJSONData:            []byte{0x7b, 0x22, 0x61, 0x70, 0x70, 0x49, 0x44, 0x22, 0x3a, 0x22, 0x61, 0x70, 0x70, 0x49, 0x44, 0x22, 0x7d},
 			expectedError:               nil,
 		},
 	}
@@ -164,7 +148,7 @@ func TestRouteStatusService_prepareDataForTestRequest(t *testing.T) {
 			routeStatusService := NewRouteStatusService(routeRepository, loggerService)
 			authorizationHeader, url, jsonData, err := routeStatusService.prepareRouteDataForTestRequest(testScenario.route)
 			assert.Equal(t, testScenario.expectedAuthorizationHeader, authorizationHeader)
-			assert.Equal(t, testScenario.expectedUrl, url)
+			assert.Equal(t, testScenario.expectedURL, url)
 			assert.Equal(t, testScenario.expectedJSONData, jsonData)
 			assert.Equal(t, testScenario.expectedError, err)
 		})
@@ -374,7 +358,7 @@ func TestRouteStatusService_CheckRoutesStatus(t *testing.T) {
 				mRouteRepository.On("UpdateWorkingRoutesStatuses", mock.Anything, mock.Anything).Return(errors.New("failed to update working route status"))
 				return mRouteRepository
 			},
-			expectedError: errors.New("Failed to update working route status"),
+			expectedError: errors.New("failed to update working route status"),
 		},
 		{
 			name: "Properly chained 2 routes",
