@@ -624,13 +624,13 @@ components:
     UpdateUserNotifications:
       type: object
       properties:
-        discordNotifications:
+        discordNotificationsSettings:
           type: boolean
           example: true
-        slackNotifications:
+        slackNotificationsSettings:
           type: boolean
           example: false
-        emailNotifications:
+        emailNotificationsSettings:
           type: boolean
           example: false
       xml:
@@ -947,6 +947,9 @@ components:
           description: Optional list of fields to pass to the next route from the current request parameters.
           items:
             type: string
+        nextRouteAuthorizationHeader:
+          type: string
+          description: Optional authorization header row from request above
         responseStatusCode:
           type: integer
           description: The expected HTTP status code for the response.
