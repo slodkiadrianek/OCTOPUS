@@ -29,7 +29,6 @@ bin/
 coverage.out
 
 # Env files (better to mount at runtime)
-.env.*
 test.env
 
 # IDE/editor configs
