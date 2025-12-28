@@ -19,9 +19,9 @@ func NewRouteHandlers(routeController interfaces.RouteController) *RouteHandlers
 }
 
 func (rh *RouteHandlers) SetupRouteHandler(router routes.Router) {
-	routeGroup := router.Group("/api/v1/apps/:appId/routes")
+	routeGroup := router.Group("/api/v1/apps/:appID/routes")
 
-	// routeGroup.GET("/", rh.routeController.GetRoutes)
+	routeGroup.GET("/:routeID", middleware.ValidateMiddleware[DTO.RouteID]("params", schema.RouteIDSchema), rh.routeController.CheckRouteStatus)
 	routeGroup.POST("/", middleware.ValidateMiddleware[DTO.CreateRouteData]("body", schema.CreateRouteSchema),
 		rh.routeController.AddWorkingRoutes)
 	// routeGroup.PUT("/:routeId", rh.routeController.UpdateRoute)

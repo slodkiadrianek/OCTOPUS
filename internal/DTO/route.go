@@ -1,5 +1,8 @@
 package DTO
 
+type RouteID struct {
+	RouteID string `json:"routeID"`
+}
 type RoutesParentID interface {
 	GetParentID() int
 }
@@ -17,7 +20,7 @@ type CreateRoute struct {
 	NextRouteBody                []string          `json:"nextRouteBody"`
 	NextRouteQuery               []string          `json:"nextRouteQuery"`
 	NextRouteParams              []string          `json:"nextRouteParams"`
-	NextRouteAuthorizationHeader string            `json:"next_authorization_header"`
+	NextRouteAuthorizationHeader string            `json:"nextRouteAuthorizationHeader"`
 	ResponseStatusCode           int               `json:"responseStatusCode" example:"200"`
 	ResponseBody                 map[string]any    `json:"responseBody" example:"id=1"`
 	ParentID                     int

@@ -37,7 +37,7 @@ var UpdateUserSchema = z.Struct(z.Shape{
 })
 
 var UserIDSchema = z.Struct(z.Shape{
-	"userId": z.String().Required(),
+	"userID": z.String().Required(),
 })
 
 var ChangeUserPasswordSchema = z.Struct(z.Shape{

@@ -4,6 +4,10 @@ import (
 	z "github.com/Oudwins/zog"
 )
 
+var RouteIDSchema = z.Struct(z.Shape{
+	"routeID": z.String().Required(),
+})
+
 var CreateRouteSchema = z.Struct(z.Shape{
 	"name": z.String().Required(),
 	"routes": z.Slice(z.Struct(z.Shape{
@@ -19,10 +23,11 @@ var CreateRouteSchema = z.Struct(z.Shape{
 		"requestBody": z.CustomFunc[map[string]any](func(val *map[string]any, ctx z.Ctx) bool {
 			return true
 		}),
-		"nextRouteBody":      z.Slice(z.String()).Optional(),
-		"nextRouteQuery":     z.Slice(z.String()).Optional(),
-		"nextRouteParams":    z.Slice(z.String()).Optional(),
-		"responseStatusCode": z.Int().Required(),
+		"nextRouteBody":                z.Slice(z.String()).Optional(),
+		"nextRouteQuery":               z.Slice(z.String()).Optional(),
+		"nextRouteParams":              z.Slice(z.String()).Optional(),
+		"nextRouteAuthorizationHeader": z.String().Optional(),
+		"responseStatusCode":           z.Int().Required(),
 		"responseBody": z.CustomFunc[map[string]any](func(val *map[string]any, ctx z.Ctx) bool {
 			return true
 		}),

@@ -23,6 +23,35 @@ func NewRouteRepository(db *sql.DB, loggerService utils.LoggerService) *RouteRep
 	}
 }
 
+func (r *RouteRepository) CheckRouteStatus(ctx context.Context, routeID int) (string, error) {
+	query := "SELECT status FROM working_routes WHERE id = $1"
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		r.loggerService.Error(failedToPrepareQuery, map[string]any{
+			"query": query,
+			"args":  routeID,
+			"err":   err.Error(),
+		})
+		return "", models.NewError(500, "Database", "failed to check route status")
+	}
+	defer func() {
+		if closeErr := stmt.Close(); closeErr != nil {
+			r.loggerService.Error(failedToCloseStatement, closeErr)
+		}
+	}()
+	var routeStatus string
+	err = stmt.QueryRowContext(ctx, routeID).Scan(&routeStatus)
+	if err != nil {
+		r.loggerService.Error(failedToExecuteSelectQuery, map[string]any{
+			"query": query,
+			"args":  routeID,
+			"err":   err.Error(),
+		})
+		return "", models.NewError(500, "Database", "failed to check route status")
+	}
+	return routeStatus, nil
+}
+
 func (r *RouteRepository) UpdateWorkingRoutesStatuses(ctx context.Context, routesStatuses map[int]string) error {
 	placeholders := make([]string, 0, len(routesStatuses))
 	argPos := 1
@@ -64,6 +93,7 @@ func (r *RouteRepository) UpdateWorkingRoutesStatuses(ctx context.Context, route
 	if err != nil {
 		r.loggerService.Error(failedToExecuteUpdateQuery, map[string]any{
 			"query": query,
+			"args":  routesStatuses,
 			"err":   err.Error(),
 		})
 		return models.NewError(500, "Database", "failed to update routes statuses")

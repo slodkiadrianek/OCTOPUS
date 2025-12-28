@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/slodkiadrianek/octopus/internal/DTO"
 	"github.com/slodkiadrianek/octopus/internal/models"
@@ -13,6 +14,7 @@ import (
 )
 
 type routeService interface {
+	CheckRouteStatus(ctx context.Context, routeID int) (string, error)
 	AddWorkingRoutes(ctx context.Context, routes *[]DTO.CreateRoute, appID string, name string) error
 }
 type RouteController struct {
@@ -27,10 +29,26 @@ func NewRouteController(routeService routeService, loggerService utils.LoggerSer
 	}
 }
 
+func (rc *RouteController) CheckRouteStatus(w http.ResponseWriter, r *http.Request) {
+	routeID, err := request.ReadParam(r, "routeID")
+	if err != nil {
+		rc.loggerService.Error(failedToReadParamFromRequest, err.Error())
+		response.SetError(w, r, err)
+		return
+	}
+	convertedRouteIDToINT, _ := strconv.Atoi(routeID)
+	routeStatus, err := rc.routeService.CheckRouteStatus(r.Context(), convertedRouteIDToINT)
+	if err != nil {
+		response.SetError(w, r, err)
+		return
+	}
+	response.Send(w, 200, map[string]string{"routeStatus": routeStatus})
+}
+
 func (rc *RouteController) AddWorkingRoutes(w http.ResponseWriter, r *http.Request) {
 	appID, err := request.ReadParam(r, "appID")
 	if err != nil {
-		rc.loggerService.Error(failedToReadParamFromRequest, r.URL.Path)
+		rc.loggerService.Error(failedToReadParamFromRequest, err.Error())
 		response.SetError(w, r, err)
 		return
 	}

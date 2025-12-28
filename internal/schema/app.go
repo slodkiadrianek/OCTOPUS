@@ -12,7 +12,7 @@ var CreateAppSchema = z.Struct(z.Shape{
 })
 
 var AppIDSchema = z.Struct(z.Shape{
-	"appId": z.String().Required().Max(64),
+	"appID": z.String().Required().Max(64),
 })
 
 var UpdateAppSchema = z.Struct(z.Shape{

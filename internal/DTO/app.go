@@ -42,7 +42,7 @@ type UpdateApp struct {
 }
 
 type AppID struct {
-	AppID string `json:"appId" example:"nd3289dh23934382"`
+	AppID string `json:"appID" example:"nd3289dh23934382"`
 }
 type AppStatus struct {
 	AppID     string        `json:"app_id"`

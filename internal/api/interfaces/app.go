@@ -21,6 +21,7 @@ type DockerController interface {
 }
 
 type RouteController interface {
+	CheckRouteStatus(w http.ResponseWriter, r *http.Request)
 	AddWorkingRoutes(w http.ResponseWriter, r *http.Request)
 }
 

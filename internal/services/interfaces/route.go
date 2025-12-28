@@ -8,6 +8,7 @@ import (
 )
 
 type RouteRepository interface {
+	CheckRouteStatus(ctx context.Context, routeID int) (string, error)
 	UpdateWorkingRoutesStatuses(ctx context.Context, routesStatuses map[int]string) error
 	GetWorkingRoutesToTest(ctx context.Context) ([]models.RouteToTest, error)
 	InsertRoutesInfo(ctx context.Context, routesInfo []*DTO.RouteInfo) ([]int, error)

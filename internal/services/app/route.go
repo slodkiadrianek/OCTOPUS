@@ -23,6 +23,14 @@ func NewRouteService(logger utils.LoggerService, routeRepository interfaces.Rout
 	}
 }
 
+func (rs *RouteService) CheckRouteStatus(ctx context.Context, routeID int) (string, error) {
+	routeStatus, err := rs.routeRepository.CheckRouteStatus(ctx, routeID)
+	if err != nil {
+		return "", err
+	}
+	return routeStatus, nil
+}
+
 func (rs *RouteService) prepareDataAboutRouteToInsertToDb(routes *[]DTO.CreateRoute) ([]*DTO.NextRoute, []*DTO.RouteRequest, []*DTO.RouteResponse, []*DTO.RouteInfo, error) {
 	nextRoutesChan := make(chan DTO.NextRoute, len(*routes))
 	requestRoutesChan := make(chan DTO.RouteRequest, len(*routes))

@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/slodkiadrianek/octopus/internal/models"
@@ -35,7 +36,7 @@ func ErrorHandler(next http.Handler) http.Handler {
 			})
 			return
 		}
-
+		fmt.Println(errVal.Error())
 		response.Send(w, 500, map[string]string{
 			"errorCategory":    "Server",
 			"errorDescription": "Internal server error",
